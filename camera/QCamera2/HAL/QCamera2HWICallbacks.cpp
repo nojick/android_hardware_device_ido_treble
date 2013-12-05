@@ -1300,6 +1300,27 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
             ALOGE("%s: No memory for asd_update qcamera_sm_internal_evt_payload_t", __func__);
         }
     }
+
+    if (pMetaData->is_awb_params_valid) {
+        ALOGD("%s, metadata for awb params.", __func__);
+        qcamera_sm_internal_evt_payload_t *payload =
+            (qcamera_sm_internal_evt_payload_t *)malloc(sizeof(qcamera_sm_internal_evt_payload_t));
+        if (NULL != payload) {
+            memset(payload, 0, sizeof(qcamera_sm_internal_evt_payload_t));
+            payload->evt_type = QCAMERA_INTERNAL_EVT_AWB_UPDATE;
+            payload->awb_data = pMetaData->awb_params;
+            int32_t rc = pme->processEvt(QCAMERA_SM_EVT_EVT_INTERNAL, payload);
+            if (rc != NO_ERROR) {
+                ALOGE("%s: processEvt awb_update failed", __func__);
+                free(payload);
+                payload = NULL;
+
+            }
+        } else {
+            ALOGE("%s: No memory for awb_update qcamera_sm_internal_evt_payload_t", __func__);
+        }
+    }
+
     if (IS_META_AVAILABLE(CAM_INTF_META_FLASH_MODE, pMetaData)) {
         uint8_t *flash_mode =
             (uint8_t *)POINTER_OF_META(CAM_INTF_META_FLASH_MODE, pMetaData);

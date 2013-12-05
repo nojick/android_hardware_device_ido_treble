@@ -145,6 +145,9 @@ public:
 
     static const char KEY_QC_ISO_MODE[];
     static const char KEY_QC_SUPPORTED_ISO_MODES[];
+    static const char KEY_QC_EXPOSURE_TIME[];
+    static const char KEY_QC_MIN_EXPOSURE_TIME[];
+    static const char KEY_QC_MAX_EXPOSURE_TIME[];
     static const char KEY_QC_LENSSHADE[] ;
     static const char KEY_QC_SUPPORTED_LENSSHADE_MODES[] ;
     static const char KEY_QC_AUTO_EXPOSURE[];
@@ -183,6 +186,18 @@ public:
     static const char KEY_QC_NO_DISPLAY_MODE[];
     static const char KEY_QC_RAW_PICUTRE_SIZE[];
     static const char KEY_QC_TINTLESS_ENABLE[];
+    static const char KEY_QC_WB_MANUAL_CCT[];
+    static const char KEY_QC_WB_CURRENT_CCT[];
+    static const char KEY_QC_MIN_WB_CCT[];
+    static const char KEY_QC_MAX_WB_CCT[];
+
+    static const char KEY_QC_MANUAL_FOCUS_POSITION[];
+    static const char KEY_QC_MANUAL_FOCUS_POS_TYPE[];
+    static const char KEY_QC_CURRENT_FOCUS_POSITION[];
+    static const char KEY_QC_MIN_FOCUS_POS_INDEX[];
+    static const char KEY_QC_MAX_FOCUS_POS_INDEX[];
+    static const char KEY_QC_MIN_FOCUS_POS_DAC[];
+    static const char KEY_QC_MAX_FOCUS_POS_DAC[];
 
     static const char KEY_INTERNAL_PERVIEW_RESTART[];
 
@@ -345,6 +360,7 @@ public:
     static const char ISO_400[];
     static const char ISO_800[];
     static const char ISO_1600[];
+    static const char ISO_3200[];
 
     // Values for auto exposure settings.
     static const char AUTO_EXPOSURE_FRAME_AVG[];
@@ -566,6 +582,7 @@ public:
     bool isPreviewFlipChanged() { return m_bPreviewFlipChanged; };
     bool isVideoFlipChanged() { return m_bVideoFlipChanged; };
     bool isSnapshotFlipChanged() { return m_bSnapshotFlipChanged; };
+    int32_t updateCCTValue(int32_t cct);
     void setHDRSceneEnable(bool bflag);
 
     const char *getASDStateString(cam_auto_scene_t scene);
@@ -591,6 +608,7 @@ public:
         return m_pCapability->refocus_af_bracketing_need.output_count;};
     inline bool generateThumbFromMain() {return isUbiFocusEnabled() ||
         isChromaFlashEnabled() || isOptiZoomEnabled() || isUbiRefocus(); }
+    int32_t  updateCurrentFocusPosition(int32_t pos);
     bool isDisplayFrameNeeded() { return m_bDisplayFrame; };
     int32_t setDisplayFrame(bool enabled) {m_bDisplayFrame=enabled; return 0;};
     bool isAdvCamFeaturesEnabled() {return isUbiFocusEnabled() ||
@@ -616,6 +634,7 @@ private:
     int32_t setEffect(const QCameraParameters& );
     int32_t setBrightness(const QCameraParameters& );
     int32_t setFocusMode(const QCameraParameters& );
+    int32_t setFocusPosition(const QCameraParameters& );
     int32_t setSharpness(const QCameraParameters& );
     int32_t setSaturation(const QCameraParameters& );
     int32_t setContrast(const QCameraParameters& );
@@ -625,6 +644,7 @@ private:
     int32_t setVtEnable(const QCameraParameters& );
     int32_t setZoom(const QCameraParameters& );
     int32_t setISOValue(const QCameraParameters& );
+    int32_t setExposureTime(const QCameraParameters& );
     int32_t setRotation(const QCameraParameters& );
     int32_t setVideoRotation(const QCameraParameters& );
     int32_t setFlash(const QCameraParameters& );
@@ -635,6 +655,7 @@ private:
     int32_t setLensShadeValue(const QCameraParameters& );
     int32_t setExposureCompensation(const QCameraParameters& );
     int32_t setWhiteBalance(const QCameraParameters& );
+    int32_t setWBManualCCT(const QCameraParameters& );
     int32_t setAntibanding(const QCameraParameters& );
     int32_t setFocusAreas(const QCameraParameters& );
     int32_t setMeteringAreas(const QCameraParameters& );
@@ -671,6 +692,7 @@ private:
     int32_t setEffect(const char *effect);
     int32_t setBrightness(int brightness);
     int32_t setFocusMode(const char *focusMode);
+    int32_t setFocusPosition(const char *typeStr, const char *posStr);
     int32_t setSharpness(int sharpness);
     int32_t setSaturation(int saturation);
     int32_t setContrast(int contrast);
@@ -681,6 +703,7 @@ private:
     int32_t setVtEnable(const char *vtEnable);
     int32_t setZoom(int zoom_level);
     int32_t setISOValue(const char *isoValue);
+    int32_t setExposureTime(const char *expTimeStr);
     int32_t setFlash(const char *flashStr);
     int32_t setAwbLock(const char *awbStr);
     int32_t setMCEValue(const char *mceStr);
@@ -689,6 +712,7 @@ private:
     int32_t setLensShadeValue(const char *lensShadeStr);
     int32_t setExposureCompensation(int expComp);
     int32_t setWhiteBalance(const char *wbStr);
+    int32_t setWBManualCCT(const char *cctStr);
     int32_t setAntibanding(const char *antiBandingStr);
     int32_t setFocusAreas(const char *focusAreasStr);
     int32_t setMeteringAreas(const char *meteringAreasStr);
@@ -817,6 +841,8 @@ private:
     bool m_bHDRThumbnailProcessNeeded;        // if thumbnail need to be processed for HDR
     bool m_bHDR1xExtraBufferNeeded;     // if extra frame with exposure compensation 0 during HDR is needed
     bool m_bHDROutputCropEnabled;     // if HDR output frame need to be scaled to user resolution
+    int32_t m_curCCT;
+    int32_t m_curFocusPos;
     DefaultKeyedVector<String8,String8> m_tempMap; // map for temororily store parameters to be set
     cam_fps_range_t m_default_fps_range;
     bool m_bAFBracketingOn;
