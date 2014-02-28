@@ -278,11 +278,11 @@ int32_t QCamera3Channel::stop()
 {
     int32_t rc = NO_ERROR;
     if(!m_bIsActive) {
-        ALOGE("%s: Attempt to stop inactive channel",__func__);
+        ALOGE("%s: Attempt to stop inactive channel", __func__);
         return rc;
     }
 
-    for (int i = 0; i < m_numStreams; i++) {
+    for (uint8_t i = 0; i < m_numStreams; i++) {
         if (mStreams[i] != NULL) {
             mStreams[i]->stop();
         }
@@ -309,7 +309,7 @@ int32_t QCamera3Channel::stop()
 int32_t QCamera3Channel::bufDone(mm_camera_super_buf_t *recvd_frame)
 {
     int32_t rc = NO_ERROR;
-    for (int i = 0; i < recvd_frame->num_bufs; i++) {
+    for (uint32_t i = 0; i < recvd_frame->num_bufs; i++) {
          if (recvd_frame->bufs[i] != NULL) {
              for (int j = 0; j < m_numStreams; j++) {
                  if (mStreams[j] != NULL &&
@@ -2239,7 +2239,7 @@ int32_t QCamera3ReprocessChannel::doReprocess(mm_camera_super_buf_t *frame,
         ALOGE("%s: No source channel for reprocess", __func__);
         return -1;
     }
-    for (int i = 0; i < frame->num_bufs; i++) {
+    for (uint32_t i = 0; i < frame->num_bufs; i++) {
         QCamera3Stream *pStream = getStreamBySourceHandle(frame->bufs[i]->stream_id);
         if (pStream != NULL) {
             cam_stream_parm_buffer_t param;

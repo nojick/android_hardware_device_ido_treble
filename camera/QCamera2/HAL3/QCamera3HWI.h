@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -168,10 +168,10 @@ private:
                                cam_intf_parm_type_t paramType,
                                uint32_t paramLength,
                                void *paramValue);
-    static int8_t lookupHalName(const QCameraMap arr[],
-                      int len, int fwk_name);
-    static int8_t lookupFwkName(const QCameraMap arr[],
-                      int len, int hal_name);
+    static int32_t lookupHalName(const QCameraMap arr[],
+                      size_t len, int fwk_name);
+    static int32_t lookupFwkName(const QCameraMap arr[],
+                      size_t len, int hal_name);
     static int calcMaxJpegSize(uint8_t camera_id);
 
     int validateCaptureRequest(camera3_capture_request_t *request);
