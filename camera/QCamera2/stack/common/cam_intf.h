@@ -305,6 +305,8 @@ typedef struct{
     cam_sensor_type_t sensor_type;
     /* opti Zoom info */
     cam_opti_zoom_t      opti_zoom_settings_need;
+
+    uint8_t focus_dist_calibrated;
 } cam_capability_t;
 
 typedef enum {
