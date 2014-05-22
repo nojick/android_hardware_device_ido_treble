@@ -1718,6 +1718,7 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     }
 
     jpg_job.encode_job.hal_version = CAM_HAL_V1;
+    m_parent->mExifParams.sensor_params.sens_type = m_parent->getSensorType();
     jpg_job.encode_job.cam_exif_params = m_parent->mExifParams;
 
     /* Init the QTable */
