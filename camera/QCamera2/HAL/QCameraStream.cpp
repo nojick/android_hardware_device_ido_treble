@@ -1096,7 +1096,7 @@ int32_t QCameraStream::releaseBuffs()
         mBufDefs = NULL;
         memset(&mFrameLenOffset, 0, sizeof(mFrameLenOffset));
     }
-    if ( !mStreamBufsAcquired ) {
+    if (!mStreamBufsAcquired && mStreamBufs != NULL) {
         mStreamBufs->deallocate();
         delete mStreamBufs;
     }
