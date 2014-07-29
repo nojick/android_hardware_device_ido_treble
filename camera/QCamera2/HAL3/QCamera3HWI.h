@@ -234,6 +234,7 @@ private:
             metadata_buffer_t *hal_metadata);
 
     void updatePowerHint(bool bWasVideo, bool bIsVideo);
+    void updateFpsInPreviewBuffer(metadata_buffer_t *metadata, uint32_t frame_number);
 
     camera3_device_t   mCameraDevice;
     uint32_t           mCameraId;
