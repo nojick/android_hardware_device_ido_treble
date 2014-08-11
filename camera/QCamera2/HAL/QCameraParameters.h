@@ -586,6 +586,8 @@ public:
         isChromaFlashEnabled() || isOptiZoomEnabled() || isHDREnabled();}
     int32_t setAecLock(const char *aecStr);
 
+    int32_t setIntEvent(cam_int_evt_params_t params);
+
 private:
     int32_t setPreviewSize(const QCameraParameters& );
     int32_t setVideoSize(const QCameraParameters& );

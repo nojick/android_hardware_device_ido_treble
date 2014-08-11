@@ -489,6 +489,10 @@ typedef union {
     INCLUDE(CAM_INTF_PARM_RAW_DIMENSION,            cam_dimension_t,             1);
     INCLUDE(CAM_INTF_PARM_TINTLESS,                 int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_EZTUNE_CMD,               cam_eztune_cmd_data_t,       1);
+    /* В старом хал его не добавили, если я его 
+       оставлю то тогда произойдет смещение следующих инклюдов
+    INCLUDE(CAM_INTF_PARM_INT_EVT,                  cam_int_evt_params_t,        1);
+    */
     INCLUDE(CAM_INTF_PARAM_LONGSHOT_ENABLE,         int8_t,                      1);
     INCLUDE(CAM_INTF_PARM_RDI_MODE,                 int32_t,                     1);
 
