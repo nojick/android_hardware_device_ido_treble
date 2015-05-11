@@ -8917,7 +8917,7 @@ int32_t QCameraParameters::getStreamFormat(cam_stream_type_t streamType,
                 CAM_FORMAT_Y_ONLY) {
             format = m_pCapability->analysis_recommended_format;
         } else {
-            ALOGE("%s:%d invalid analysis_recommended_format %d\n",
+            ALOGE("invalid analysis_recommended_format %d\n",
                     m_pCapability->analysis_recommended_format);
             format = mAppPreviewFormat;
         }
