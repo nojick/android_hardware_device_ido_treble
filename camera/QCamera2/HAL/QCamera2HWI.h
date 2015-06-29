@@ -637,6 +637,7 @@ private:
     enum DefferedWorkCmd {
         CMD_DEFF_ALLOCATE_BUFF,
         CMD_DEFF_PPROC_START,
+        CMD_DEF_METADATA_ALLOC,
         CMD_DEFF_MAX
     };
 
@@ -645,9 +646,15 @@ private:
         cam_stream_type_t type;
     } DefferAllocBuffArgs;
 
+    typedef struct {
+        uint8_t bufferCnt;
+        size_t size;
+    } DeferMetadataAllocArgs;
+
     typedef union {
         DefferAllocBuffArgs allocArgs;
         QCameraChannel *pprocArgs;
+        DeferMetadataAllocArgs metadataAllocArgs;
     } DefferWorkArgs;
 
     bool mDeffOngoingJobs[MAX_ONGOING_JOBS];
@@ -682,6 +689,7 @@ private:
     int32_t mMetadataJob;
     int32_t mReprocJob;
     int32_t mRawdataJob;
+    int32_t mMetadataAllocJob;
     uint32_t mOutputCount;
     uint32_t mInputCount;
     bool mAdvancedCaptureConfigured;
@@ -695,6 +703,7 @@ private:
     mm_jpeg_mpo_ops_t     mJpegMpoHandle;
     uint32_t              mJpegClientHandle;
     bool                  mJpegHandleOwner;
+    QCameraMemory *mMetadataMem;
 };
 
 }; // namespace qcamera
