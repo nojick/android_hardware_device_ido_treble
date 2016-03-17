@@ -1187,7 +1187,6 @@ private:
     int8_t mTotalPPCount;
     int8_t mCurPPCount;
     int32_t mZoomLevel;
-    bool m_bStreamsConfigured;
     int32_t mParmZoomLevel;
     bool m_bIsLowMemoryDevice;
     int32_t mCds_mode;
