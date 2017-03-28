@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <hardware_legacy/uevent.h>
+#include "uevent.h"
 
 #include <malloc.h>
 #include <string.h>
@@ -66,17 +66,22 @@ int uevent_init()
     return (fd > 0);
 }
 
+int uevent_get_fd()
+{
+    return fd;
+}
+
 int uevent_next_event(char* buffer, int buffer_length)
 {
     while (1) {
         struct pollfd fds;
         int nr;
-
+    
         fds.fd = fd;
         fds.events = POLLIN;
         fds.revents = 0;
         nr = poll(&fds, 1, -1);
-
+     
         if(nr > 0 && (fds.revents & POLLIN)) {
             int count = recv(fd, buffer, buffer_length, 0);
             if (count > 0) {
@@ -90,7 +95,43 @@ int uevent_next_event(char* buffer, int buffer_length)
             } 
         }
     }
-
+    
     // won't get here
     return 0;
+}
+
+int uevent_add_native_handler(void (*handler)(void *data, const char *msg, int msg_len),
+                             void *handler_data)
+{
+    struct uevent_handler *h;
+
+    h = malloc(sizeof(struct uevent_handler));
+    if (h == NULL)
+        return -1;
+    h->handler = handler;
+    h->handler_data = handler_data;
+
+    pthread_mutex_lock(&uevent_handler_list_lock);
+    LIST_INSERT_HEAD(&uevent_handler_list, h, list);
+    pthread_mutex_unlock(&uevent_handler_list_lock);
+
+    return 0;
+}
+
+int uevent_remove_native_handler(void (*handler)(void *data, const char *msg, int msg_len))
+{
+    struct uevent_handler *h;
+    int err = -1;
+
+    pthread_mutex_lock(&uevent_handler_list_lock);
+    LIST_FOREACH(h, &uevent_handler_list, list) {
+        if (h->handler == handler) {
+            LIST_REMOVE(h, list);
+            err = 0;
+            break;
+       }
+    }
+    pthread_mutex_unlock(&uevent_handler_list_lock);
+
+    return err;
 }

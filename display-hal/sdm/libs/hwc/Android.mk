@@ -11,7 +11,7 @@ LOCAL_C_INCLUDES              := $(common_includes)
 LOCAL_HEADER_LIBRARIES        := display_headers libhardware_headers libhardware_legacy_headers libui_v_headers
 
 LOCAL_CFLAGS                  := $(common_flags) -Wno-missing-field-initializers -Wno-unused-parameter \
-                                 -std=c++11 -fcolor-diagnostics -Wno-sign-conversion -DLOG_TAG=\"SDM\" -Wno-shorten-64-to-32
+                                  -fcolor-diagnostics -Wno-sign-conversion -DLOG_TAG=\"SDM\" -Wno-shorten-64-to-32
 LOCAL_CLANG                   := true
 
 LOCAL_SHARED_LIBRARIES        := libsdmcore libqservice libbinder libhardware \
@@ -34,7 +34,7 @@ LOCAL_SRC_FILES               := hwc_session.cpp \
                                  hwc_tonemapper.cpp \
                                  hwc_socket_handler.cpp \
                                  hwc_display_external_test.cpp \
-                                 android/uevent.cpp
+                                 android/uevent.c
 
 include $(BUILD_SHARED_LIBRARY)
 endif
