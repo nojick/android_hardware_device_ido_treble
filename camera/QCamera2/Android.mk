@@ -105,10 +105,10 @@ endif
 #LOCAL_CFLAGS += -DCONFIG_CAMERA_IDO
 
 #LOCAL_STATIC_LIBRARIES := libqcamera2_util
-
 LOCAL_SHARED_LIBRARIES := libcamera_client liblog libhardware libutils libcutils libdl libsync libgui
 LOCAL_SHARED_LIBRARIES += libmmcamera_interface libmmjpeg_interface libui libcamera_metadata
 LOCAL_SHARED_LIBRARIES += libqdMetaData libqservice libbinder
+LOCAL_STATIC_LIBRARIES := android.hardware.camera.common@1.0-helper
 ifeq ($(USE_DISPLAY_SERVICE),true)
 LOCAL_SHARED_LIBRARIES += android.frameworks.displayservice@1.0 libhidlbase libhidltransport
 else
