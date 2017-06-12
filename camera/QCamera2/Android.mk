@@ -68,9 +68,10 @@ endif
 LOCAL_C_INCLUDES += device/xiaomi/ido/display-hal/libgralloc1
 LOCAL_C_INCLUDES += device/xiaomi/ido/display-hal/libqdutils
 
-LOCAL_SHARED_LIBRARIES := libcamera_client liblog libhardware libutils libcutils libdl
+LOCAL_SHARED_LIBRARIES := liblog libhardware libutils libcutils libdl
 LOCAL_SHARED_LIBRARIES += libmmcamera_interface libmmjpeg_interface libui libcamera_metadata
 LOCAL_SHARED_LIBRARIES += libqdMetaData libbinder
+LOCAL_STATIC_LIBRARIES := android.hardware.camera.common@1.0-helper
 LOCAL_HEADER_LIBRARIES += media_plugin_headers
 
 LOCAL_MODULE_RELATIVE_PATH := hw
