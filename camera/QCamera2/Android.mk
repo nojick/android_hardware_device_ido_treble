@@ -56,10 +56,9 @@ endif
 ifeq ($(call is-platform-sdk-version-at-least,26),true)
 USE_DISPLAY_SERVICE := true
 LOCAL_CFLAGS += -DUSE_DISPLAY_SERVICE
-LOCAL_CFLAGS += -std=c++11 -std=gnu++1y
-else
-LOCAL_CFLAGS += -std=c++11 -std=gnu++0x
 endif
+
+LOCAL_CFLAGS += -std=c++11 -std=gnu++1y
 
 #HAL 1.0 Flags
 LOCAL_CFLAGS += -DDEFAULT_DENOISE_MODE_ON -DHAL3 -DQCAMERA_REDEFINE_LOG
@@ -105,18 +104,21 @@ endif
 #LOCAL_CFLAGS += -DCONFIG_CAMERA_IDO
 
 #LOCAL_STATIC_LIBRARIES := libqcamera2_util
-LOCAL_SHARED_LIBRARIES := libcamera_client liblog libhardware libutils libcutils libdl libsync libgui
+LOCAL_STATIC_LIBRARIES := android.hardware.camera.common@1.0-helper
+LOCAL_SHARED_LIBRARIES := liblog libhardware libutils libcutils libdl libsync
 LOCAL_SHARED_LIBRARIES += libmmcamera_interface libmmjpeg_interface libui libcamera_metadata
 LOCAL_SHARED_LIBRARIES += libqdMetaData libqservice libbinder
-LOCAL_STATIC_LIBRARIES := android.hardware.camera.common@1.0-helper
+LOCAL_SHARED_LIBRARIES += libhidlbase libhwbinder
+LOCAL_SHARED_LIBRARIES += android.hardware.power@1.0
+
 ifeq ($(USE_DISPLAY_SERVICE),true)
-LOCAL_SHARED_LIBRARIES += android.frameworks.displayservice@1.0 libhidlbase libhidltransport
-else
-LOCAL_SHARED_LIBRARIES += libgui
+LOCAL_SHARED_LIBRARIES += android.frameworks.displayservice@1.0 libhidltransport
 endif
+
 ifeq ($(TARGET_TS_MAKEUP),true)
 LOCAL_SHARED_LIBRARIES += libts_face_beautify_hal libts_detected_face_hal
 endif
+
 LOCAL_HEADER_LIBRARIES += media_plugin_headers
 
 LOCAL_MODULE_RELATIVE_PATH := hw
