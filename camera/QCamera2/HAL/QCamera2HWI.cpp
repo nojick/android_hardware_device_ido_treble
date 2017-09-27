@@ -1985,6 +1985,13 @@ int QCamera2HardwareInterface::openCamera()
          }
 #endif //USE_DISPLAY_SERVICE
 
+#ifdef USE_DISPLAY_SERVICE
+         if(!mCameraDisplay->startVsync(TRUE))
+         {
+             LOGE("Error: Cannot start vsync (still continue)");
+         }
+#endif //USE_DISPLAY_SERVICE
+
     return NO_ERROR;
 
 error_exit3:
