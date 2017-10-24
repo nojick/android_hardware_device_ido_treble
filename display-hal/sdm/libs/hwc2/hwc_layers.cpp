@@ -68,6 +68,105 @@ DisplayError SetCSC(const private_handle_t *pvt_handle, ColorMetaData *color_met
   return kErrorNone;
 }
 
+// Returns true when color primary is supported
+bool GetColorPrimary(const int32_t &dataspace, ColorPrimaries *color_primary) {
+  auto standard = dataspace & HAL_DATASPACE_STANDARD_MASK;
+  bool supported_csc = true;
+  switch (standard) {
+    case  HAL_DATASPACE_STANDARD_BT709:
+      *color_primary = ColorPrimaries_BT709_5;
+      break;
+    case HAL_DATASPACE_STANDARD_BT601_525:
+    case HAL_DATASPACE_STANDARD_BT601_525_UNADJUSTED:
+      *color_primary = ColorPrimaries_BT601_6_525;
+      break;
+    case HAL_DATASPACE_STANDARD_BT601_625:
+    case HAL_DATASPACE_STANDARD_BT601_625_UNADJUSTED:
+      *color_primary = ColorPrimaries_BT601_6_625;
+      break;
+    case HAL_DATASPACE_STANDARD_DCI_P3:
+      *color_primary = ColorPrimaries_DCIP3;
+      break;
+    case HAL_DATASPACE_STANDARD_BT2020:
+      *color_primary = ColorPrimaries_BT2020;
+      break;
+    default:
+      DLOGV_IF(kTagClient, "Unsupported Standard Request = %d", standard);
+      supported_csc = false;
+  }
+  return supported_csc;
+}
+
+bool GetTransfer(const int32_t &dataspace, GammaTransfer *gamma_transfer) {
+  auto transfer = dataspace & HAL_DATASPACE_TRANSFER_MASK;
+  bool supported_transfer = true;
+  switch (transfer) {
+    case HAL_DATASPACE_TRANSFER_SRGB:
+      *gamma_transfer = Transfer_sRGB;
+      break;
+    case HAL_DATASPACE_TRANSFER_SMPTE_170M:
+      *gamma_transfer = Transfer_SMPTE_170M;
+      break;
+    case HAL_DATASPACE_TRANSFER_ST2084:
+      *gamma_transfer = Transfer_SMPTE_ST2084;
+      break;
+    case HAL_DATASPACE_TRANSFER_HLG:
+      *gamma_transfer = Transfer_HLG;
+      break;
+    case HAL_DATASPACE_TRANSFER_LINEAR:
+      *gamma_transfer = Transfer_Linear;
+      break;
+    case HAL_DATASPACE_TRANSFER_GAMMA2_2:
+      *gamma_transfer = Transfer_Gamma2_2;
+      break;
+    default:
+      DLOGV_IF(kTagClient, "Unsupported Transfer Request = %d", transfer);
+      supported_transfer = false;
+  }
+  return supported_transfer;
+}
+
+void GetRange(const int32_t &dataspace, ColorRange *color_range) {
+  auto range = dataspace & HAL_DATASPACE_RANGE_MASK;
+  switch (range) {
+    case HAL_DATASPACE_RANGE_FULL:
+      *color_range = Range_Full;
+      break;
+    case HAL_DATASPACE_RANGE_LIMITED:
+      *color_range = Range_Limited;
+      break;
+    default:
+      DLOGV_IF(kTagClient, "Unsupported Range Request = %d", range);
+      break;
+  }
+}
+
+bool IsBT2020(const ColorPrimaries &color_primary) {
+  switch (color_primary) {
+  case ColorPrimaries_BT2020:
+    return true;
+    break;
+  default:
+    return false;
+  }
+}
+
+// Retrieve ColorMetaData from android_data_space_t (STANDARD|TRANSFER|RANGE)
+bool GetSDMColorSpace(const int32_t &dataspace, ColorMetaData *color_metadata) {
+  bool valid = false;
+  valid = GetColorPrimary(dataspace, &(color_metadata->colorPrimaries));
+  if (!valid) {
+    return valid;
+  }
+  valid = GetTransfer(dataspace, &(color_metadata->transfer));
+  if (!valid) {
+    return valid;
+  }
+  GetRange(dataspace, &(color_metadata->range));
+
+  return true;
+}
+
 // Layer operations
 HWCLayer::HWCLayer(hwc2_display_t display_id, HWCBufferAllocator *buf_allocator)
   : id_(next_id_++), display_id_(display_id), buffer_allocator_(buf_allocator) {
@@ -194,7 +293,7 @@ HWC2::Error HWCLayer::SetLayerBlendMode(HWC2::BlendMode mode) {
 HWC2::Error HWCLayer::SetLayerColor(hwc_color_t color) {
   layer_->solid_fill_color = GetUint32Color(color);
   layer_->input_buffer.format = kFormatARGB8888;
-  DLOGV_IF(kTagCompManager, "[%" PRIu64 "][%" PRIu64 "] Layer color set to %x", display_id_, id_,
+  DLOGV_IF(kTagClient, "[%" PRIu64 "][%" PRIu64 "] Layer color set to %x", display_id_, id_,
            layer_->solid_fill_color);
   return HWC2::Error::None;
 }
@@ -245,7 +344,7 @@ HWC2::Error HWCLayer::SetLayerDataspace(int32_t dataspace) {
         break;
       default:
         // unknown legacy dataspace
-        DLOGW_IF(kTagQDCM, "Unsupported dataspace type %d", dataspace);
+        DLOGW_IF(kTagClient, "Unsupported dataspace type %d", dataspace);
     }
   }
 
@@ -564,6 +663,10 @@ DisplayError HWCLayer::SetMetaData(const private_handle_t *pvt_handle, Layer *la
   int32_t interlaced = 0;
   if (getMetaData(handle, GET_PP_PARAM_INTERLACED, &interlaced) == 0) {
     layer_buffer->flags.interlace = interlaced ? true : false;
+  }
+  if (interlace != layer_buffer->flags.interlace) {
+    DLOGI("Layer buffer interlaced metadata has changed. old=%d, new=%d",
+          layer_buffer->flags.interlace, interlace);
   }
 
   uint32_t linear_format = 0;

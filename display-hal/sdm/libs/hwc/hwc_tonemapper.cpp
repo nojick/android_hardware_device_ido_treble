@@ -133,6 +133,7 @@ int HWCToneMapper::HandleToneMap(hwc_display_contents_1_t *content_list, LayerSt
     }
 
     if (layer->request.flags.tone_map) {
+    DLOGV_IF(kTagClient, "Tonemapping for layer at index %d", i);
       switch (layer->composition) {
       case kCompositionGPUTarget:
         if (!gpu_count) {
@@ -213,6 +214,7 @@ void HWCToneMapper::PostCommit(LayerStack *layer_stack) {
       session->acquired_ = false;
       it++;
     } else {
+    DLOGI_IF(kTagClient, "Tone map session %d closed.", session_index);
       delete session;
       it = tone_map_sessions_.erase(it);
     }
