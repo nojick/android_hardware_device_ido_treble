@@ -23,6 +23,9 @@
      for different hardware or product builds. -->
 <resources>
 
+    <!-- Show APN Settings for some CDMA carriers -->
+    <bool name="config_show_apn_setting_cdma">true</bool>
+
     <!-- Flag indicating if network query through TelephonyManager.requestNetworkScan() should be
          disabled.
          If set to true, it will send network query through Phone.getAvailableNetworks() directly
