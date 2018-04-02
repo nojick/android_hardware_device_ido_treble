@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2014 - 2016, The Linux Foundation. All rights reserved.
+* Copyright (c) 2014-2018, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -75,7 +75,7 @@ int HWCDisplayExternal::Create(CoreInterface *core_intf, HWCBufferAllocator *buf
       external_height = primary_height;
     } else {
       int downscale_enabled = 0;
-      HWCDebugHandler::Get()->GetProperty("sdm.debug.downscale_external", &downscale_enabled);
+      HWCDebugHandler::Get()->GetProperty(ENABLE_EXTERNAL_DOWNSCALE_PROP, &downscale_enabled);
       if (downscale_enabled) {
         GetDownscaleResolution(primary_width, primary_height, &external_width, &external_height);
       }

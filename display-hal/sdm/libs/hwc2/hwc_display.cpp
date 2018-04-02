@@ -359,7 +359,7 @@ int HWCDisplay::Init() {
   client_target_ = new HWCLayer(id_, buffer_allocator_);
 
   int blit_enabled = 0;
-  HWCDebugHandler::Get()->GetProperty("persist.hwc.blit.comp", &blit_enabled);
+  HWCDebugHandler::Get()->GetProperty(DISABLE_BLIT_COMPOSITION_PROP, &blit_enabled);
   if (needs_blit_ && blit_enabled) {
     // TODO(user): Add blit engine when needed
   }
