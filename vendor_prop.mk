@@ -91,7 +91,8 @@ media.msm8939hw=1 \
 mm.enable.smoothstreaming=true \
 mmp.enable.3g2=true \
 media.aac_51_output_enabled=true \
-mm.enable.qcom_parser=3407871
+mm.enable.qcom_parser=3407871 \
+vendor.mediacodec.binder.size=6
 
 # Netmgrd
 PRODUCT_PROPERTY_OVERRIDES += \
