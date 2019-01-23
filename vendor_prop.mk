@@ -123,7 +123,8 @@ ro.telephony.call_ring.multiple=false \
 ril.subscription.types=NV,RUIM \
 persist.radio.apm_sim_not_pwdn=1 \
 persist.radio.multisim.config=dsds \
-ro.telephony.default_network=9,9
+ro.telephony.default_network=9,9 \
+persist.radio.add_power_save=1
 
 # SDcardFS
 PRODUCT_PROPERTY_OVERRIDES += \
