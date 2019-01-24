@@ -81,62 +81,22 @@ on early-boot
     write /sys/bus/msm_subsys/devices/subsys2/restart_level "related"
 
 on boot
-    chown bluetooth bluetooth /sys/module/bluetooth_power/parameters/power
     chown bluetooth bluetooth /sys/class/rfkill/rfkill0/type
     chown bluetooth bluetooth /sys/class/rfkill/rfkill0/state
-    chown bluetooth bluetooth /proc/bluetooth/sleep/proto
-    chown bluetooth bluetooth /sys/module/hci_uart/parameters/ath_lpm
-    chown bluetooth bluetooth /sys/module/hci_uart/parameters/ath_btwrite
-    chown system system /sys/module/sco/parameters/disable_esco
-    chown bluetooth bluetooth /sys/module/hci_smd/parameters/hcismd_set
-    chown system system /sys/module/radio_iris_transport/parameters/fmsmd_set
-    chmod 0660 /sys/module/bluetooth_power/parameters/power
-    chmod 0660 /sys/module/hci_smd/parameters/hcismd_set
-    chmod 0660 /sys/module/radio_iris_transport/parameters/fmsmd_set
     chmod 0660 /sys/class/rfkill/rfkill0/state
-    chmod 0660 /proc/bluetooth/sleep/proto
     chown bluetooth bluetooth /dev/ttyHS0
-    chmod 0660 /sys/module/hci_uart/parameters/ath_lpm
-    chmod 0660 /sys/module/hci_uart/parameters/ath_btwrite
     chmod 0660 /dev/ttyHS0
-    chown bluetooth bluetooth /sys/devices/platform/msm_serial_hs.0/clock
-    chmod 0660 /sys/devices/platform/msm_serial_hs.0/clock
-
-    chmod 0660 /dev/ttyHS2
-    chown bluetooth bluetooth /dev/ttyHS2
-
-    chown bluetooth bluetooth /sys/class/rfkill/rfkill0/device/extldo
-    chmod 0660 /sys/class/rfkill/rfkill0/device/extldo
 
     # Create QMUX deamon socket area
-    mkdir /dev/socket/qmux_radio 0770 radio radio
-    chmod 2770 /dev/socket/qmux_radio
-    mkdir /dev/socket/qmux_audio 0770 media audio
-    chmod 2770 /dev/socket/qmux_audio
-    mkdir /dev/socket/qmux_bluetooth 0770 bluetooth bluetooth
-    chmod 2770 /dev/socket/qmux_bluetooth
-    mkdir /dev/socket/qmux_gps 0770 gps gps
-    chmod 2770 /dev/socket/qmux_gps
+    mkdir /dev/socket/qmux_radio 2770 radio radio
+    mkdir /dev/socket/qmux_audio 2770 media audio
+    mkdir /dev/socket/qmux_bluetooth 2770 bluetooth bluetooth
+    mkdir /dev/socket/qmux_gps 2770 gps gps
 
-    mkdir /persist/drm 0770 system system
-    mkdir /persist/misc 0770 system system
     mkdir /persist/alarm 0770 system system
-    mkdir /persist/bluetooth 0770 bluetooth bluetooth
 
     # Create NETMGR daemon socket area
     mkdir /dev/socket/netmgr 0750 radio radio
-
-#   Define TCP buffer sizes for various networks
-#   ReadMin, ReadInitial, ReadMax, WriteMin, WriteInitial, WriteMax,
-    setprop net.tcp.buffersize.wifi    524288,2097152,4194304,262144,524288,1048576
-
-    # Remove SUID bit for iproute2 ip tool
-    chmod 0755 /system/bin/ip
-
-    chmod 0444 /sys/devices/platform/msm_hsusb/gadget/usb_state
-
-#   Define TCP buffer sizes for various networks
-    setprop net.tcp.2g_init_rwnd 10
 
 #   Assign TCP buffer thresholds to be ceiling value of technology maximums
 #   Increased technology maximums should be reflected here.
@@ -150,9 +110,6 @@ on boot
     # connections on high-throughput links get dropped when
     # an ack packet comes out of order
     write /proc/sys/net/netfilter/nf_conntrack_tcp_be_liberal 1
-
-    # Allow access for CCID command/response timeout configuration
-    chown system system /sys/module/ccid_bridge/parameters/bulk_msg_timeout
 
     # Mark the copy complete flag to not completed
     write /data/misc/radio/copy_complete 0
@@ -211,10 +168,8 @@ on fs
     symlink /dev/block/platform/soc.0/${ro.boot.bootdevice} /dev/block/bootdevice
 
     mount_all /vendor/etc/fstab.qcom
-    mkdir /persist/data 0700 system system
     restorecon_recursive /persist
 
-# MSM specific files that need to be created on /data
 on post-fs-data
     # Create directory for TZ Apps
     mkdir /data/misc/qsee 0770 system system
@@ -230,8 +185,6 @@ on post-fs-data
 
     # Create the directories used by the Wireless subsystem
     mkdir /data/vendor/wifi 0770 wifi wifi
-    mkdir /data/vendor/wifi/sockets 0770 wifi wifi
-    mkdir /data/vendor/wifi/wpa_supplicant 0770 wifi wifi
     mkdir /data/vendor/wifi/wpa 0770 wifi wifi
     mkdir /data/vendor/wifi/wpa/sockets 0770 wifi wifi
 
@@ -245,9 +198,6 @@ on post-fs-data
 
     mkdir /data/dpm/nsrm 0771 system system
     chown system system /data/dpm/nsrm
-
-    # Create directory used by audio subsystem
-    mkdir /data/misc/audio 0770 audio audio
 
     # Create directory used by the DASH client
     mkdir /data/misc/dash 0770 media audio
@@ -280,57 +230,16 @@ on post-fs-data
     mkdir /data/vendor/location/mq 0770 gps gps
     mkdir /data/vendor/location/xtwifi 0770 gps gps
 
-    # Create directory from IMS services
-    mkdir /data/shared 0755
-    chown system system /data/shared
-
-    # Create /data/time folder for time-services
-    mkdir /data/time/ 0700 system system
-
-    mkdir /data/audio/ 0770 media audio
-
     setprop vold.post_fs_data_done 1
 
-    # Create a folder for SRS to be able to create a usercfg file
-    mkdir /data/data/media 0770 media media
-
-    # Create folder for mm-qcamera-daemon
-    mkdir /data/camera 0770 media camera
-
     # Create PERFD deamon related dirs
-    mkdir /data/misc/perfd 0755 root system
-    chmod 2755 /data/misc/perfd
-    mkdir /data/system/perfd 0770 root system
-    chmod 2770 /data/system/perfd
+    mkdir /data/misc/perfd 2755 root system
+    mkdir /data/system/perfd 2770 root system
 
-    # Sensor
-    mkdir /persist/sensors 0775 system system
-    chmod 664 /persist/sensors/sensors_settings
-    chown system root /persist/sensors/sensors_settings
-
-    # RIDL data
-    mkdir /data/misc/SelfHost/ 0710 system shell
-    mkdir /data/misc/SelfHost/QCLogs/ 2750 system shell
-    mkdir /data/misc/SelfHost/QCLogs/temp/ 0700 system shell
-    mkdir /data/misc/SelfHost/storage/ 0700 system shell
-    mkdir /data/misc/SelfHost/Running/ 2750 system shell
-    mkdir /data/misc/SelfHost/socket/ 2770 system system
-
-    # Create FM dir for patchdownloader
-    mkdir /data/misc/fm 0770 system system
-    chmod 0770 /data/misc/fm
-
-    # Fingerprint
-    mkdir /data/fpc 0700 system system
-
-    mkdir /data/tombstones 0771 system system
-    mkdir /tombstones/modem 0771 system system
-    mkdir /tombstones/lpass 0771 system system
-    mkdir /tombstones/wcnss 0771 system system
-    mkdir /tombstones/dsps 0771 system system
-    mkdir /persist/data/sfs 0700 system system
-    mkdir /persist/data/tz 0700 system system
-    mkdir /data/misc/dts 0770 media audio
+    mkdir /data/tombstones/modem 0771 system system
+    mkdir /data/tombstones/lpass 0771 system system
+    mkdir /data/tombstones/wcnss 0771 system system
+    mkdir /data/tombstones/dsps 0771 system system
 
 on property:sys.boot_completed=1
     start vendor.qcom-post-boot
