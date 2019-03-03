@@ -29,7 +29,6 @@
 #include <android/hardware/biometrics/fingerprint/2.1/types.h>
 
 #include "BiometricsFingerprint.h"
-#include "fingerprintd/FingerprintDaemonProxy.h"
 
 using android::hardware::biometrics::fingerprint::V2_1::IBiometricsFingerprint;
 using android::hardware::biometrics::fingerprint::V2_1::implementation::BiometricsFingerprint;
@@ -38,16 +37,6 @@ using android::hardware::joinRpcThreadpool;
 using android::sp;
 
 int main() {
-    ALOGE("Start fingerprintd");
-    android::sp<android::IServiceManager> serviceManager = android::defaultServiceManager();
-    android::sp<android::FingerprintDaemonProxy> proxy =
-            android::FingerprintDaemonProxy::getInstance();
-    android::status_t ret = serviceManager->addService(
-            android::FingerprintDaemonProxy::descriptor, proxy);
-    if (ret != android::OK) {
-        ALOGE("Couldn't register " LOG_TAG " binder service!");
-        return -1;
-    }
 
     ALOGE("Start biometrics");
     android::sp<IBiometricsFingerprint> bio = BiometricsFingerprint::getInstance();
