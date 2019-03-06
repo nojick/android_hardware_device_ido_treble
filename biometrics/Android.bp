@@ -8,7 +8,6 @@ cc_binary {
     srcs: [
         "BiometricsFingerprint.cpp",
         "service.cpp",
-
     ],
 
     shared_libs: [

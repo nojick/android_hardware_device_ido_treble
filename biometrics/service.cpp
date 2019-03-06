@@ -42,9 +42,8 @@ int main() {
     android::sp<IBiometricsFingerprint> bio = BiometricsFingerprint::getInstance();
     configureRpcThreadpool(1, false /*callerWillJoin*/);
     if (bio != nullptr) {
-        ret = bio->registerAsService();
-        if (ret != android::OK) {
-            ALOGE("Cannot register BiometricsFingerprint service: %d", ret);
+        if (::android::OK != bio->registerAsService()) {
+            return 1;
         }
     } else {
         ALOGE("Can't create instance of BiometricsFingerprint, nullptr");
