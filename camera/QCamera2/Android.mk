@@ -80,7 +80,7 @@ LOCAL_C_INCLUDES := \
 
 #HAL 1.0 Include paths
 LOCAL_C_INCLUDES += \
-        device/xiaomi/ido/camera/QCamera2/HAL
+         $(LOCAL_PATH)/HAL
 
 LOCAL_C_INCLUDES += device/xiaomi/ido/display-hal/libgralloc1
 LOCAL_C_INCLUDES += device/xiaomi/ido/display-hal/libqdutils
@@ -109,7 +109,7 @@ LOCAL_SHARED_LIBRARIES := liblog libhardware libutils libcutils libdl libsync
 LOCAL_SHARED_LIBRARIES += libmmcamera_interface libmmjpeg_interface libui libcamera_metadata
 LOCAL_SHARED_LIBRARIES += libqdMetaData libqservice libbinder
 LOCAL_SHARED_LIBRARIES += libhidlbase libhwbinder
-LOCAL_SHARED_LIBRARIES += android.hardware.power@1.0
+LOCAL_SHARED_LIBRARIES += android.hardware.power@1.1
 
 ifeq ($(USE_DISPLAY_SERVICE),true)
 LOCAL_SHARED_LIBRARIES += android.frameworks.displayservice@1.0 libhidltransport
