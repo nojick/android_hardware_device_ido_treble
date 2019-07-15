@@ -158,3 +158,6 @@ ro.product.first_api_level=22
 PRODUCT_PROPERTY_OVERRIDES += \
 qemu.hw.mainkeys=1
 
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.charger.enable_suspend = true \
+    ro.charger.disable_init_blank=true
