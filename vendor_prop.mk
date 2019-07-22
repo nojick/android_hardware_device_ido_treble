@@ -76,7 +76,8 @@ debug.sf.latch_unsignaled=1 \
 sys.hwc.gpu_perf_mode=1 \
 debug.hwui.renderer=opengl \
 ro.opengles.version=196610 \
-ro.sf.lcd_density=320
+ro.sf.lcd_density=320 \
+debug.sf.enable_gl_backpressure=1 \
 
 # DRM
 PRODUCT_PROPERTY_OVERRIDES += \
