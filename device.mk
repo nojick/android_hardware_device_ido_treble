@@ -97,6 +97,11 @@ PRODUCT_PACKAGES += \
 
 # Bluetooth
 PRODUCT_PACKAGES += \
+    audio.bluetooth.default \
+    android.hardware.bluetooth.audio@2.0-impl
+
+# Bluetooth
+PRODUCT_PACKAGES += \
     libbt-vendor
 
 # ConsumerIR
