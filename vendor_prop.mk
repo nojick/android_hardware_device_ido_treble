@@ -157,3 +157,7 @@ qemu.hw.mainkeys=1
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.charger.enable_suspend = true \
     ro.charger.disable_init_blank=true
+
+#Configstore
+PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
+    ro.surface_flinger.max_frame_buffer_acquired_buffers=3
