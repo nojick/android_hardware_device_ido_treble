@@ -96,7 +96,8 @@ mm.enable.smoothstreaming=true \
 mmp.enable.3g2=true \
 media.aac_51_output_enabled=true \
 mm.enable.qcom_parser=3407871 \
-vendor.mediacodec.binder.size=6
+vendor.mediacodec.binder.size=6 \
+debug.stagefright.ccodec=0 \
 
 # Netmgrd
 PRODUCT_PROPERTY_OVERRIDES += \
