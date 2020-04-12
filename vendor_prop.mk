@@ -189,6 +189,10 @@ ro.lmk.downgrade_pressure=60 \
 ro.lmk.thrashing_limit=30 \
 ro.lmk.thrashing_limit_decay=50
 
+# Memory
+PRODUCT_PROPERTY_OVERRIDES += \
+	ro.config.avoid_gfx_accel=true
+
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.charger.enable_suspend = true \
     ro.charger.disable_init_blank=true
