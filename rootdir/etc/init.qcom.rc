@@ -65,6 +65,8 @@ on fs
     restorecon_recursive /persist
 
 on post-fs-data
+    # Create /data/time folder for time-services
+    mkdir /data/vendor/time 0770 system system
     # Create folder for mm-qcamera-daemon
     mkdir /data/fdAlbum 0770 camera camera
     mkdir /data/vendor/qcam 0770 camera camera
@@ -160,6 +162,8 @@ on boot
     # Create persist folders
     mkdir /persist/alarm 0770 system system
     mkdir /persist/display 0770 system graphics
+
+    mkdir /persist/time 0770 system system
 
     # Create NETMGR daemon socket area
     mkdir /dev/socket/netmgr 0750 radio radio
@@ -374,7 +378,7 @@ service vendor.thermal-engine /system/vendor/bin/thermal-engine
     writepid /dev/cpuset/system-background/tasks
 
 service vendor.time_daemon /system/vendor/bin/time_daemon
-    class late_start
+    class main
     user root
     group root
     writepid /dev/cpuset/system-background/tasks
