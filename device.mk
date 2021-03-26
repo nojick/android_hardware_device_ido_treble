@@ -377,4 +377,5 @@ PRODUCT_COPY_FILES += \
 
 # Properties
 -include $(LOCAL_PATH)/vendor_prop.mk
+$(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base_telephony.mk)
