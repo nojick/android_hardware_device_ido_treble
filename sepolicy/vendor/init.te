@@ -26,5 +26,6 @@ allow init vendor_file:file execute_no_trans;
 allow init vndbinder_device:chr_file { ioctl open read write };
 allow init diag_device:chr_file { ioctl open read write };
 allow init sysfs_leds:lnk_file read;
+allow init system_file:dir mounton;
 
 
