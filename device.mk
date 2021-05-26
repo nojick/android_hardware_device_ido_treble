@@ -275,13 +275,17 @@ PRODUCT_PACKAGES += \
     libOmxVenc \
     libstagefrighthw
 
-# Power
+# Power used
 PRODUCT_PACKAGES += \
     android.hardware.power@1.0-impl \
     android.hardware.power@1.0-service \
     power.msm8916
 
 # Power
+PRODUCT_PACKAGES += \
+    android.hardware.power.stats@1.0-service.mock
+
+# Power unused
 PRODUCT_PACKAGES += \
     android.hardware.power@1.0-service-qti
 
