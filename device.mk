@@ -189,10 +189,6 @@ PRODUCT_PACKAGES += \
     FMRadio \
     libfmjni
 
-# GPS
-PRODUCT_PACKAGES += \
-    gps.msm8916
-
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/gps/flp.conf:$(TARGET_COPY_OUT_VENDOR)/etc/flp.conf \
     $(LOCAL_PATH)/gps/gps.conf:$(TARGET_COPY_OUT_VENDOR)/etc/gps.conf \
