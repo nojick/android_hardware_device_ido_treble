@@ -284,7 +284,7 @@ PRODUCT_PACKAGES += \
     init.qcom.rc \
     init.qcom.sh \
     init.qcom.usb.rc \
-    ueventd.qcom.rc
+    ueventd.rc
 
 # Sensors
 PRODUCT_COPY_FILES += \
