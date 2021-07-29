@@ -17,16 +17,16 @@
 #define LOG_TAG "sensor"
 #include <utils/Log.h>
 
-#include <android/looper.h>
+#include "looper.h"
 #include <android/sensor.h>
 
 #include <utils/RefBase.h>
 #include <utils/Looper.h>
 #include <utils/Timers.h>
 
-#include <gui/Sensor.h>
+#include <sensor/Sensor.h>
 #include <gui/SensorManager.h>
-#include <gui/SensorEventQueue.h>
+#include <sensor/SensorEventQueue.h>
 
 #include <poll.h>
 #include "SeempLog.h"
