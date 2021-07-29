@@ -22,9 +22,6 @@ ifeq ($(call is-board-platform-in-list,msm8974 msm8916 msm8226 msm8610 msm8909),
 endif
 
 LOCAL_CFLAGS += -D_ANDROID_
-LOCAL_COPY_HEADERS_TO := mm-camera-interface
-LOCAL_COPY_HEADERS += ../common/cam_intf.h
-LOCAL_COPY_HEADERS += ../common/cam_types.h
 
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/inc \
@@ -52,6 +49,8 @@ LOCAL_MODULE           := libmmcamera_interface
 LOCAL_32_BIT_ONLY := true
 LOCAL_VENDOR_MODULE := true
 LOCAL_SHARED_LIBRARIES := libdl libcutils liblog
+LOCAL_SHARED_LIBRARIES += libhardware
+
 LOCAL_MODULE_TAGS := optional
 
 include $(BUILD_SHARED_LIBRARY)
