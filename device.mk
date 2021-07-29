@@ -153,9 +153,7 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.renderscript@1.0-impl
 
-# Doze mode
 PRODUCT_PACKAGES += \
-    XiaomiDoze
 
 # Fingerprint
 PRODUCT_PACKAGES += \
