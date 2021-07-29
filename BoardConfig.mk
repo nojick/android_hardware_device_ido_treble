@@ -137,6 +137,7 @@ USE_DEVICE_SPECIFIC_GPS := true
 TARGET_KEYMASTER_WAIT_FOR_QSEE := true
 
 
+
 # Malloc
 MALLOC_SVELTE := true
 
@@ -165,7 +166,6 @@ BOARD_VNDK_VERSION := current
 TARGET_POWERHAL_VARIANT := qcom
 
 # Properties
-TARGET_SYSTEM_PROP := $(LOCAL_PATH)/system.prop
 TARGET_VENDOR_PROP := $(LOCAL_PATH)/system.prop
 
 # Qualcomm
@@ -183,17 +183,17 @@ include device/qcom/sepolicy/sepolicy.mk
 BOARD_SEPOLICY_DIRS += $(LOCAL_PATH)/sepolicy
 
 # Wifi
-BOARD_HAS_QCOM_WLAN              := true
-BOARD_WLAN_DEVICE                := qcwcn
-BOARD_HOSTAPD_DRIVER             := NL80211
-BOARD_HOSTAPD_PRIVATE_LIB        := lib_driver_cmd_$(BOARD_WLAN_DEVICE)
-BOARD_WPA_SUPPLICANT_DRIVER      := NL80211
-BOARD_WPA_SUPPLICANT_PRIVATE_LIB := lib_driver_cmd_$(BOARD_WLAN_DEVICE)
-TARGET_USES_QCOM_WCNSS_QMI       := true
-TARGET_PROVIDES_WCNSS_QMI        := true
-WIFI_DRIVER_FW_PATH_AP           := "ap"
-WIFI_DRIVER_FW_PATH_STA          := "sta"
-WPA_SUPPLICANT_VERSION           := VER_0_8_X
+BOARD_HAS_QCOM_WLAN := true
+BOARD_HOSTAPD_DRIVER := NL80211
+BOARD_HOSTAPD_PRIVATE_LIB := lib_driver_cmd_qcwcn
+BOARD_WLAN_DEVICE := qcwcn
+BOARD_WPA_SUPPLICANT_DRIVER := NL80211
+BOARD_WPA_SUPPLICANT_PRIVATE_LIB := lib_driver_cmd_qcwcn
+PRODUCT_VENDOR_MOVE_ENABLED      := true
+TARGET_USES_QCOM_WCNSS_QMI := true
+WIFI_DRIVER_FW_PATH_AP := "ap"
+WIFI_DRIVER_FW_PATH_STA := "sta"
+WPA_SUPPLICANT_VERSION := VER_0_8_X
 
 # inherit from the proprietary version
 -include vendor/xiaomi/ido/BoardConfigVendor.mk
