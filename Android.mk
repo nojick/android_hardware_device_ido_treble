@@ -26,7 +26,7 @@ include $(CLEAR_VARS)
 CARD_IMAGES := \
     cardapp.b00 cardapp.b01 cardapp.b02 cardapp.b03 cardapp.mdt
 
-CARD_SYMLINKS := $(addprefix $(TARGET_OUT_ETC)/firmware/,$(notdir $(CARD_IMAGES)))
+CARD_SYMLINKS := $(addprefix $(TARGET_OUT_VENDOR)/firmware/,$(notdir $(CARD_IMAGES)))
 $(CARD_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
 	@echo "CARDAPP firmware link: $@"
 	@mkdir -p $(dir $@)
@@ -38,7 +38,7 @@ ALL_DEFAULT_INSTALLED_MODULES += $(CARD_SYMLINKS)
 CMN_IMAGES := \
     cmnlib.b00 cmnlib.b01 cmnlib.b02 cmnlib.b03 cmnlib.mdt
 
-CMN_SYMLINKS := $(addprefix $(TARGET_OUT_ETC)/firmware/,$(notdir $(CMN_IMAGES)))
+CMN_SYMLINKS := $(addprefix $(TARGET_OUT_VENDOR)/firmware/,$(notdir $(CMN_IMAGES)))
 $(CMN_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
 	@echo "CMN firmware link: $@"
 	@mkdir -p $(dir $@)
@@ -50,7 +50,7 @@ ALL_DEFAULT_INSTALLED_MODULES += $(CMN_SYMLINKS)
 ISDB_IMAGES := \
     isdbtmm.b00 isdbtmm.b01 isdbtmm.b02 isdbtmm.b03 isdbtmm.mdt
 
-ISDB_SYMLINKS := $(addprefix $(TARGET_OUT_ETC)/firmware/,$(notdir $(ISDB_IMAGES)))
+ISDB_SYMLINKS := $(addprefix $(TARGET_OUT_VENDOR)/firmware/,$(notdir $(ISDB_IMAGES)))
 $(ISDB_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
 	@echo "ISDB firmware link: $@"
 	@mkdir -p $(dir $@)
@@ -62,7 +62,7 @@ ALL_DEFAULT_INSTALLED_MODULES += $(ISDB_SYMLINKS)
 KM_IMAGES := \
     keymaste.b00 keymaste.b01 keymaste.b02 keymaste.b03 keymaste.mdt
 
-KM_SYMLINKS := $(addprefix $(TARGET_OUT_ETC)/firmware/,$(notdir $(KM_IMAGES)))
+KM_SYMLINKS := $(addprefix $(TARGET_OUT_VENDOR)/firmware/,$(notdir $(KM_IMAGES)))
 $(KM_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
 	@echo "Keymaster firmware link: $@"
 	@mkdir -p $(dir $@)
@@ -74,7 +74,7 @@ ALL_DEFAULT_INSTALLED_MODULES += $(KM_SYMLINKS)
 MBA_IMAGES := \
     mba.mbn
 
-MBA_SYMLINKS := $(addprefix $(TARGET_OUT_ETC)/firmware/,$(notdir $(MBA_IMAGES)))
+MBA_SYMLINKS := $(addprefix $(TARGET_OUT_VENDOR)/firmware/,$(notdir $(MBA_IMAGES)))
 $(MBA_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
 	@echo "MBA firmware link: $@"
 	@mkdir -p $(dir $@)
@@ -86,7 +86,7 @@ ALL_DEFAULT_INSTALLED_MODULES += $(MBA_SYMLINKS)
 MLI_IMAGES := \
     mlipay.b00 mlipay.b01 mlipay.b02 mlipay.b03 mlipay.mdt
 
-MLI_SYMLINKS := $(addprefix $(TARGET_OUT_ETC)/firmware/,$(notdir $(MLI_IMAGES)))
+MLI_SYMLINKS := $(addprefix $(TARGET_OUT_VENDOR)/firmware/,$(notdir $(MLI_IMAGES)))
 $(MLI_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
 	@echo "MLI firmware link: $@"
 	@mkdir -p $(dir $@)
@@ -101,7 +101,7 @@ MODEM_IMAGES := \
     modem.b15 modem.b16 modem.b17 modem.b18 modem.b21 modem.b22 \
     modem.b23 modem.b25 modem.b26 modem.mdt modem_pr
 
-MODEM_SYMLINKS := $(addprefix $(TARGET_OUT_ETC)/firmware/,$(notdir $(MODEM_IMAGES)))
+MODEM_SYMLINKS := $(addprefix $(TARGET_OUT_VENDOR)/firmware/,$(notdir $(MODEM_IMAGES)))
 $(MODEM_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
 	@echo "Modem firmware link: $@"
 	@mkdir -p $(dir $@)
@@ -113,7 +113,7 @@ ALL_DEFAULT_INSTALLED_MODULES += $(MODEM_SYMLINKS)
 PLAYREADY_IMAGES := \
     playread.b00 playread.b01 playread.b02 playread.b03 playread.mdt
 
-PLAYREADY_SYMLINKS := $(addprefix $(TARGET_OUT_ETC)/firmware/,$(notdir $(PLAYREADY_IMAGES)))
+PLAYREADY_SYMLINKS := $(addprefix $(TARGET_OUT_VENDOR)/firmware/,$(notdir $(PLAYREADY_IMAGES)))
 $(PLAYREADY_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
 	@echo "Playready firmware link: $@"
 	@mkdir -p $(dir $@)
@@ -125,7 +125,7 @@ ALL_DEFAULT_INSTALLED_MODULES += $(PLAYREADY_SYMLINKS)
 SEC_IMAGES := \
     secauth.b00 secauth.b01 secauth.b02 secauth.b03 secauth.mdt
 
-SEC_SYMLINKS := $(addprefix $(TARGET_OUT_ETC)/firmware/,$(notdir $(SEC_IMAGES)))
+SEC_SYMLINKS := $(addprefix $(TARGET_OUT_VENDOR)/firmware/,$(notdir $(SEC_IMAGES)))
 $(SEC_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
 	@echo "SecAuth firmware link: $@"
 	@mkdir -p $(dir $@)
@@ -137,7 +137,7 @@ ALL_DEFAULT_INSTALLED_MODULES += $(SEC_SYMLINKS)
 TZ_IMAGES := \
     tzfinger.b00 tzfinger.b01 tzfinger.b02 tzfinger.b03 ptzfinger.mdt
 
-TZ_SYMLINKS := $(addprefix $(TARGET_OUT_ETC)/firmware/,$(notdir $(TZ_IMAGES)))
+TZ_SYMLINKS := $(addprefix $(TARGET_OUT_VENDOR)/firmware/,$(notdir $(TZ_IMAGES)))
 $(TZ_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
 	@echo "Tzfinger firmware link: $@"
 	@mkdir -p $(dir $@)
@@ -150,7 +150,7 @@ WCNSS_IMAGES := \
     wcnss.b00 wcnss.b01 wcnss.b02 wcnss.b04 wcnss.b06 \
     wcnss.b09 wcnss.b10 wcnss.b11 wcnss.mdt
 
-WCNSS_SYMLINKS := $(addprefix $(TARGET_OUT_ETC)/firmware/,$(notdir $(WCNSS_IMAGES)))
+WCNSS_SYMLINKS := $(addprefix $(TARGET_OUT_VENDOR)/firmware/,$(notdir $(WCNSS_IMAGES)))
 $(WCNSS_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
 	@echo "WCNSS firmware link: $@"
 	@mkdir -p $(dir $@)
@@ -162,7 +162,7 @@ ALL_DEFAULT_INSTALLED_MODULES += $(WCNSS_SYMLINKS)
 WV_IMAGES := \
     widevine.b00 widevine.b01 widevine.b02 widevine.b03 widevine.mdt
 
-WV_SYMLINKS := $(addprefix $(TARGET_OUT_ETC)/firmware/,$(notdir $(WV_IMAGES)))
+WV_SYMLINKS := $(addprefix $(TARGET_OUT_VENDOR)/firmware/,$(notdir $(WV_IMAGES)))
 $(WV_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
 	@echo "Widevine firmware link: $@"
 	@mkdir -p $(dir $@)
@@ -171,7 +171,7 @@ $(WV_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
 
 ALL_DEFAULT_INSTALLED_MODULES += $(WV_SYMLINKS)
 
-WCNSS_CONFIG_SYMLINK := $(TARGET_OUT_ETC)/firmware/wlan/prima/WCNSS_qcom_cfg.ini
+WCNSS_CONFIG_SYMLINK := $(TARGET_OUT_VENDOR)/firmware/wlan/prima/WCNSS_qcom_cfg.ini
 $(WCNSS_CONFIG_SYMLINK): $(LOCAL_INSTALLED_MODULE)
 	@echo "WCNSS config link: $@"
 	@mkdir -p $(dir $@)
