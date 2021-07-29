@@ -38,9 +38,6 @@ LOCAL_C_INCLUDES := \
         $(LOCAL_PATH)/../stack/common \
         frameworks/native/include \
         frameworks/native/include/media/openmax \
-        $(call project-path-for,qcom-display)/libgralloc \
-	$(call project-path-for,qcom-display)/libqdutils \
-        $(call project-path-for,qcom-media)/libstagefrighthw \
     hardware/qcom/display-caf/msm8916/libgralloc \
     hardware/qcom/display-caf/msm8916/libqdutils \
     hardware/qcom/media-caf/msm8916/libstagefrighthw \
