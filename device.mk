@@ -17,8 +17,6 @@
 
 $(call inherit-product, $(SRC_TARGET_DIR)/product/languages_full.mk)
 
-$(call inherit-product-if-exists, frameworks/native/build/phone-xhdpi-2048-hwui-memory.mk)
-
 $(call inherit-product, vendor/xiaomi/ido/ido-vendor.mk)
 
 # Overlays
