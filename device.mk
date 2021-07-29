@@ -175,6 +175,9 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     vndk-sp
 
+# Wifi
+PRODUCT_PACKAGES += \
+    android.hardware.wifi@1.0-service
 
 # Fingerprint
 PRODUCT_PACKAGES += \
@@ -283,16 +286,13 @@ PRODUCT_COPY_FILES += \
 
 # Wifi
 PRODUCT_PACKAGES += \
-    libqsap_sdk \
-    libQWiFiSoftApCfg \
+    libwcnss_qmi \
+    wcnss_service \
     libwpa_client \
-    libwcnss_qmi
-
-PRODUCT_PACKAGES += \
-    hostapd_default.conf \
     hostapd \
+    wificond \
     wpa_supplicant \
-    wpa_supplicant.conf
+    wpa_supplicant.conf \
 
 PRODUCT_PACKAGES += \
     p2p_supplicant_overlay.conf \
