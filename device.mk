@@ -94,6 +94,7 @@ PRODUCT_PACKAGES += \
 # Bluetooth
 PRODUCT_PACKAGES += \
     libbt-vendor
+
 # ConsumerIR
 PRODUCT_PACKAGES += \
     android.hardware.ir@1.0-impl \
@@ -104,6 +105,12 @@ PRODUCT_PACKAGES += \
     android.hardware.sensors@1.0-impl.msm8916 \
     android.hardware.sensors@1.0-service.msm8916 \
     sensors.msm8916
+
+# DRM
+PRODUCT_PACKAGES += \
+    android.hardware.drm@1.0-service \
+    android.hardware.drm@1.0-impl
+
 # Audio configuration
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/audio/aanc_tuning_mixer.txt:$(TARGET_COPY_OUT_VENDOR)/etc/aanc_tuning_mixer.txt \
