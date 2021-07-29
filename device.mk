@@ -94,6 +94,11 @@ PRODUCT_PACKAGES += \
 # Bluetooth
 PRODUCT_PACKAGES += \
     libbt-vendor
+# Sensor HAL
+PRODUCT_PACKAGES += \
+    android.hardware.sensors@1.0-impl.msm8916 \
+    android.hardware.sensors@1.0-service.msm8916 \
+    sensors.msm8916
 # Audio configuration
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/audio/aanc_tuning_mixer.txt:$(TARGET_COPY_OUT_VENDOR)/etc/aanc_tuning_mixer.txt \
@@ -253,7 +258,7 @@ PRODUCT_PACKAGES += \
 
 # Sensors
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/configs/calmodule.cfg:system/vendor/etc/calmodule.cfg
+    $(LOCAL_PATH)/configs/sensors/_hals.conf:system/vendor/etc/sensors/_hals.conf \
     $(LOCAL_PATH)/configs/calmodule.cfg:$(TARGET_COPY_OUT_VENDOR)/etc/calmodule.cfg
 
 # Thermal Configuration
