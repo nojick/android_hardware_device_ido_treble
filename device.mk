@@ -142,7 +142,6 @@ PRODUCT_PACKAGES += \
     libmm-qcamera \
     libshim_camera \
     libboringssl-compat \
-    libstlport \
     Snap
 
 # DataServices
@@ -163,7 +162,6 @@ PRODUCT_PACKAGES += \
     gralloc.msm8916 \
     hwcomposer.msm8916 \
     memtrack.msm8916 \
-    liboverlay
     liboverlay \
     libgenlock \
     libsensor_vendor \
