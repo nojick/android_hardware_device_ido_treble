@@ -20,6 +20,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := fingerprint.$(TARGET_BOARD_PLATFORM)
 LOCAL_MODULE_RELATIVE_PATH := hw
+LOCAL_VENDOR_MODULE := true
 LOCAL_SRC_FILES := fingerprint.c \
 		   QSEEComFunc.c \
 		   fpc_imp.c
@@ -27,7 +28,8 @@ LOCAL_SRC_FILES := fingerprint.c \
 LOCAL_CFLAGS += -std=c99
 LOCAL_SHARED_LIBRARIES := liblog \
 			  libdl \
-			  libutils
+			  libutils \
+			  libhardware
 
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
