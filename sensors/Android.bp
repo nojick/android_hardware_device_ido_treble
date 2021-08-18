@@ -9,7 +9,8 @@ cc_library_static {
         "liblog",
         "libcutils",
         "libutils",
-        "libdl"
+        "libdl",
+        "libhardware",
     ],
     export_include_dirs: ["."],
 }
@@ -17,7 +18,7 @@ cc_library_static {
 cc_library_shared {
     name: "android.hardware.sensors@1.0-impl.msm8916",
     defaults: ["hidl_defaults"],
-    proprietary: true,
+    vendor: true,
     relative_install_path: "hw",
     srcs: ["Sensors.cpp"],
     shared_libs: [
@@ -27,6 +28,7 @@ cc_library_shared {
         "libbase",
         "libutils",
         "libhidlbase",
+        "libhidltransport",
         "android.hardware.sensors@1.0",
     ],
     static_libs: [
@@ -49,8 +51,10 @@ cc_binary {
         "libcutils",
         "libdl",
         "libbase",
+        "libhardware",
         "libutils",
         "libhidlbase",
+        "libhidltransport",
         "android.hardware.sensors@1.0",
     ],
     arch: {

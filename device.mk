@@ -297,7 +297,7 @@ PRODUCT_PACKAGES += \
     android.hardware.vibrator@1.0-service
 
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/configs/sensors/_hals.conf:system/vendor/etc/sensors/_hals.conf \
+    $(LOCAL_PATH)/configs/sensors/_hals.conf:$(TARGET_COPY_OUT_VENDOR)/etc/sensors/_hals.conf \
     $(LOCAL_PATH)/configs/calmodule.cfg:$(TARGET_COPY_OUT_VENDOR)/etc/calmodule.cfg
 
 # Thermal Configuration
