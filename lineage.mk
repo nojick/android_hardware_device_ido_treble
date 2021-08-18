@@ -16,7 +16,7 @@
 #
 
 $(call inherit-product, device/xiaomi/ido/full_ido.mk)
-
+$(call inherit-product, vendor/vndk/vndk.mk)
 # Inherit some common MK stuff.
 $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
