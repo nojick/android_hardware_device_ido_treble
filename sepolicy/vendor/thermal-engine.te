@@ -1,0 +1,1 @@
+allow thermal-engine sysfs_spmi_dev:dir search;

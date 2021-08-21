@@ -1,0 +1,3 @@
+allow rild binder_device:chr_file ioctl;
+allow rild radio_data_file:dir { add_name getattr read remove_name write };
+allow rild servicemanager:binder call;

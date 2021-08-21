@@ -1,0 +1,12 @@
+allow mm-qcamerad mpctl_socket:sock_file write;
+allow mm-qcamerad system_data_file:dir { write add_name };
+allow mm-qcamerad system_data_file:sock_file write;
+
+# Nick Kralevich <nnk@google.com> : Allow loading files with text relocations from /system
+allow mm-qcamerad system_file:file execmod;
+
+allow mm-qcamerad binder_device:chr_file { ioctl open read write };
+allow mm-qcamerad camera_data_file:sock_file { create unlink };
+allow mm-qcamerad sensorservice_service:service_manager find;
+allow mm-qcamerad servicemanager:binder call;
+allow mm-qcamerad system_server:unix_stream_socket { read write };

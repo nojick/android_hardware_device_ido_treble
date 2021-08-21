@@ -1,0 +1,23 @@
+# Fingerprint
+/dev/socket/fpce                                u:object_r:fpc_socket:s0
+/data/fpc(/.*)?                                 u:object_r:fpc_data_file:s0
+/sys/devices/soc\.0/fpc1020.*/hw_reset           u:object_r:fpc_sysfs:s0
+/sys/devices/soc\.0/fpc1020.*/irq                u:object_r:fpc_sysfs:s0
+/sys/devices/soc\.0/fpc1020.*/wakeup_enable      u:object_r:fpc_sysfs:s0
+/sys/devices/soc\.0/fpc1020.*/clk_enable         u:object_r:fpc_sysfs:s0
+/sys/devices/soc\.0/fpc1020.*/spi_prepare        u:object_r:fpc_sysfs:s0
+
+# Lights
+/sys/devices/soc\.0/gpio-leds\.[a-z0-9]+/leds(/.*)?                       u:object_r:sysfs_leds:s0
+/sys/devices/soc\.0/qcom,camera-led-flash\.[a-z0-9]+/leds(/.*)?           u:object_r:sysfs_leds:s0
+/sys/devices/soc\.0/[a-z0-9]+\.i2c/i2c-[0-9]/[0-9]-[a-z0-9]+/leds(/.*)?   u:object_r:sysfs_leds:s0
+
+# sysfs - battery/charger
+/sys/devices/battery\.[0-9]+/power_supply(/.*)?             u:object_r:sysfs_batteryinfo:s0
+/sys/devices/i2c\.[0-9]+/i2c-[0-9]+/[0-9]+-[a-z0-9]+/max[a-z0-9]+-charger/power_supply(/.*)? u:object_r:sysfs_batteryinfo:s0
+/sys/devices/i2c\.[0-9]+/i2c-[0-9]+/[0-9]+-[a-z0-9]+/power_supply(/.*)?                      u:object_r:sysfs_batteryinfo:s0
+/sys/devices/msm_dwc3/power_supply(/.*)?                    u:object_r:sysfs_batteryinfo:s0
+
+/(vendor|system/vendor)/bin/hw/android\.hardware\.sensors@1\.0-service\.msm8916			u:object_r:hal_sensors_default_exec:s0
+
+/(vendor|system/vendor)/bin/hw/android\.hardware\.biometrics\.fingerprint@2\.1-service                u:object_r:hal_fingerprint_default_exec:s0

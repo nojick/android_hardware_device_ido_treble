@@ -1,0 +1,5 @@
+allow servicemanager init:binder transfer;
+allow servicemanager init:dir search;
+allow servicemanager mm-qcamerad:dir search;
+allow servicemanager mm-qcamerad:file { open read };
+allow servicemanager mm-qcamerad:process getattr;
