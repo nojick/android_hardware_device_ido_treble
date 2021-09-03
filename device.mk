@@ -338,7 +338,9 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/wifi/WCNSS_qcom_cfg.ini:$(TARGET_COPY_OUT_VENDOR)/etc/wifi/WCNSS_qcom_cfg.ini \
     $(LOCAL_PATH)/wifi/WCNSS_qcom_wlan_nv.bin:$(TARGET_COPY_OUT_VENDOR)/firmware/wlan/prima/WCNSS_qcom_wlan_nv.bin \
     $(LOCAL_PATH)/wifi/WCNSS_wlan_dictionary.dat:$(TARGET_COPY_OUT_VENDOR)/firmware/wlan/prima/WCNSS_wlan_dictionary.dat
+
 # Properties
 TARGET_VENDOR_PROP := $(LOCAL_PATH)/system.prop
 # Properties
 -include $(LOCAL_PATH)/vendor_prop.mk
+$(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base_telephony.mk)
