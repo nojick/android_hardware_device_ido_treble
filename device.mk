@@ -78,7 +78,7 @@ PRODUCT_PACKAGES += \
     audio.primary.msm8916 \
     audio.r_submix.default \
     audio.usb.default \
-    audio_policy.msm8916 \
+    libaudio-resampler \
     libqcompostprocbundle \
     libqcomvisualizer \
     libqcomvoiceprocessing
@@ -279,6 +279,18 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     libtinyxml \
     libxml2
+
+PRODUCT_PACKAGES += \
+    telephony-ext \
+    ims-ext-common
+
+PRODUCT_BOOT_JARS += \
+    telephony-ext
+
+# HIDL
+PRODUCT_PACKAGES += \
+    android.hidl.base@1.0 \
+    android.hidl.manager@1.0
 
 # Ramdisk
 PRODUCT_PACKAGES += \
