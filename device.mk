@@ -140,8 +140,11 @@ PRODUCT_PACKAGES += \
     camera.device@1.0-impl \
     camera.msm8916 \
     libmm-qcamera \
-    libshim_camera \
     Snap
+
+# Lib Shim
+PRODUCT_PACKAGES += \
+    libshim_atomic
 
 # DataServices
 PRODUCT_PACKAGES += \
