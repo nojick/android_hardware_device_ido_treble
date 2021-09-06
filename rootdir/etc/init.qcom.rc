@@ -211,7 +211,7 @@ on post-fs-data
     mkdir /data/misc/qsee 0770 system system
 
     # We will remap this as /mnt/sdcard with the sdcard fuse tool
-    mkdir /data/misc/camera 0770 camera camera
+    mkdir /data/vendor/qcam 0770 camera camera
     setprop persist.camera.awb.ledrgshift 1
     setprop persist.camera.awb.ledbgshift 1.15
 
