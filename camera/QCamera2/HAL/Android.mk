@@ -66,7 +66,7 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/tsMakeuplib/include
 endif
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
-LOCAL_SHARED_LIBRARIES := liblog libhardware libutils libcutils libdl libgui liblog
+LOCAL_SHARED_LIBRARIES := liblog libhardware libutils libcutils libdl liblog
 LOCAL_SHARED_LIBRARIES += libmmcamera_interface libmmjpeg_interface libqdMetaData
 LOCAL_SHARED_LIBRARIES += libsensor_vendor
 ifeq ($(TARGET_TS_MAKEUP),true)
