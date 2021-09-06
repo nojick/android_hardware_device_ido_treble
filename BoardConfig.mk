@@ -201,7 +201,11 @@ TARGET_PER_MGR_ENABLED := true
 
 # SELinux
 include device/qcom/sepolicy/sepolicy.mk
-BOARD_SEPOLICY_DIRS += $(LOCAL_PATH)/sepolicy
+#include device/qcom/sepolicy/legacy-sepolicy.mk
+BOARD_SEPOLICY_DIRS += device/xiaomi/ido/sepolicy/vendor
+BOARD_PLAT_PRIVATE_SEPOLICY_DIR += device/xiaomi/ido/sepolicy/private
+BOARD_PLAT_PUBLIC_SEPOLICY_DIR += device/xiaomi/ido/sepolicy/public
+BOARD_SEPOLICY_VERS := 27.0
 
 # Wifi
 BOARD_HAS_QCOM_WLAN := true
