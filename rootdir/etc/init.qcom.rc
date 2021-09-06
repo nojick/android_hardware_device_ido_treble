@@ -46,7 +46,7 @@ on init
     # Enable power-on alarm
     write /sys/module/qpnp_rtc/parameters/poweron_alarm 1
     
-        mount debugfs /sys/kernel/debug /sys/kernel/debug mode=755
+    mount debugfs /sys/kernel/debug /sys/kernel/debug mode=755
 
     # Enable power-on alarm
     write /sys/module/qpnp_rtc/parameters/poweron_alarm 1
@@ -356,25 +356,6 @@ service dpmd /vendor/bin/dpmd
     socket dpmd stream 660 root system
     group system readproc
     disabled
-
-service config_bt_addr /vendor/bin/btnvtool -O
-    class core
-    user bluetooth
-    group bluetooth radio
-    oneshot
-
-service hciattach /vendor/bin/sh /vendor/bin/init.qcom.bt.sh
-    class late_start
-    user bluetooth
-    group bluetooth net_bt_admin
-    disabled
-    oneshot
-
-on property:bluetooth.hciattach=true
-    start hciattach
-
-on property:bluetooth.hciattach=false
-    setprop bluetooth.status off
 
 service qcom-sh /vendor/bin/sh /vendor/bin/init.qcom.sh
     class late_start
