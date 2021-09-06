@@ -19,6 +19,9 @@ LOCAL_PATH := device/xiaomi/ido
 
 TARGET_SPECIFIC_HEADER_PATH := $(LOCAL_PATH)/include
 
+# Root
+#BOARD_ROOT_EXTRA_FOLDERS := firmware persist dsp
+
 # Architecture
 TARGET_ARCH := arm64
 TARGET_ARCH_VARIANT := armv8-a
@@ -195,6 +198,9 @@ TARGET_RIL_VARIANT := caf
 TARGET_PROVIDES_QTI_TELEPHONY_JAR := true
 # Peripheral manager
 TARGET_PER_MGR_ENABLED := true
+
+# Filesystem
+#TARGET_FS_CONFIG_GEN := $(LOCAL_PATH)/config.fs
 
 # SELinux
 include device/qcom/sepolicy/sepolicy.mk
