@@ -1,1 +1,3 @@
-allow bootanim vendor_file:file { execute read };
+allow bootanim vendor_file:file { open read };
+allow bootanim vendor_file:file getattr;
+allow bootanim vendor_file:file execute;

@@ -1,5 +1,10 @@
-allow servicemanager init:binder transfer;
 allow servicemanager init:dir search;
 allow servicemanager mm-qcamerad:dir search;
 allow servicemanager mm-qcamerad:file { open read };
 allow servicemanager mm-qcamerad:process getattr;
+#neverallow allow servicemanager init:binder transfer;
+allow servicemanager init:file read;
+allow servicemanager hal_camera_default:dir search;
+allow servicemanager hal_camera_default:file { open read };
+allow servicemanager hal_camera_default:process getattr;
+

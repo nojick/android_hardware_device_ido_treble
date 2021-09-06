@@ -1,2 +1,4 @@
 allow mm-pp-daemon diag_device:chr_file { read write ioctl open };
 allow mm-pp-daemon system_prop:property_service set;
+allow mm-pp-daemon ion_device:chr_file { read write };
+allow mm-pp-daemon ion_device:chr_file open;

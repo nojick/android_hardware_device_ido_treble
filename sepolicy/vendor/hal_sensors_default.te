@@ -1,0 +1,5 @@
+allow hal_sensors_default sysfs:dir { open read };
+allow hal_sensors_default sysfs:file { open read };
+allow hal_sensors_default system_data_file:file { getattr open read };
+allow hal_sensors_default sysfs:file write;
+#allow hal_sensors_default system_data_file:file write;
