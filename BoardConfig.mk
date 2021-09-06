@@ -182,9 +182,6 @@ PRODUCT_COPY_FILES += \
 	device/phh/treble/ld.config.26.txt:system/etc/ld.config.26.txt \
 	device/phh/treble/ld.config.27.txt:system/etc/ld.config.27.txt \
 
-# Properties
-TARGET_VENDOR_PROP := $(LOCAL_PATH)/system.prop
-
 # Qualcomm
 BOARD_USES_QCOM_HARDWARE := true
 BOARD_USES_QC_TIME_SERVICES := true
