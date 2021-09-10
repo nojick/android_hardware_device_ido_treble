@@ -194,6 +194,18 @@ on boot
     # Mark wifi driver as unloaded - "ok" indicates loaded
     setprop wlan.driver.status not_ok
 
+    # Fingerprint
+    chown input system /sys/devices/soc.0/fpc1020.70/enable_wakeup
+    chmod 0666 /sys/devices/soc.0/fpc1020.70/enable_wakeup
+    chown system system /sys/devices/soc.0/fpc1020.70/clk_enable
+    chmod 0660 /sys/devices/soc.0/fpc1020.70/clk_enable
+    chown system system /sys/devices/soc.0/fpc1020.70/hw_reset
+    chmod 0220 /sys/devices/soc.0/fpc1020.70/hw_reset
+    chown system system /sys/devices/soc.0/fpc1020.70/irq
+    chmod 0660 /sys/devices/soc.0/fpc1020.70/irq
+    chown system system /sys/devices/soc.0/fpc1020.70/spi_prepare
+    chmod 0660 /sys/devices/soc.0/fpc1020.70/spi_prepare
+
 on fs
     wait /dev/block/platform/soc.0/${ro.boot.bootdevice}
     symlink /dev/block/platform/soc.0/${ro.boot.bootdevice} /dev/block/bootdevice
@@ -220,11 +232,9 @@ on post-fs-data
     mkdir /data/misc/bluetooth 0770 bluetooth bluetooth
 
     # Create the directories used by the Wireless subsystem
-    mkdir /data/misc/wifi 0770 wifi wifi
-    mkdir /data/misc/wifi/sockets 0770 wifi wifi
-    mkdir /data/misc/wifi/wpa_supplicant 0770 wifi wifi
-    mkdir /data/misc/dhcp 0770 dhcp dhcp
-    chown dhcp dhcp /data/misc/dhcp
+    mkdir /data/vendor/wifi 0770 wifi wifi
+    mkdir /data/vendor/wifi/sockets 0770 wifi wifi
+    mkdir /data/vendor/wifi/wpa_supplicant 0770 wifi wifi
 
     # Create the directories used by CnE subsystem
     mkdir /data/connectivity 0771 system system
@@ -327,20 +337,21 @@ on property:sys.boot_completed=1
     start vendor.qcom-post-boot
     setprop sys.io.scheduler "bfq"
     write /dev/kmsg "Boot completed "
+    swapon_all /system/vendor/etc/fstab.qcom
 
     # CPE fw_name used by sound trigger HAL
     chown media audio /sys/kernel/wcd_cpe0/fw_name
 
-on property:vold.decrypt=trigger_restart_framework
-    start config_bt_addr
-    start wcnss-service
+#on property:vold.decrypt=trigger_restart_framework
+#    start config_bt_addr
+#    start wcnss-service
 
-service irsc_util /vendor/bin/irsc_util "/vendor/etc/sec_config"
+service vendor.irsc_util /vendor/bin/irsc_util "/vendor/etc/sec_config"
     class main
     user root
     oneshot
 
-service rmt_storage /vendor/bin/rmt_storage
+service vendor.rmt_storage /vendor/bin/rmt_storage
     class core
     user root
     group system wakelock
@@ -357,9 +368,10 @@ service dpmd /vendor/bin/dpmd
     group system readproc
     disabled
 
-service qcom-sh /vendor/bin/sh /vendor/bin/init.qcom.sh
+service vendor.qcom-sh /vendor/bin/init.qcom.sh
     class late_start
     user root
+    group root system radio
     oneshot
 
 # FM
@@ -370,19 +382,20 @@ on property:hw.fm.init=1
     write /sys/module/radio_iris_transport/parameters/fmsmd_set 1
 
 # QMUX must be in multiple groups to support external process connections
-service qmuxd /vendor/bin/qmuxd
+service vendor.qmuxd /vendor/bin/qmuxd
     class main
     user root
     group radio audio bluetooth gps oem_2950 wakelock
 
-service netmgrd /vendor/bin/netmgrd
+service vendor.netmgrd /vendor/bin/netmgrd
     class main
-    group system wakelock
+    user root
+    group radio system wakelock
     writepid /dev/cpuset/system-background/tasks
 
 on property:ro.use_data_netmgrd=false
     # netmgr not supported on specific target
-    stop netmgrd
+    stop vendor.netmgrd
 
 # Adjust socket buffer to enlarge TCP receive window for high bandwidth
 # but only if ro.data.large_tcp_window_size property is set.
@@ -407,10 +420,11 @@ on property:ro.data.large_tcp_window_size=true
     # Adjust socket buffer to enlarge TCP receive window for high bandwidth (e.g. DO-RevB)
     write /proc/sys/net/ipv4/tcp_adv_win_scale  2
 
-service ril-daemon1 /vendor/bin/hw/rild -c 2
+service vendor.ril-daemon1 /vendor/bin/hw/rild -c 2
     class main
     user radio
-    group radio cache inet misc audio log readproc wakelock
+    disable
+    group radio cache inet misc audio log readproc wakelock sdcard_r sdcard_rw diag log
     capabilities BLOCK_SUSPEND NET_ADMIN NET_RAW
 
 service charger /system/bin/charger
@@ -502,8 +516,16 @@ service vendor.qcom-post-boot /vendor/bin/init.qcom.post_boot.sh
     user root
     disabled
     oneshot
+
+service vendor.msm_irqbalance /vendor/bin/msm_irqbalance -f /system/vendor/etc/msm_irqbalance.conf
+    class core
+    user root
+    group root
+    disabled
+
 on property:init.svc.surfaceflinger=stopped
     stop ppd
 
 on property:init.svc.surfaceflinger=running
     start ppd
+
