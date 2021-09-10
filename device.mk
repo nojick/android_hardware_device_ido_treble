@@ -147,7 +147,9 @@ PRODUCT_PACKAGES += \
 
 # Lib Shim
 PRODUCT_PACKAGES += \
-    libshim_atomic
+    libshim_atomic \
+    libandroid_shim \
+    libshim_camera
 
 # DataServices
 PRODUCT_PACKAGES += \
@@ -162,23 +164,18 @@ PRODUCT_PACKAGES += \
     android.hardware.graphics.composer@2.1-service \
     android.hardware.memtrack@1.0-impl \
     android.hardware.memtrack@1.0-service \
-    android.hardware.configstore@1.0-service \
+    android.hardware.configstore@1.1-service \
     copybit.msm8916 \
     gralloc.msm8916 \
     hwcomposer.msm8916 \
     memtrack.msm8916 \
     liboverlay \
     libgenlock \
-    libsensor_vendor \
     libui_v
 
 # RenderScript HAL
 PRODUCT_PACKAGES += \
     android.hardware.renderscript@1.0-impl
-
-# VNDK-SP:
-PRODUCT_PACKAGES += \
-    vndk-sp
 
 # Wifi
 PRODUCT_PACKAGES += \
@@ -304,9 +301,14 @@ PRODUCT_PACKAGES += \
     init.qcom.usb.rc \
     ueventd.rc
 
-# USB HAL
+# Healthd
 PRODUCT_PACKAGES += \
-    android.hardware.usb@1.0-service
+    android.hardware.health@2.0-impl \
+    android.hardware.health@2.0-service
+
+# USB
+PRODUCT_PACKAGES += \
+    android.hardware.usb@1.0-service.basic
 
 # Vibrator
 PRODUCT_PACKAGES += \
