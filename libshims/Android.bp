@@ -1,0 +1,18 @@
+// libandroid
+cc_library_shared {
+    name: "libandroid_shim",
+    proprietary: true,
+    defaults: ["hidl_defaults"],
+    srcs: [
+        "libshims_android.cpp",
+    ],
+    cflags: [
+        "-Werror",
+        "-Wextra",
+        "-Wall",
+    ],
+    shared_libs: [
+        "libutils",
+    ],
+}
+
