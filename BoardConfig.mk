@@ -145,7 +145,8 @@ TARGET_RECOVERY_DEVICE_MODULES := libinit_ido
 # Keymaster
 TARGET_KEYMASTER_WAIT_FOR_QSEE := true
 
-
+# Filesystem
+TARGET_FS_CONFIG_GEN := $(LOCAL_PATH)/config.fs
 
 # Malloc
 MALLOC_SVELTE := true
