@@ -294,6 +294,7 @@ service vm_bms /vendor/bin/vm_bms
     class main
     user root
     group root wakelock
+    disabled
 
 # Allow usb charging to be disabled peristently
 on property:persist.usb.chgdisabled=1
@@ -309,6 +310,9 @@ on charger
     chown root system /sys/class/power_supply/bms/voltage_ocv
     chmod 0664 /sys/class/power_supply/bms/current_now
     chmod 0664 /sys/class/power_supply/bms/voltage_ocv
+    setprop persist.sys.usb.config mass_storage
+    load_system_props
+    load_all_props
     start vm_bms
 
 # start camera server as daemon
