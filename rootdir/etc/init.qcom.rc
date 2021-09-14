@@ -72,10 +72,13 @@ on post-fs-data
     # Create directory used by display clients
     mkdir /data/misc/display 0770 system graphics
 
-   #Create directories for Location services
+    #Create directories for Location services
     mkdir /data/vendor/location 0770 gps gps
     mkdir /data/vendor/location/mq 0770 gps gps
     mkdir /data/vendor/location/xtwifi 0770 gps gps
+    mkdir /dev/socket/location 0770 gps gps
+    mkdir /dev/socket/location/mq 0770 gps gps
+    mkdir /dev/socket/location/xtra 0770 gps gps
 
     # Create the directories used by the Wireless subsystem
     mkdir /data/vendor/wifi 0770 wifi wifi
@@ -357,10 +360,16 @@ service vendor.qcom-post-boot /vendor/bin/init.qcom.post_boot.sh
     disabled
     oneshot
 
-service loc_launcher /system/vendor/bin/loc_launcher
-    #loc_launcher will start as root and set its uid to gps
+service mlid /vendor/bin/mlid
     class late_start
-    group gps inet diag wifi
+    user gps
+    group gps
+    socket mlid stream 0666 gps gps
+
+service loc_launcher /system/vendor/bin/loc_launcher
+    class late_start
+    user gps
+    group gps
 
 service vendor.per_mgr /system/vendor/bin/pm-service
     class core
