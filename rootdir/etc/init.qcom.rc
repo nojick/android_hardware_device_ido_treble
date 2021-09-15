@@ -224,10 +224,11 @@ service vendor.rmt_storage /vendor/bin/rmt_storage
     writepid /dev/cpuset/system-background/tasks
     shutdown critical
 
-service cnd /vendor/bin/cnd
-    class late_start
-    socket cnd stream 660 root inet
-    disabled
+service vendor.cnd /vendor/bin/cnd
+    class main
+    user system
+    group system wifi inet radio wakelock net_admin
+    writepid /dev/cpuset/system-background/tasks
 
 service dpmd /vendor/bin/dpmd
     class late_start
@@ -252,7 +253,7 @@ on property:vendor.hw.fm.init=1
 service vendor.qmuxd /vendor/bin/qmuxd
     class main
     user root
-    group radio audio bluetooth gps oem_2950 wakelock
+    group radio audio bluetooth gps oem_2901 wakelock
     writepid /dev/cpuset/system-background/tasks
 
 service vendor.msm_irqbalance /vendor/bin/msm_irqbalance -f /vendor/etc/msm_irqbalance.conf
@@ -375,17 +376,17 @@ service loc_launcher /system/vendor/bin/loc_launcher
     user gps
     group gps
 
-service vendor.per_mgr /system/vendor/bin/pm-service
+service vendor.per_mgr /vendor/bin/pm-service
     class core
     user system
     group system net_raw
 
-service vendor.per_proxy /system/vendor/bin/pm-proxy
+service vendor.per_proxy /vendor/bin/pm-proxy
     class core
     user system
     group system
 
-service port-bridge /system/vendor/bin/port-bridge
+service port-bridge /vendor/bin/port-bridge
     class main
     user radio
     group radio system inet
