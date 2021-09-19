@@ -108,6 +108,12 @@ PRODUCT_PACKAGES += \
     android.hardware.sensors@1.0-service.msm8916 \
     sensors.msm8916
 
+# Thermal
+PRODUCT_PACKAGES += \
+    android.hardware.thermal@1.0-impl \
+    android.hardware.thermal@1.0-service \
+    thermal.msm8916
+
 # DRM
 PRODUCT_PACKAGES += \
     android.hardware.drm@1.0-impl \
