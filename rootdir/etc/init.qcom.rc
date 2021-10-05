@@ -99,10 +99,6 @@ on post-fs-data
     # Permissions required for power HAL
     chown system system /sys/devices/system/cpu/cpu0/core_ctl/max_cpus
 
- #create port-bridge log dir
-    mkdir /data/vendor/port_bridge 0770 radio radio
-    chmod 0770 /data/vendor/port_bridge
-
     #Create PERFD deamon related dirs
     mkdir /data/vendor/perfd 0770 root system
     chmod 2770 /data/vendor/perfd
@@ -383,22 +379,6 @@ service loc_launcher /system/vendor/bin/loc_launcher
     class late_start
     user gps
     group gps
-
-service vendor.per_mgr /vendor/bin/pm-service
-    class core
-    user system
-    group system net_raw
-
-service vendor.per_proxy /vendor/bin/pm-proxy
-    class core
-    user system
-    group system
-
-service port-bridge /vendor/bin/port-bridge
-    class main
-    user radio
-    group radio system inet
-    oneshot
 
 on property:init.svc.surfaceflinger=stopped
     stop ppd
