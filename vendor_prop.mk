@@ -141,12 +141,11 @@ persist.timed.enable=true
 PRODUCT_PROPERTY_OVERRIDES += \
 wifi.interface=wlan0
 
-#ro.product.first_api_level indicates the first api level that the device has
-been commercially launched on.
-PRODUCT_PROPERTY_OVERRIDES +=\
+#ro.product.first_api_level indicates the first api level that the device has been commercially launched on.
+PRODUCT_PROPERTY_OVERRIDES += \
 ro.product.first_api_level=22
 
 # Disable Nav Bar By Default
-PRODUCT_PROPERTY_OVERRIDES +=\
+PRODUCT_PROPERTY_OVERRIDES += \
 qemu.hw.mainkeys=1
 
