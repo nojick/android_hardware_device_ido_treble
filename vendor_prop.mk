@@ -146,3 +146,7 @@ been commercially launched on.
 PRODUCT_PROPERTY_OVERRIDES +=\
 ro.product.first_api_level=22
 
+# Disable Nav Bar By Default
+PRODUCT_PROPERTY_OVERRIDES +=\
+qemu.hw.mainkeys=1
+
