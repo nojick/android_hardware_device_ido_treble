@@ -99,6 +99,9 @@ on post-fs-data
     # Permissions required for power HAL
     chown system system /sys/devices/system/cpu/cpu0/core_ctl/max_cpus
 
+    #Create FM dir for patchdownloader
+    mkdir /data/misc/fm 0770 system system
+    chmod 0770 /data/misc/fm
 on early-boot
     # set RLIMIT_MEMLOCK to 64MB
     setrlimit 8 67108864 67108864
