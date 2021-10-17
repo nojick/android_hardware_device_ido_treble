@@ -125,6 +125,7 @@ persist.rild.nitz_short_ons_3="" \
 rild.libpath=/vendor/lib64/libril-qc-qmi-1.so \
 vendor.rild.libpath=/system/vendor/lib64/libril-qc-qmi-1.so \
 ro.telephony.call_ring.multiple=false \
+ro.telephony.ril.config=legacypollstate \
 ril.subscription.types=NV,RUIM \
 persist.radio.apm_sim_not_pwdn=1 \
 persist.radio.multisim.config=dsds \
