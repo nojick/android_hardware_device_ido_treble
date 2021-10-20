@@ -261,7 +261,7 @@ on property:vendor.hw.fm.init=1
 service vendor.qmuxd /vendor/bin/qmuxd
     class main
     user root
-    group radio audio bluetooth gps oem_2901 wakelock
+    group radio audio bluetooth gps oem_2950 wakelock
     writepid /dev/cpuset/system-background/tasks
 
 service vendor.msm_irqbalance /vendor/bin/msm_irqbalance -f /vendor/etc/msm_irqbalance.conf
@@ -406,4 +406,37 @@ service wcnss-service /vendor/bin/wcnss_service
     class late_start
     user system
     group system wifi radio
+    oneshot
+
+service imsqmidaemon /vendor/bin/imsqmidaemon
+    class main
+    user system
+    socket ims_qmid stream 0660 system radio
+    group radio log oem_2950
+
+service imsdatadaemon /vendor/bin/imsdatadaemon
+    class main
+    user system
+    socket ims_datad stream 0660 system radio
+    group system wifi radio inet log oem_2950
+    disabled
+
+on property:sys.ims.QMI_DAEMON_STATUS=1
+    start imsdatadaemon
+
+service ims_rtp_daemon /vendor/bin/ims_rtp_daemon
+   class main
+   user system
+   socket ims_rtpd stream 0660 system radio
+   group radio diag oem_2950 log inet
+   disabled
+
+service imscmservice /vendor/bin/imscmservice
+   class main
+   user system
+   group radio diag inet log
+   disabled
+
+service imsstarter /vendor/bin/init.qti.ims.sh
+    class main
     oneshot
