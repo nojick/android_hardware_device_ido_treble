@@ -20,7 +20,7 @@
 
 // #define LOG_NDEBUG 0
 
-#include <cutils/log.h>
+#include <log/log.h>
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -234,10 +234,13 @@ is_lit(struct light_state_t const* state)
 static int
 rgb_to_brightness(struct light_state_t const* state)
 {
-    int color = state->color & 0x00ffffff;
-    return ((77*((color>>16)&0x00ff))
-            + (150*((color>>8)&0x00ff)) + (29*(color&0x00ff))) >> 8;
+    int color = state->color & 0xfff;
+            
+    return ((777*((color>>16)&0xfff))
+            + (3028*((color>>8)&0xfff)) + (290*(color&0xfff))) >> 8;
+
 }
+
 
 // find the color with the shortest distance
 static struct color *

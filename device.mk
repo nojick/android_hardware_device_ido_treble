@@ -242,7 +242,9 @@ PRODUCT_PACKAGES += \
 
 # Lights
 PRODUCT_PACKAGES += \
-    android.hardware.light@2.0-service.aw2013
+    android.hardware.light@2.0-service \
+    android.hardware.light@2.0-impl \
+    lights.msm8916
 
 # Gatekeeper
 PRODUCT_PACKAGES += \
