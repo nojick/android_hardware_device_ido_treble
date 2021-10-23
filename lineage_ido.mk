@@ -19,12 +19,24 @@ $(call inherit-product, device/xiaomi/ido/full_ido.mk)
 
 # Inherit some common MK stuff.
 $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
+# Inherit some common Lineage stuff
+$(call inherit-product, vendor/lineage/config/common.mk)
 
+PRODUCT_BRAND := Xiaomi
+PRODUCT_DEVICE := ido
+PRODUCT_MANUFACTURER := Xiaomi
 PRODUCT_NAME := lineage_ido
 BOARD_VENDOR := Xiaomi
+
+TARGET_VENDOR_PRODUCT_NAME := ido
+
 
 PRODUCT_GMS_CLIENTID_BASE := android-xiaomi
 BUILD_FINGERPRINT := "Xiaomi/ido/ido:5.1.1/LMY47V/V8.1.3.0.LAIMIDI:user/release-keys"
 # Build fingerprint
 PRODUCT_BUILD_PROP_OVERRIDES += \
     PRIVATE_BUILD_DESC="ido-user 5.1.1 LMY47V V8.1.3.0.LAIMIDI release-keys"
+
+PRODUCT_SYSTEM_PROPERTY_BLACKLIST += \
+    ro.product.model
+
