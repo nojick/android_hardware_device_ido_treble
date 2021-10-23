@@ -34,12 +34,8 @@
 
 namespace android {
 
-namespace Gralloc2 {
-class Allocator;
-}
-
+class GrallocAllocator;
 class GraphicBufferMapper;
-class String8;
 
 class GraphicBufferAllocator : public Singleton<GraphicBufferAllocator>
 {
@@ -53,10 +49,12 @@ public:
 
     status_t free(buffer_handle_t handle);
 
-    void dump(String8& res) const;
+    size_t getTotalSize() const;
+
+    void dump(std::string& res) const;
     static void dumpToSystemLog();
 
-private:
+protected:
     struct alloc_rec_t {
         uint32_t width;
         uint32_t height;
@@ -76,7 +74,7 @@ private:
     ~GraphicBufferAllocator();
 
     GraphicBufferMapper& mMapper;
-    const std::unique_ptr<const Gralloc2::Allocator> mAllocator;
+    std::unique_ptr<const GrallocAllocator> mAllocator;
 };
 
 // ---------------------------------------------------------------------------
