@@ -20,7 +20,6 @@ $(call inherit-product, vendor/vndk/vndk.mk)
 # Inherit some common MK stuff.
 $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
-
 PRODUCT_NAME := lineage_ido
 BOARD_VENDOR := Xiaomi
 

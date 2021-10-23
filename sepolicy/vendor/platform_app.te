@@ -1,1 +1,2 @@
-allow platform_app vendor_file:file { execute getattr read };
+allow platform_app vendor_file:file { execute open read };
+allow platform_app vendor_file:file getattr;

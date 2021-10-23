@@ -1,3 +1,2 @@
-allow system_app proc_touchpanel:dir search;
-allow system_app proc_touchpanel:file rw_file_perms;
-allow system_app vendor_file:file { execute read };
+allow system_app vendor_file:file { execute getattr open read };
+#neverallow allow system_app time_daemon:unix_stream_socket connectto;

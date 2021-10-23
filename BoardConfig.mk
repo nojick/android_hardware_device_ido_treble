@@ -19,6 +19,9 @@ LOCAL_PATH := device/xiaomi/ido
 
 TARGET_SPECIFIC_HEADER_PATH := $(LOCAL_PATH)/include
 
+# Root
+#BOARD_ROOT_EXTRA_FOLDERS := firmware persist dsp
+
 # Architecture
 TARGET_ARCH := arm64
 TARGET_ARCH_VARIANT := armv8-a
@@ -179,9 +182,6 @@ PRODUCT_COPY_FILES += \
 	device/phh/treble/ld.config.26.txt:system/etc/ld.config.26.txt \
 	device/phh/treble/ld.config.27.txt:system/etc/ld.config.27.txt \
 
-# Properties
-TARGET_VENDOR_PROP := $(LOCAL_PATH)/system.prop
-
 # Qualcomm
 BOARD_USES_QCOM_HARDWARE := true
 BOARD_USES_QC_TIME_SERVICES := true
@@ -196,9 +196,16 @@ TARGET_PROVIDES_QTI_TELEPHONY_JAR := true
 # Peripheral manager
 TARGET_PER_MGR_ENABLED := true
 
+# Filesystem
+#TARGET_FS_CONFIG_GEN := $(LOCAL_PATH)/config.fs
+
 # SELinux
 include device/qcom/sepolicy/sepolicy.mk
-BOARD_SEPOLICY_DIRS += $(LOCAL_PATH)/sepolicy
+#include device/qcom/sepolicy/legacy-sepolicy.mk
+BOARD_SEPOLICY_DIRS += device/xiaomi/ido/sepolicy/vendor
+BOARD_PLAT_PRIVATE_SEPOLICY_DIR += device/xiaomi/ido/sepolicy/private
+BOARD_PLAT_PUBLIC_SEPOLICY_DIR += device/xiaomi/ido/sepolicy/public
+BOARD_SEPOLICY_VERS := 27.0
 
 # Wifi
 BOARD_HAS_QCOM_WLAN := true
