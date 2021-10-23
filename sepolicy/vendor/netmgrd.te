@@ -3,5 +3,4 @@ allow netmgrd self:capability { dac_override sys_admin };
 allow netmgrd vendor_toolbox_exec:file { execute getattr open read };
 allow netmgrd net_data_file:dir read;
 allow netmgrd system_file:file lock;
-allow netmgrd netd_socket:sock_file write;
 #dontaudit netmgrd toolbox_exec:file execute;
