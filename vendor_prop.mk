@@ -74,10 +74,11 @@ debug.enable.sglscale=1 \
 debug.cpurend.vsync=false \
 debug.sf.latch_unsignaled=1 \
 sys.hwc.gpu_perf_mode=1 \
-debug.hwui.renderer=opengl \
 ro.opengles.version=196610 \
 ro.sf.lcd_density=320 \
 debug.sf.enable_gl_backpressure=1 \
+debug.sf.disable_backpressure=1 \
+debug.sf.recomputecrop=0 \
 
 # DRM
 PRODUCT_PROPERTY_OVERRIDES += \
