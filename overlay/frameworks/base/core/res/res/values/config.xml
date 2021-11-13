@@ -313,4 +313,14 @@
     <!-- Flag indicating which package name can access the persistent data partition -->
     <string name="config_persistentDataPackageName" translatable="false">com.google.android.gms</string>
 
+    <!-- Control whether the always on display mode is enabled by default. This value will be used
+         during initialization when the setting is still null.-->
+    <bool name="config_dozeAlwaysOnEnabled">false</bool> 
+        <!-- Doze: does this device support STATE_DOZE and STATE_DOZE_SUSPEND? -->
+    <bool name="doze_display_state_supported">false</bool>
+
+    <!-- If true, enable the advance anti-falsing classifier on the lockscreen. On some devices it
+         does not work well, particularly with noisy touchscreens. Note that disabling it may
+         increase the rate of unintentional unlocks. -->
+    <bool name="config_lockscreenAntiFalsingClassifierEnabled">false</bool>
 </resources>
