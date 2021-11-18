@@ -183,7 +183,6 @@ PRODUCT_PACKAGES += \
     memtrack.msm8916 \
     liboverlay \
     libgenlock \
-    libui_v
 
 # RenderScript HAL
 PRODUCT_PACKAGES += \
