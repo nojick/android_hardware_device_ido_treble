@@ -317,6 +317,16 @@ PRODUCT_PACKAGES += \
     init.qcom.usb.rc \
     ueventd.qcom.rc
 
+# HIDL
+PRODUCT_PACKAGES += \
+    android.hidl.base@1.0 \
+    android.hidl.manager@1.0 \
+    android.hidl.manager@1.0-java \
+    libhidltransport \
+    libhidltransport.vendor \
+    libhwbinder \
+    libhwbinder.vendor
+
 # Healthd
 PRODUCT_PACKAGES += \
     android.hardware.health@2.1-impl \
