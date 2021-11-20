@@ -173,13 +173,6 @@ BOARD_RECOVERYIMAGE_PARTITION_SIZE := 33554432
 BOARD_SYSTEMIMAGE_PARTITION_SIZE := 2415919104
 BOARD_USERDATAIMAGE_PARTITION_SIZE := 12066978816 # (12066995200-16384)
 BOARD_FLASH_BLOCK_SIZE := 131072 # blockdev --getbsz /dev/block/mmcblk0p19
-BOARD_VENDORIMAGE_PARTITION_SIZE   := 536870912
-
-#Treble
-ENABLE_VENDOR_IMAGE := true
-BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
-TARGET_COPY_OUT_VENDOR := vendor
-PRODUCT_VENDOR_MOVE_ENABLED := true
 
 # Vintf
 PRODUCT_ENFORCE_VINTF_MANIFEST := true
@@ -202,8 +195,8 @@ TARGET_PROVIDES_QTI_TELEPHONY_JAR := true
 TARGET_PER_MGR_ENABLED := true
 
 # SELinux
-include device/qcom/sepolicy/sepolicy.mk
-#include device/qcom/sepolicy-legacy/sepolicy.mk
+#include device/qcom/sepolicy/sepolicy.mk
+include device/qcom/sepolicy-legacy/sepolicy.mk
 BOARD_SEPOLICY_DIRS += device/xiaomi/ido/sepolicy/vendor
 BOARD_PLAT_PRIVATE_SEPOLICY_DIR += device/xiaomi/ido/sepolicy/private
 BOARD_PLAT_PUBLIC_SEPOLICY_DIR += device/xiaomi/ido/sepolicy/public
