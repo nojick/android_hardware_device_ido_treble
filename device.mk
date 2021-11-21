@@ -163,7 +163,8 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     libshim_atomic \
     libandroid_shim \
-    libshim_camera
+    libshim_camera \
+    libshim_audioclient
 
 # DataServices
 PRODUCT_PACKAGES += \
@@ -345,6 +346,9 @@ PRODUCT_COPY_FILES += \
 # Thermal Configuration
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/thermal-engine.conf:$(TARGET_COPY_OUT_VENDOR)/etc/thermal-engine.conf
+
+TARGET_LD_SHIM_LIBS += \
+    /system/vendor/lib64/libril-qc-qmi-1.so|libshim_audioclient.so \
 
 PRODUCT_COPY_FILES += \
     prebuilts/vndk/v29/arm64/arch-arm64-armv8-a/shared/vndk-core/libprotobuf-cpp-lite.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libprotobuf-cpp-lite-v29.so \
