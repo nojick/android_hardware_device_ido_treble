@@ -249,7 +249,7 @@ PRODUCT_PACKAGES += \
 
 # Gatekeeper
 PRODUCT_PACKAGES += \
-    android.hardware.gatekeeper@1.0-impl
+    android.hardware.gatekeeper@1.0-service.software
 
 # Media
 PRODUCT_COPY_FILES += \
