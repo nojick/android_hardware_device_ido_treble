@@ -130,6 +130,10 @@ persist.radio.multisim.config=dsds \
 ro.telephony.default_network=9,9 \
 persist.radio.add_power_save=1
 
+# SDcardFS
+PRODUCT_PROPERTY_OVERRIDES += \
+ro.sys.sdcardfs=true
+
 # Wfd
 PRODUCT_PROPERTY_OVERRIDES += \
 persist.debug.wfd.enable=1
