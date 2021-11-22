@@ -2,5 +2,4 @@ subdirs = [
 	"libs",
 	"ui",
 	"sensors",
-	"camera",
 ]
