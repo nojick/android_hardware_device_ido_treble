@@ -154,3 +154,11 @@ ro.product.first_api_level=22
 PRODUCT_PROPERTY_OVERRIDES += \
 qemu.hw.mainkeys=1
 
+# Fuse disable
+PRODUCT_PROPERTY_OVERRIDES += \
+persist.sys.fflag.override.settings_fuse=false
+
+# WFD
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.debug.wfd.enable=1 \
+    persist.sys.wfd.virtual=0
