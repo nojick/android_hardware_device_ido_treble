@@ -1492,7 +1492,6 @@ uint8_t get_num_of_cameras()
     char subdev_name[32];
     int32_t sd_fd = 0;
     struct sensor_init_cfg_data cfg;
-    char prop[PROPERTY_VALUE_MAX];
     uint32_t temp;
     uint32_t log_level;
     uint32_t debug_mask;
@@ -1513,11 +1512,6 @@ uint8_t get_num_of_cameras()
 
     CDBG_HIGH("%s gMmCameraIntfLogLevel=%d",__func__, gMmCameraIntfLogLevel);
 
-    property_get("vold.decrypt", prop, "0");
-    int decrypt = atoi(prop);
-    if (decrypt == 1) {
-        return 0;
-    }
 
     /* lock the mutex */
     pthread_mutex_lock(&g_intf_lock);
