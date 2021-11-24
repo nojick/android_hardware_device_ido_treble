@@ -65,7 +65,7 @@ LOCAL_CFLAGS += -DTARGET_TS_MAKEUP
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/tsMakeuplib/include
 endif
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
-LOCAL_HEADER_LIBRARIES := generated_kernel_headers
+LOCAL_HEADER_LIBRARIES := generated_kernel_headers libbinder_headers
 LOCAL_SHARED_LIBRARIES := liblog libhardware libutils libcutils libdl liblog
 LOCAL_SHARED_LIBRARIES += libmmcamera_interface libmmjpeg_interface libqdMetaData
 
