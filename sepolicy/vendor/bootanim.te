@@ -1,3 +1,2 @@
-allow bootanim vendor_file:file { open read };
-allow bootanim vendor_file:file getattr;
-allow bootanim vendor_file:file execute;
+allow bootanim userspace_reboot_exported_prop:file { open read };
+allow bootanim userspace_reboot_exported_prop:file getattr;

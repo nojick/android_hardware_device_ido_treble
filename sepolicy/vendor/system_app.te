@@ -1,2 +1,9 @@
 allow system_app vendor_file:file { execute getattr open read };
-#neverallow allow system_app time_daemon:unix_stream_socket connectto;
+allow system_app installd:binder call;
+allow system_app netd:binder call;
+allow system_app proc_pagetypeinfo:file { getattr open read };
+allow system_app sysfs_zram:dir search;
+allow system_app sysfs_zram:file { getattr open read };
+allow system_app system_suspend_control_service:service_manager find;
+allow system_app vold:binder call;
+allow system_app wificond:binder call;

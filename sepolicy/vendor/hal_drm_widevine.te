@@ -1,0 +1,2 @@
+allow hal_drm_widevine vendor_data_file:dir { add_name open read write };
+allow hal_drm_widevine vendor_data_file:file { create getattr };

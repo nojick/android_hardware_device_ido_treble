@@ -1,9 +1,9 @@
-#dontaudit rild binder_device:chr_file ioctl;
+allow rild binder_device:chr_file ioctl;
 allow rild radio_data_file:dir { getattr read remove_name write };
 allow rild radio_data_file:file { lock open read unlink write };
 
 allow rild radio_data_file:dir search;
-#dontaudit rild binder_device:chr_file { read write };
+allow rild binder_device:chr_file { read write };
 allow rild radio_data_file:dir { add_name open };
 allow rild radio_data_file:file getattr;
 allow rild radio_data_file:file { create ioctl };

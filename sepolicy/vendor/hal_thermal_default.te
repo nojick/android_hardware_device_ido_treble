@@ -1,0 +1,2 @@
+allow hal_thermal_default self:capability sys_resource;
+

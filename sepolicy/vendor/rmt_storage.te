@@ -1,4 +1,4 @@
 allow rmt_storage self:capability net_raw;
-#dontaudit rmt_storage debugfs:file write;
+allow rmt_storage debugfs:file write;
 allow rmt_storage self:capability sys_admin;
 
