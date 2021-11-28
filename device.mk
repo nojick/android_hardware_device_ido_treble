@@ -195,6 +195,10 @@ PRODUCT_PACKAGES += \
     fingerprint.msm8916 \
     android.hardware.biometrics.fingerprint@2.0-service.ido
 
+# Encryption
+PRODUCT_PACKAGES += \
+    vendor.qti.hardware.cryptfshw@1.0-service-qti.qsee
+
 # FM
 PRODUCT_PACKAGES += \
     FMRadio \
