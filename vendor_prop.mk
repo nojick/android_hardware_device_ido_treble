@@ -130,10 +130,6 @@ persist.radio.multisim.config=dsds \
 ro.telephony.default_network=9,9 \
 persist.radio.add_power_save=1
 
-# SDcardFS
-PRODUCT_PROPERTY_OVERRIDES += \
-ro.sys.sdcardfs=true
-
 # Wfd
 PRODUCT_PROPERTY_OVERRIDES += \
 persist.debug.wfd.enable=1
@@ -153,10 +149,6 @@ ro.product.first_api_level=22
 # Disable Nav Bar By Default
 PRODUCT_PROPERTY_OVERRIDES += \
 qemu.hw.mainkeys=1
-
-# Fuse disable
-PRODUCT_PROPERTY_OVERRIDES += \
-persist.sys.fflag.override.settings_fuse=false
 
 # WFD
 PRODUCT_PROPERTY_OVERRIDES += \
