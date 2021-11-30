@@ -1,5 +1,41 @@
-allow hal_sensors_default sysfs:dir { open read };
-allow hal_sensors_default sysfs:file { open read };
+binder_call(hal_sensors_default, hwservicemanager)
+binder_call(hal_sensors_default, servicemanager)
+
+binder_call(hal_sensors_default, mm-qcamerad)
+binder_call(hal_sensors_default, system_server)
+
+binder_call(hal_sensors_default, system_app)
+binder_call(hal_sensors_default, priv_app)
+binder_call(hal_sensors_default, platform_app)
+
+allow hal_sensors_default self:capability { dac_override };
+allow hal_sensors_default sensors_device:chr_file { ioctl open read };
+allow hal_sensors_default sysfs:file { open read write };
 allow hal_sensors_default system_data_file:file { getattr open read };
-allow hal_sensors_default sysfs:file write;
+
+allow hal_sensors_default proc_net:file { getattr open read };
+allow hal_sensors_default sysfs:dir read;
+allow hal_sensors_default sysfs:dir open;
 allow hal_sensors_default system_data_file:file write;
+allow hal_sensors_default system_data_file:dir write;
+allow hal_sensors_default system_data_file:dir add_name;
+allow hal_sensors_default system_data_file:file create;
+allow hal_sensors_default system_data_file:dir remove_name;
+allow hal_sensors_default system_data_file:file { rename unlink };
+allow hal_sensors_default system_data_root_file:dir write;
+allow hal_sensors_default system_data_root_file:dir add_name;
+allow hal_sensors_default system_data_root_file:file { read write };
+allow hal_sensors_default system_data_root_file:file getattr;
+allow hal_sensors_default system_data_root_file:file open;
+allow hal_sensors_default system_data_root_file:file create;
+
+
+allow hal_sensors_default {
+    sysfs_batteryinfo
+    sysfs_graphics
+}:dir search;
+
+allow hal_sensors_default {
+    sysfs_batteryinfo
+    sysfs_graphics
+}:file r_file_perms;
