@@ -200,9 +200,9 @@ TARGET_PER_MGR_ENABLED := true
 #include device/qcom/sepolicy/sepolicy.mk
 include device/qcom/sepolicy-legacy/sepolicy.mk
 BOARD_SEPOLICY_DIRS += device/xiaomi/ido/sepolicy/vendor
-BOARD_PLAT_PRIVATE_SEPOLICY_DIR += device/xiaomi/ido/sepolicy/private
-BOARD_PLAT_PUBLIC_SEPOLICY_DIR += device/xiaomi/ido/sepolicy/public
-BOARD_SEPOLICY_VERS := 30.0
+SYSTEM_EXT_PRIVATE_SEPOLICY_DIRS += device/xiaomi/ido/sepolicy/private
+SYSTEM_EXT_PUBLIC_SEPOLICY_DIRS += device/xiaomi/ido/sepolicy/public
+BOARD_SEPOLICY_VERS := 31.0
 SELINUX_IGNORE_NEVERALLOWS := true
 
 # Wifi
