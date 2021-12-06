@@ -183,5 +183,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.charger.disable_init_blank=true
 
 #BPF not suported
+PRODUCT_PROPERTY_OVERRIDES += \
 ro.kernel.ebpf.supported=false
 
