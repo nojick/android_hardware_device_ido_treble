@@ -158,7 +158,7 @@ PRODUCT_PACKAGES += \
     librmnetctl
 
 #DEX
-PRODUCT_PACKAGES += \
+PRODUCT_HOST_PACKAGES += \
     libdexfile
 
 # Display
