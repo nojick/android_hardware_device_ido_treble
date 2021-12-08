@@ -35,7 +35,9 @@ LOCAL_CFLAGS += -DUSE_JB_MR1
 endif
 
 
+ifeq ($(TARGET_USES_AOSP),true)
 LOCAL_CFLAGS += -DVANILLA_HAL
+endif
 
 
 LOCAL_C_INCLUDES := \
