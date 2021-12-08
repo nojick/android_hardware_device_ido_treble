@@ -1,0 +1,2 @@
+allow untrusted_app_29 adbd_prop:file { getattr open };
+

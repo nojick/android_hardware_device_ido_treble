@@ -11,3 +11,7 @@ type proc_swap, fs_type, proc_type;
 type proc_vm, fs_type, proc_type;
 
 type proc_kernel_sched, fs_type;
+
+# sysfs
+type sysfs_disk_stat, fs_type, sysfs_type;
+
