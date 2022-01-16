@@ -329,7 +329,6 @@ service vendor.vm_bms /system/vendor/bin/vm_bms
     class main
     user root
     group root wakelock
-    disabled
 
 # Allow usb charging to be disabled peristently
 on property:persist.usb.chgdisabled=1
@@ -346,7 +345,7 @@ on charger
     chmod 0664 /sys/class/power_supply/bms/current_now
     chmod 0664 /sys/class/power_supply/bms/voltage_ocv
     setprop persist.sys.usb.config mass_storage
-    start vm_bms
+    start vendor.vm_bms
 
 # start camera server as daemon
 service vendor.qcamerasvr /system/vendor/bin/mm-qcamera-daemon
@@ -357,7 +356,7 @@ service vendor.qcamerasvr /system/vendor/bin/mm-qcamera-daemon
 
 on property:sys.boot_completed=1
     start vendor.qcom-post-boot
-    setprop sys.io.scheduler "bfq"
+    setprop sys.io.scheduler "cfq"
     write /dev/kmsg "Boot completed "
     swapon_all /system/vendor/etc/fstab.qcom
     restart vendor.camera-provider-2-5
