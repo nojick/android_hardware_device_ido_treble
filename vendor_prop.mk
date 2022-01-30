@@ -123,14 +123,17 @@ persist.rild.nitz_short_ons_1="" \
 persist.rild.nitz_short_ons_2="" \
 persist.rild.nitz_short_ons_3="" \
 rild.libpath=/vendor/lib64/libril-qc-qmi-1.so \
-vendor.rild.libpath=/system/vendor/lib64/libril-qc-qmi-1.so \
+vendor.rild.libpath=/vendor/lib64/libril-qc-qmi-1.so \
 ro.telephony.call_ring.multiple=false \
-ro.telephony.ril.config=legacypollstate \
 ril.subscription.types=NV,RUIM \
-persist.radio.apm_sim_not_pwdn=1 \
 persist.radio.multisim.config=dsds \
-ro.telephony.default_network=9,9 \
-persist.radio.add_power_save=1
+ro.telephony.default_network=22,1 \
+persist.vendor.radio.add_power_save=1 \
+telephony.lteOnCdmaDevice=1 \
+persist.vendor.radio.rat_on=combine \
+persist.vendor.radio.apm_sim_not_pwdn=1 \
+persist.vendor.radio.sib16_support=1 \
+persist.vendor.radio.custom_ecc=1 \
 
 # Wfd
 PRODUCT_PROPERTY_OVERRIDES += \
