@@ -79,6 +79,7 @@ ro.sf.lcd_density=320 \
 debug.sf.enable_gl_backpressure=1 \
 debug.sf.disable_backpressure=1 \
 debug.sf.recomputecrop=0 \
+ro.qualcomm.cabl=2 \
 
 # DRM
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -203,4 +204,9 @@ ro.kernel.ebpf.supported=false
 
 #Configstore
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
-    ro.surface_flinger.max_frame_buffer_acquired_buffers=3
+    ro.surface_flinger.max_frame_buffer_acquired_buffers=3 \
+    ro.surface_flinger.force_hwc_copy_for_virtual_displays=true \
+    ro.surface_flinger.has_HDR_display=false \
+    ro.surface_flinger.has_wide_color_display=false \
+    ro.surface_flinger.start_graphics_allocator_service=true \
+    ro.surface_flinger.use_context_priority=true \
