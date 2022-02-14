@@ -347,7 +347,7 @@ on charger
 
 # start camera server as daemon
 service qcamerasvr /vendor/bin/mm-qcamera-daemon
-    class hal
+    class late_start
     user camera
     group camera system inet input graphics
     writepid /dev/cpuset/camera-daemon/tasks
@@ -357,6 +357,7 @@ on property:sys.boot_completed=1
     setprop sys.io.scheduler "bfq"
     write /dev/kmsg "Boot completed "
     swapon_all /vendor/etc/fstab.qcom
+    restart vendor.camera-provider-2-5
 
 service qseecomd /vendor/bin/qseecomd
     class core
