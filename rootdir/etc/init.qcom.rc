@@ -354,7 +354,7 @@ service qcamerasvr /vendor/bin/mm-qcamera-daemon
 
 on property:sys.boot_completed=1
     start vendor.qcom-post-boot
-    setprop sys.io.scheduler "bfq"
+    setprop sys.io.scheduler "cfq"
     write /dev/kmsg "Boot completed "
     swapon_all /vendor/etc/fstab.qcom
     restart vendor.camera-provider-2-5
