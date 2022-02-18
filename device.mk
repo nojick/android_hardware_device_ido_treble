@@ -303,7 +303,8 @@ PRODUCT_BOOT_JARS += \
 # HIDL
 PRODUCT_PACKAGES += \
     android.hidl.base@1.0 \
-    android.hidl.manager@1.0
+    android.hidl.manager@1.0 \
+    libbinder_vendor
 
 # Ramdisk
 PRODUCT_PACKAGES += \
