@@ -434,24 +434,6 @@ service port-bridge /vendor/bin/port-bridge
     group radio system inet
     oneshot
 
-on property:init.svc.surfaceflinger=stopped
-    stop ppd
-
-on property:init.svc.surfaceflinger=running
-    start ppd
-
-on property:init.svc.surfaceflinger=restarting
-    stop ppd
-
-on property:init.svc.zygote=stopped
-    stop ppd
-
-on property:init.svc.zygote=running
-    start ppd
-
-on property:init.svc.zygote=restarting
-    stop ppd
-
 service wcnss-service /vendor/bin/wcnss_service
     class late_start
     user system
