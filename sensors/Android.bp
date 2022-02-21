@@ -18,7 +18,7 @@ cc_library_static {
 cc_library_shared {
     name: "android.hardware.sensors@1.0-impl.msm8916",
     defaults: ["hidl_defaults"],
-    vendor: true,
+    proprietary: true,
     relative_install_path: "hw",
     srcs: ["Sensors.cpp"],
     shared_libs: [
@@ -32,15 +32,36 @@ cc_library_shared {
         "android.hardware.sensors@1.0",
     ],
     static_libs: [
-        "android.hardware.sensors@1.0-convert",
+        "android.hardware.sensors@1.0-convert-msm8916",
         "multihal-ido",
     ],
     local_include_dirs: ["include/sensors"],
 }
 
+cc_library_static {
+    name: "android.hardware.sensors@1.0-convert-msm8916",
+    vendor_available: true,
+    defaults: ["hidl_defaults"],
+    srcs: ["convert.cpp"],
+    export_include_dirs: ["include"],
+    shared_libs: [
+        "liblog",
+        "libcutils",
+        "libhardware",
+        "libbase",
+        "libutils",
+        "libhidlbase",
+        "libhidltransport",
+        "android.hardware.sensors@1.0",
+    ],
+    local_include_dirs: ["include/sensors"],
+    export_shared_lib_headers: [
+        "libhardware",
+    ],
+}
+
 cc_binary {
     name: "android.hardware.sensors@1.0-service.msm8916",
-    defaults: ["hidl_defaults"],
     relative_install_path: "hw",
     vendor: true,
     init_rc: ["android.hardware.sensors@1.0-service.msm8916.rc"],
@@ -51,15 +72,9 @@ cc_binary {
         "libcutils",
         "libdl",
         "libbase",
-        "libhardware",
         "libutils",
         "libhidlbase",
         "libhidltransport",
         "android.hardware.sensors@1.0",
     ],
-    arch: {
-        arm: {
-            cflags: ["-DARCH_ARM_32"],
-        },
-    },
 }
