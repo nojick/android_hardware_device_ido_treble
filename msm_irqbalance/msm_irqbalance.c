@@ -21,7 +21,7 @@
 #include <sys/prctl.h>
 #include <poll.h>
 #include <cutils/properties.h>
-#include <private/android_filesystem_config.h>
+#include <cutils/android_filesystem_config.h>
 #include "msm_irqbalance.h"
 
 static char const *VERSION_STR = "1.4";
