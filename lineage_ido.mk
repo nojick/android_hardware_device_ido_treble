@@ -15,27 +15,33 @@
 # limitations under the License.
 #
 
-$(call inherit-product, device/xiaomi/ido/full_ido.mk)
-
 # Inherit some common MK stuff.
 $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 # Inherit some common Lineage stuff
 $(call inherit-product, vendor/lineage/config/common.mk)
+# Inherit from those products. Most specific first.
+$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
+$(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
+
+# Inherit from ido device
+$(call inherit-product, device/xiaomi/ido/device.mk)
+
 
 PRODUCT_BRAND := Xiaomi
 PRODUCT_DEVICE := ido
 PRODUCT_MANUFACTURER := Xiaomi
 PRODUCT_NAME := lineage_ido
 BOARD_VENDOR := Xiaomi
+PRODUCT_MODEL := Redmi 3
 
 TARGET_VENDOR_PRODUCT_NAME := ido
 
 
 PRODUCT_GMS_CLIENTID_BASE := android-xiaomi
-BUILD_FINGERPRINT := "Xiaomi/ido/ido:5.1.1/LMY47V/V8.1.3.0.LAIMIDI:user/release-keys"
+BUILD_FINGERPRINT := "Xiaomi/ido/ido:5.1.1/LMY47V/V9.6.1.0.LAICNFD:user/release-keys"
 # Build fingerprint
 PRODUCT_BUILD_PROP_OVERRIDES += \
-    PRIVATE_BUILD_DESC="ido-user 5.1.1 LMY47V V8.1.3.0.LAIMIDI release-keys"
+    PRIVATE_BUILD_DESC="ido-user 5.1.1 LMY47V V9.6.1.0.LAICNFD release-keys"
 
 PRODUCT_SYSTEM_PROPERTY_BLACKLIST += \
     ro.product.model
