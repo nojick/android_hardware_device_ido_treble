@@ -47,9 +47,9 @@ av.streaming.offload.enable=false
 PRODUCT_PROPERTY_OVERRIDES += \
 bluetooth.hfp.client=1 \
 qcom.bluetooth.soc=smd \
+vendor.qcom.bluetooth.soc=smd \
 ro.bluetooth.dun=true \
 ro.bluetooth.hfp.ver=1.7 \
-ro.bluetooth.sap=true \
 ro.qualcomm.bt.hci_transport=smd
 
 # Camera
@@ -142,7 +142,8 @@ persist.vendor.radio.custom_ecc=1 \
 
 # Wfd
 PRODUCT_PROPERTY_OVERRIDES += \
-persist.debug.wfd.enable=1
+persist.debug.wfd.enable=1 \
+persist.sys.wfd.virtual=0
 
 # Time
 PRODUCT_PROPERTY_OVERRIDES += \
