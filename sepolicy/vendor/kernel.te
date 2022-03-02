@@ -11,8 +11,10 @@ allow kernel radio:process setsched;
 allow kernel system_app:process setsched;
 allow kernel system_server:process setsched;
 allow kernel zygote:process setsched;
-
+allow kernel untrusted_app:fd use;
+allow kernel appdomain_tmpfs:file write;
 # TODO - root cause why the kernel generating this denial.
 allow kernel domain:process setsched;
-#dontaudit kernel self:capability dac_override;
-#dontaudit kernel self:capability dac_read_search;
+allow kernel self:capability dac_override;
+
+

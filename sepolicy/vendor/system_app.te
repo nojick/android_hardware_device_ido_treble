@@ -1,2 +1,3 @@
 allow system_app vendor_file:file { execute getattr open read };
-#neverallow allow system_app time_daemon:unix_stream_socket connectto;
+allow system_app apex_service:service_manager find;
+allow system_app system_suspend_control_service:service_manager find;

@@ -1,0 +1,2 @@
+allow hal_bluetooth_qti mnt_vendor_file:dir search;
+

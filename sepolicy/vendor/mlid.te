@@ -1,0 +1,1 @@
+allow mlid self:netlink_socket { create read setopt write };

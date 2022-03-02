@@ -1,1 +1,23 @@
 allow priv_app vendor_file:file { execute getattr open read };
+allow priv_app sysfs_graphics:file { getattr open read };
+allow priv_app hal_memtrack_hwservice:hwservice_manager find;
+allow priv_app property_socket:sock_file write;
+allow priv_app hal_memtrack_default:binder call;
+allow priv_app init:unix_stream_socket connectto;
+allow priv_app alarm_boot_prop:file open;
+allow priv_app device:dir { read open };
+allow priv_app proc:file open;
+allow priv_app proc_interrupts:file { read open };
+allow priv_app proc_modules:file { read getattr open };
+allow priv_app sysfs:dir open;
+allow priv_app sysfs_android_usb:file open;
+allow priv_app alarm_boot_prop:file getattr;
+allow priv_app alarm_handled_prop:file open;
+allow priv_app alarm_instance_prop:file open;
+allow priv_app sysfs:file open;
+allow priv_app alarm_handled_prop:file getattr;
+allow priv_app bg_boot_complete_prop:file { getattr open };
+allow priv_app alarm_instance_prop:file getattr;
+allow priv_app apexd_prop:file { getattr open };
+allow priv_app bg_daemon_prop:file { getattr open };
+

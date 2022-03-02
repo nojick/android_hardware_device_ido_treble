@@ -1,2 +1,4 @@
 allow system_server vendor_file:file { execute getattr open read };
-#neverallow allow system_server init:binder call;
+allow system_server init:binder { call transfer };
+allow system_server sysfs:file { getattr open read };
+allow system_server app_zygote:process getpgid;

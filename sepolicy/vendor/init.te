@@ -10,6 +10,23 @@ allow init input_device:chr_file ioctl;
 allow init servicemanager:binder call;
 allow init video_device:chr_file write;
 allow init system_data_file:file append;
-#dontaudit init vendor_file:file execute_no_trans;
-
-
+allow init self:socket read;
+allow init hal_drm_hwservice:hwservice_manager add;
+allow init hal_gnss_hwservice:hwservice_manager { add find };
+allow init hal_health_default:binder { call transfer };
+allow init hal_health_hwservice:hwservice_manager find;
+allow init per_mgr:binder call;
+allow init per_mgr_service:service_manager find;
+allow init qmuxd_socket:sock_file write;
+allow init same_process_hal_file:file execute;
+allow init self:socket { create ioctl write };
+allow init shell_data_file:dir { add_name write };
+allow init sysfs:file setattr;
+allow init sysfs_leds:lnk_file read;
+allow init system_server:binder { call transfer };
+allow init vendor_file:file execute_no_trans;
+allow init vndbinder_device:chr_file { ioctl open read write };
+allow init vndservicemanager:binder call;
+allow init qmuxd:unix_stream_socket connectto;
+allow init diag_device:chr_file { open read write };
+allow init per_mgr:binder transfer;

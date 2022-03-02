@@ -1,0 +1,6 @@
+allow system_app apexd:binder call;
+allow system_app proc_pagetypeinfo:file read;
+allow system_app storaged:binder call;
+allow system_app sysfs_zram:dir search;
+allow system_app system_suspend:binder call;
+allow system_app wificond:binder call;

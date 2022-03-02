@@ -1,4 +1,2 @@
-#allow hal_gnss_qti binder_device:chr_file { ioctl open read write };
-#allow hal_gnss_qti servicemanager:binder call;
-#allow hal_gnss_qti self:udp_socket create;
-
+allow hal_gnss_qti hal_health_default:binder { call transfer };
+allow hal_gnss_qti hal_health_hwservice:hwservice_manager find;

@@ -1,2 +1,16 @@
 allow untrusted_app sysfs_zram:dir search;
 allow untrusted_app sysfs_zram:file { getattr open read };
+allow untrusted_app vendor_file:file { execute getattr open read };
+allow untrusted_app sysfs_graphics:file read;
+allow untrusted_app input_device:dir search;
+allow untrusted_app mnt_vendor_file:dir search;
+allow untrusted_app proc_net:file read;
+allow untrusted_app rootfs:dir read;
+allow untrusted_app sysfs_net:dir search;
+allow untrusted_app sysfs:file { getattr read };
+allow untrusted_app sysfs_graphics:file open;
+allow untrusted_app sysfs:file open;
+allow untrusted_app sysfs_graphics:file getattr;
+allow untrusted_app proc_uptime:file open;
+allow untrusted_app alarm_boot_prop:file { getattr open };
+allow untrusted_app alarm_handled_prop:file getattr;

@@ -1,0 +1,5 @@
+allow netutils_wrapper self:capability { dac_override dac_read_search };
+allow netutils_wrapper system_data_file:dir read;
+allow netutils_wrapper vendor_file:dir read;
+allow netutils_wrapper netmgrd:file read;
+allow netutils_wrapper shell_data_file:dir read;
