@@ -43,6 +43,3 @@ BUILD_FINGERPRINT := "Xiaomi/ido/ido:5.1.1/LMY47V/V9.6.1.0.LAICNFD:user/release-
 PRODUCT_BUILD_PROP_OVERRIDES += \
     PRIVATE_BUILD_DESC="ido-user 5.1.1 LMY47V V9.6.1.0.LAICNFD release-keys"
 
-PRODUCT_SYSTEM_PROPERTY_BLACKLIST += \
-    ro.product.model
-
