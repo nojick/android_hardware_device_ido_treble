@@ -6,3 +6,5 @@ allow hal_sensors_default mnt_vendor_file:dir search;
 allow hal_sensors_default system_data_file:file write;
 allow hal_sensors_default system_data_file:dir write;
 allow hal_sensors_default system_data_file:dir add_name;
+allow hal_sensors_default system_data_file:dir remove_name;
+allow hal_sensors_default system_data_file:file { create rename };
