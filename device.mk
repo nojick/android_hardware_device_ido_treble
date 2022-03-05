@@ -323,7 +323,7 @@ PRODUCT_PACKAGES += \
     init.qcom.rc \
     init.qcom.sh \
     init.qcom.usb.rc \
-    ueventd.rc
+    ueventd.qcom.rc
 
 # Healthd
 PRODUCT_PACKAGES += \
