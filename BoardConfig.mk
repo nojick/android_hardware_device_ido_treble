@@ -193,7 +193,7 @@ include device/qcom/sepolicy-legacy/sepolicy.mk
 BOARD_SEPOLICY_DIRS += device/xiaomi/ido/sepolicy/vendor
 BOARD_PLAT_PRIVATE_SEPOLICY_DIR += device/xiaomi/ido/sepolicy/private
 BOARD_PLAT_PUBLIC_SEPOLICY_DIR += device/xiaomi/ido/sepolicy/public
-BOARD_SEPOLICY_VERS := 29.0
+BOARD_SEPOLICY_VERS := 30.0
 SELINUX_IGNORE_NEVERALLOWS := true
 
 # Wifi
