@@ -310,7 +310,7 @@ PRODUCT_BOOT_JARS += \
     telephony-ext
 
 PRODUCT_PACKAGES += \
-    vndservicemanager
+    vndservicemanager \
     libbinder_vendor
 
 # Ramdisk
