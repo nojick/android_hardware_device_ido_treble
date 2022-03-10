@@ -23,8 +23,8 @@ LOCAL_PROPRIETARY_MODULE := true
 LOCAL_SRC_FILES := thermal.c
 LOCAL_SRC_FILES += thermal_common.c
 
-ifeq ($(call is-board-platform-in-list,msm8998), true)
-LOCAL_SRC_FILES += thermal-8998.c
+ifeq ($(call is-board-platform-in-list,msm8916), true)
+LOCAL_SRC_FILES += thermal-8916.c
 else ifeq ($(call is-board-platform-in-list,sdm845), true)
 LOCAL_SRC_FILES += thermal-845.c
 else
