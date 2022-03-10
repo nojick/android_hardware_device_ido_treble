@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_MAP_H
-#define ANDROID_MAP_H
+package android.content.pm;
 
-#include <map>
-#include <string>
-
-// ---------------------------------------------------------------------------
-namespace android {
-namespace binder {
-
-class Value;
+import android.content.pm.PackageChangeEvent;
 
 /**
- * Convenience typedef for ::std::map<::std::string,::android::binder::Value>
+ * This is a non-blocking notification when a package has changed.
+ *
+ * @hide
  */
-typedef ::std::map<::std::string, Value> Map;
-
-} // namespace binder
-} // namespace android
-
-// ---------------------------------------------------------------------------
-
-#endif // ANDROID_MAP_H
+oneway interface IPackageChangeObserver {
+  void onPackageChanged(in PackageChangeEvent event);
+}
