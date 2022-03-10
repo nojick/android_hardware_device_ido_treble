@@ -138,13 +138,7 @@ cc_library_shared {
 cc_library_headers {
     name: "libui_v_headers",
     export_include_dirs: ["include"],
-    vendor_available: true,
-    target: {
-        vendor: {
-            cflags: ["-DLIBUI_IN_VNDK"],
-            override_export_include_dirs: ["include_vndk"],
-        },
-    },
+    vendor: true,
     header_libs: [
         "libnativewindow_headers",
     ],
