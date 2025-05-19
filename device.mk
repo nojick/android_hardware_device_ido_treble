@@ -79,7 +79,8 @@ PRODUCT_PACKAGES += \
     audio.usb.default \
     libqcompostprocbundle \
     libqcomvisualizer \
-    libqcomvoiceprocessing
+    libqcomvoiceprocessing \
+    libaudiopolicymanager
 
 PRODUCT_PACKAGES += \
     android.hardware.audio@2.0-impl \
@@ -90,19 +91,19 @@ PRODUCT_PACKAGES += \
     android.hardware.soundtrigger@2.0-service
 
 # Bluetooth
-PRODUCT_PACKAGES += \
-    libbt-vendor
+#PRODUCT_PACKAGES += \
+ #   libbt-vendor
 
 # ConsumerIR
 PRODUCT_PACKAGES += \
-    android.hardware.ir@1.0-impl \
-    android.hardware.ir@1.0-service
+   android.hardware.ir@1.0-impl \
+   android.hardware.ir@1.0-service
 
 # Sensor HAL
-PRODUCT_PACKAGES += \
-    android.hardware.sensors@1.0-impl.msm8916 \
-    android.hardware.sensors@1.0-service.msm8916 \
-    sensors.msm8916
+#PRODUCT_PACKAGES += \
+#    android.hardware.sensors@1.0-impl.msm8916 \
+#    android.hardware.sensors@1.0-service.msm8916 \
+#    sensors.msm8916
 
 # DRM
 PRODUCT_PACKAGES += \
@@ -132,13 +133,13 @@ PRODUCT_PACKAGES += \
     libcnefeatureconfig
 
 # Camera
-PRODUCT_PACKAGES += \
-    android.hardware.camera.provider@2.4-service.ido \
-    android.hardware.camera.provider@2.4-impl \
-    camera.device@1.0-impl \
-    camera.msm8916 \
-    libmm-qcamera \
-    Snap
+#PRODUCT_PACKAGES += \
+   # android.hardware.camera.provider@2.4-service.ido \
+   # android.hardware.camera.provider@2.4-impl \
+    #camera.device@1.0-impl \
+   # camera.msm8916 \
+    #libmm-qcamera \
+   # Snap
 
 # Lib Shim
 PRODUCT_PACKAGES += \
@@ -162,9 +163,6 @@ PRODUCT_PACKAGES += \
     gralloc.msm8916 \
     hwcomposer.msm8916 \
     memtrack.msm8916 \
-    liboverlay \
-    libgenlock \
-    libsensor_vendor \
     libui_v
 
 # RenderScript HAL
@@ -176,13 +174,13 @@ PRODUCT_PACKAGES += \
     vndk-sp
 
 # Wifi
-PRODUCT_PACKAGES += \
-    android.hardware.wifi@1.0-service
+#PRODUCT_PACKAGES += \
+#    android.hardware.wifi@1.0-service
 
 # Fingerprint
-PRODUCT_PACKAGES += \
-    fingerprint.msm8916 \
-    android.hardware.biometrics.fingerprint@2.1-service
+#PRODUCT_PACKAGES += \
+    #fingerprint.msm8916 \
+    #android.hardware.biometrics.fingerprint@2.1-service
 
 # FM
 PRODUCT_PACKAGES += \
@@ -224,15 +222,13 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PACKAGES += \
     android.hardware.keymaster@3.0-impl \
     android.hardware.keymaster@3.0-service \
-    keystore.msm8916
 
 # Lights
-PRODUCT_PACKAGES += \
-    android.hardware.light@2.0-service.aw2013
+#PRODUCT_PACKAGES += \
+#    android.hardware.light@2.0-service.aw2013
 
-# Gatekeeper
 PRODUCT_PACKAGES += \
-    android.hardware.gatekeeper@1.0-impl
+    android.hardware.gatekeeper@1.0-impl \
 
 # Media
 PRODUCT_COPY_FILES += \
@@ -247,25 +243,25 @@ PRODUCT_COPY_FILES += \
     frameworks/av/media/libstagefright/data/media_codecs_google_video_le.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_video_le.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_video.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_video.xml
 
-PRODUCT_PACKAGES += \
-    libOmxAacEnc \
-    libOmxAmrEnc \
-    libOmxCore \
-    libOmxEvrcEnc \
-    libOmxQcelp13Enc \
-    libOmxVdec \
-    libOmxVenc \
-    libstagefrighthw
+#PRODUCT_PACKAGES += \
+#    libOmxAacEnc \
+#    libOmxAmrEnc \
+#    libOmxCore \
+#    libOmxEvrcEnc \
+ #   libOmxQcelp13Enc \
+#    libOmxVdec \
+#    libOmxVenc \
+#    libstagefrighthw
 
 # Power
-PRODUCT_PACKAGES += \
-    android.hardware.power@1.0-impl \
-    android.hardware.power@1.0-service \
-    power.msm8916
+#PRODUCT_PACKAGES += \
+#    android.hardware.power@1.0-impl \
+#    android.hardware.power@1.0-service \
+#    power.msm8916
 
 # Power
-PRODUCT_PACKAGES += \
-    android.hardware.power@1.0-service-qti
+#PRODUCT_PACKAGES += \
+#    android.hardware.power@1.0-service-qti
 
 # QMI
 PRODUCT_PACKAGES += \
@@ -278,12 +274,12 @@ PRODUCT_PACKAGES += \
     libtinyxml \
     libxml2
 
-PRODUCT_PACKAGES += \
-    telephony-ext \
-    ims-ext-common
+#PRODUCT_PACKAGES += \
+    #telephony-ext \
+    #ims-ext-common
 
-PRODUCT_BOOT_JARS += \
-    telephony-ext
+#PRODUCT_BOOT_JARS += \
+   # telephony-ext
 
 # HIDL
 PRODUCT_PACKAGES += \
@@ -304,9 +300,9 @@ PRODUCT_PACKAGES += \
     android.hardware.usb@1.0-service
 
 # Vibrator
-PRODUCT_PACKAGES += \
-    android.hardware.vibrator@1.0-impl \
-    android.hardware.vibrator@1.0-service
+#PRODUCT_PACKAGES += \
+#    android.hardware.vibrator@1.0-impl \
+#    android.hardware.vibrator@1.0-service
 
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/sensors/_hals.conf:$(TARGET_COPY_OUT_VENDOR)/etc/sensors/_hals.conf \
@@ -317,14 +313,14 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/thermal-engine.conf:$(TARGET_COPY_OUT_VENDOR)/etc/thermal-engine.conf
 
 # Wifi
-PRODUCT_PACKAGES += \
-    libwcnss_qmi \
-    wcnss_service \
-    libwpa_client \
-    hostapd \
-    wificond \
-    wpa_supplicant \
-    wpa_supplicant.conf \
+#PRODUCT_PACKAGES += \
+#    libwcnss_qmi \
+#    wcnss_service \
+#    libwpa_client \
+#    hostapd \
+#    wificond \
+#    wpa_supplicant \
+#    wpa_supplicant.conf \
 
 PRODUCT_PACKAGES += \
     p2p_supplicant_overlay.conf \
