@@ -153,6 +153,10 @@ persist.timed.enable=true
 PRODUCT_PROPERTY_OVERRIDES += \
 wifi.interface=wlan0
 
+# USB
+PRODUCT_PROPERTY_OVERRIDES += \
+sys.usb.controller=msm_hsusb
+
 #ro.product.first_api_level indicates the first api level that the device has been commercially launched on.
 PRODUCT_PROPERTY_OVERRIDES += \
 ro.product.first_api_level=22
