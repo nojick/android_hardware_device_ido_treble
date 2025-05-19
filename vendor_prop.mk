@@ -141,3 +141,7 @@ persist.timed.enable=true
 PRODUCT_PROPERTY_OVERRIDES += \
 wifi.interface=wlan0
 
+# USB
+PRODUCT_PROPERTY_OVERRIDES += \
+sys.usb.controller=msm_hsusb
+
