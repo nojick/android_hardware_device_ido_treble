@@ -91,8 +91,8 @@ PRODUCT_PACKAGES += \
     android.hardware.soundtrigger@2.0-service
 
 # Bluetooth
-#PRODUCT_PACKAGES += \
- #   libbt-vendor
+PRODUCT_PACKAGES += \
+   libbt-vendor
 
 # ConsumerIR
 PRODUCT_PACKAGES += \
@@ -174,8 +174,8 @@ PRODUCT_PACKAGES += \
     vndk-sp
 
 # Wifi
-#PRODUCT_PACKAGES += \
-#    android.hardware.wifi@1.0-service
+PRODUCT_PACKAGES += \
+    android.hardware.wifi@1.0-service
 
 # Fingerprint
 #PRODUCT_PACKAGES += \
@@ -224,8 +224,8 @@ PRODUCT_PACKAGES += \
     android.hardware.keymaster@3.0-service \
 
 # Lights
-#PRODUCT_PACKAGES += \
-#    android.hardware.light@2.0-service.aw2013
+PRODUCT_PACKAGES += \
+    android.hardware.light@2.0-service.aw2013
 
 PRODUCT_PACKAGES += \
     android.hardware.gatekeeper@1.0-impl \
@@ -274,12 +274,12 @@ PRODUCT_PACKAGES += \
     libtinyxml \
     libxml2
 
-#PRODUCT_PACKAGES += \
-    #telephony-ext \
-    #ims-ext-common
+PRODUCT_PACKAGES += \
+    telephony-ext \
+    ims-ext-common
 
-#PRODUCT_BOOT_JARS += \
-   # telephony-ext
+PRODUCT_BOOT_JARS += \
+    telephony-ext
 
 # HIDL
 PRODUCT_PACKAGES += \
@@ -300,9 +300,9 @@ PRODUCT_PACKAGES += \
     android.hardware.usb@1.0-service
 
 # Vibrator
-#PRODUCT_PACKAGES += \
-#    android.hardware.vibrator@1.0-impl \
-#    android.hardware.vibrator@1.0-service
+PRODUCT_PACKAGES += \
+    android.hardware.vibrator@1.0-impl \
+    android.hardware.vibrator@1.0-service
 
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/sensors/_hals.conf:$(TARGET_COPY_OUT_VENDOR)/etc/sensors/_hals.conf \
@@ -313,14 +313,14 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/thermal-engine.conf:$(TARGET_COPY_OUT_VENDOR)/etc/thermal-engine.conf
 
 # Wifi
-#PRODUCT_PACKAGES += \
-#    libwcnss_qmi \
-#    wcnss_service \
-#    libwpa_client \
-#    hostapd \
-#    wificond \
-#    wpa_supplicant \
-#    wpa_supplicant.conf \
+PRODUCT_PACKAGES += \
+    libwcnss_qmi \
+    wcnss_service \
+    libwpa_client \
+    hostapd \
+    wificond \
+    wpa_supplicant \
+    wpa_supplicant.conf \
 
 PRODUCT_PACKAGES += \
     p2p_supplicant_overlay.conf \
