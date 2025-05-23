@@ -188,8 +188,8 @@ TARGET_PROVIDES_QTI_TELEPHONY_JAR := true
 TARGET_PER_MGR_ENABLED := true
 
 # SELinux
-#include device/qcom/sepolicy/sepolicy.mk
-include device/qcom/sepolicy-legacy/sepolicy.mk
+include device/qcom/sepolicy/sepolicy.mk
+#include device/qcom/sepolicy-legacy/sepolicy.mk
 BOARD_SEPOLICY_DIRS += device/xiaomi/ido/sepolicy/vendor
 BOARD_PLAT_PRIVATE_SEPOLICY_DIR += device/xiaomi/ido/sepolicy/private
 BOARD_PLAT_PUBLIC_SEPOLICY_DIR += device/xiaomi/ido/sepolicy/public

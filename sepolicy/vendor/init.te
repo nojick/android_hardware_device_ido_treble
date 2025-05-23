@@ -1,4 +1,3 @@
-allow init btnvtool_exec:file execute;
 allow init debugfs:dir mounton;
 allow init vendor_file:file {execute};
 allow init cameraserver:binder transfer;
@@ -15,8 +14,6 @@ allow init hal_drm_hwservice:hwservice_manager add;
 allow init hal_gnss_hwservice:hwservice_manager { add find };
 allow init hal_health_default:binder { call transfer };
 allow init hal_health_hwservice:hwservice_manager find;
-allow init per_mgr:binder call;
-allow init per_mgr_service:service_manager find;
 allow init qmuxd_socket:sock_file write;
 allow init same_process_hal_file:file execute;
 allow init self:socket { create ioctl write };
@@ -29,4 +26,3 @@ allow init vndbinder_device:chr_file { ioctl open read write };
 allow init vndservicemanager:binder call;
 allow init qmuxd:unix_stream_socket connectto;
 allow init diag_device:chr_file { open read write };
-allow init per_mgr:binder transfer;

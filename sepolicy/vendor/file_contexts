@@ -1,3 +1,5 @@
+/firmware(/.*)?                                                     u:object_r:firmware_file:s0
+/persist(/.*)?                                                      u:object_r:persist_file:s0
 # Camera sockets
 /data/vendor/qcam(/.*)?		u:object_r:vendor_camera_data_file:s0
 # Fingerprint
