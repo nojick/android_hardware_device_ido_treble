@@ -161,11 +161,11 @@ PRODUCT_PACKAGES += \
     libcnefeatureconfig
 
 # Camera
-PRODUCT_PACKAGES += \
-    android.hardware.camera.provider@2.5-service \
-    camera.msm8916 \
-    libmm-qcamera \
-    Snap
+#PRODUCT_PACKAGES += \
+   # android.hardware.camera.provider@2.5-service \
+   # camera.msm8939 \
+   # libmm-qcamera \
+   # Snap
 
 # Lib Shim
 PRODUCT_PACKAGES += \
