@@ -1191,11 +1191,13 @@ int HWCDisplay::SetDisplayStatus(uint32_t display_status) {
   switch (display_status) {
   case kDisplayStatusResume:
     display_paused_ = false;
+    break;
   case kDisplayStatusOnline:
     status = SetPowerMode(HWC_POWER_MODE_NORMAL);
     break;
   case kDisplayStatusPause:
     display_paused_ = true;
+    break;
   case kDisplayStatusOffline:
     status = SetPowerMode(HWC_POWER_MODE_OFF);
     break;
