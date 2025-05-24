@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2014 - 2017, The Linux Foundation. All rights reserved.
+* Copyright (c) 2014 - 2016, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without modification, are permitted
 * provided that the following conditions are met:
@@ -28,13 +28,11 @@
 #include <hardware/hwcomposer.h>
 #include <core/core_interface.h>
 #include <utils/locker.h>
-#include <future>   // NOLINT
 
 #include "hwc_display_primary.h"
 #include "hwc_display_external.h"
 #include "hwc_display_virtual.h"
 #include "hwc_color_manager.h"
-#include "hwc_socket_handler.h"
 
 namespace sdm {
 
@@ -87,9 +85,6 @@ class HWCSession : hwc_composer_device_1_t, public qClient::BnQClient {
   int DisconnectDisplay(int disp);
   void HandleSecureDisplaySession(hwc_display_contents_1_t **displays);
   int GetVsyncPeriod(int disp);
-  int CreateExternalDisplay(int disp, uint32_t primary_width, uint32_t primary_height,
-                            bool use_primary_res);
-  void AsyncRefresh();
 
   // QClient methods
   virtual android::status_t notifyCallback(uint32_t command, const android::Parcel *input_parcel,
@@ -105,8 +100,7 @@ class HWCSession : hwc_composer_device_1_t, public qClient::BnQClient {
   android::status_t ConfigureRefreshRate(const android::Parcel *input_parcel);
   android::status_t QdcmCMDHandler(const android::Parcel *input_parcel,
                                    android::Parcel *output_parcel);
-  android::status_t ControlPartialUpdate(const android::Parcel *input_parcel,
-                                         android::Parcel *output_parcel);
+  android::status_t ControlPartialUpdate(const android::Parcel *input_parcel, android::Parcel *out);
   android::status_t OnMinHdcpEncryptionLevelChange(const android::Parcel *input_parcel,
                                                    android::Parcel *output_parcel);
   android::status_t SetPanelBrightness(const android::Parcel *input_parcel,
@@ -130,9 +124,6 @@ class HWCSession : hwc_composer_device_1_t, public qClient::BnQClient {
   android::status_t GetBWTransactionStatus(const android::Parcel *input_parcel,
                                           android::Parcel *output_parcel);
   android::status_t SetMixerResolution(const android::Parcel *input_parcel);
-  android::status_t SetDisplayPort(DisplayPort sdm_disp_port, int *hwc_disp_port);
-  android::status_t GetHdrCapabilities(const android::Parcel *input_parcel,
-                                       android::Parcel *output_parcel);
 
   static Locker locker_;
   CoreInterface *core_intf_ = NULL;
@@ -154,10 +145,6 @@ class HWCSession : hwc_composer_device_1_t, public qClient::BnQClient {
   qService::QService *qservice_ = NULL;
   bool is_hdmi_primary_ = false;
   bool is_hdmi_yuv_ = false;
-  std::future<void> future_;
-  std::bitset<HWC_NUM_DISPLAY_TYPES> connected_displays_;  // Bit mask of connected displays
-  HWCSocketHandler socket_handler_;
-  Locker uevent_locker_;
 };
 
 }  // namespace sdm

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017, 2019, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright 2015 The Android Open Source Project
@@ -39,8 +39,6 @@
 
 namespace sdm {
 
-DisplayError SetCSC(const private_handle_t *pvt_handle, ColorMetaData *color_metadata);
-
 enum GeometryChanges {
   kNone         = 0x000,
   kBlendMode    = 0x001,
@@ -52,6 +50,7 @@ enum GeometryChanges {
   kZOrder       = 0x040,
   kAdded        = 0x080,
   kRemoved      = 0x100,
+  kBufferGeometry = 0x200,
 };
 
 class HWCLayer {
@@ -61,7 +60,6 @@ class HWCLayer {
   uint32_t GetZ() const { return z_; }
   hwc2_layer_t GetId() const { return id_; }
   Layer *GetSDMLayer() { return layer_; }
-  void ResetPerFrameData();
 
   HWC2::Error SetLayerBlendMode(HWC2::BlendMode mode);
   HWC2::Error SetLayerBuffer(buffer_handle_t buffer, int32_t acquire_fence);
@@ -79,26 +77,28 @@ class HWCLayer {
   HWC2::Composition GetClientRequestedCompositionType() { return client_requested_; }
   void UpdateClientCompositionType(HWC2::Composition type) { client_requested_ = type; }
   HWC2::Composition GetDeviceSelectedCompositionType() { return device_selected_; }
-  int32_t GetLayerDataspace() { return dataspace_; }
   uint32_t GetGeometryChanges() { return geometry_changes_; }
   void ResetGeometryChanges() { geometry_changes_ = GeometryChanges::kNone; }
   void PushReleaseFence(int32_t fence);
   int32_t PopReleaseFence(void);
-  bool SupportedDataspace();
-  bool SupportLocalConversion(ColorPrimaries working_primaries);
+  void ResetValidation() { needs_validate_ = false; }
+  bool NeedsValidation() { return (needs_validate_ || geometry_changes_); }
+  bool IsSurfaceUpdated() { return surface_updated_; }
+  void SetPartialUpdate(bool enabled) { partial_update_enabled_ = enabled; }
 
  private:
   Layer *layer_ = nullptr;
   uint32_t z_ = 0;
+  int32_t dataspace_ = 0;
   const hwc2_layer_t id_;
   const hwc2_display_t display_id_;
   static std::atomic<hwc2_layer_t> next_id_;
   std::queue<int32_t> release_fences_;
   int ion_fd_ = -1;
   HWCBufferAllocator *buffer_allocator_ = NULL;
-  int32_t dataspace_ =  HAL_DATASPACE_UNKNOWN;
-  LayerTransform layer_transform_ = {};
-  LayerRect dst_rect_ = {};
+  bool needs_validate_ = true;
+  bool partial_update_enabled_ = false;
+  bool surface_updated_ = true;
 
   // Composition requested by client(SF)
   HWC2::Composition client_requested_ = HWC2::Composition::Device;
@@ -112,8 +112,10 @@ class HWCLayer {
   LayerBufferFormat GetSDMFormat(const int32_t &source, const int flags);
   LayerBufferS3DFormat GetS3DFormat(uint32_t s3d_format);
   DisplayError SetMetaData(const private_handle_t *pvt_handle, Layer *layer);
+  DisplayError SetCSC(ColorSpace_t source, LayerCSC *target);
   DisplayError SetIGC(IGC_t source, LayerIGC *target);
   uint32_t RoundToStandardFPS(float fps);
+  void SetDirtyRegions(hwc_region_t surface_damage);
 };
 
 struct SortLayersByZ {

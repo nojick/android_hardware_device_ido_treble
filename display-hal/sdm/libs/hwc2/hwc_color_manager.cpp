@@ -28,7 +28,6 @@
 */
 
 #include <dlfcn.h>
-#include <powermanager/IPowerManager.h>
 #include <cutils/sockets.h>
 #include <cutils/native_handle.h>
 #include <utils/String16.h>
@@ -204,12 +203,14 @@ int HWCColorManager::SetFrameCapture(void *params, bool enable, HWCDisplay *hwc_
 
   if (enable) {
     std::memset(&buffer_info, 0x00, sizeof(buffer_info));
-    hwc_display->GetPanelResolution(&buffer_info.buffer_config.width,
-                                    &buffer_info.buffer_config.height);
+    hwc_display->GetFrameBufferResolution(&buffer_info.buffer_config.width,
+                                          &buffer_info.buffer_config.height);
     if (frame_capture_data->input_params.out_pix_format == PP_PIXEL_FORMAT_RGB_888) {
       buffer_info.buffer_config.format = kFormatRGB888;
     } else if (frame_capture_data->input_params.out_pix_format == PP_PIXEL_FORMAT_RGB_2101010) {
-      buffer_info.buffer_config.format = kFormatRGBA1010102;
+      // TODO(user): Complete the implementation
+      DLOGE("RGB 10-bit format NOT supported");
+      return -EFAULT;
     } else {
       DLOGE("Pixel-format: %d NOT support.", frame_capture_data->input_params.out_pix_format);
       return -EFAULT;
@@ -235,129 +236,26 @@ int HWCColorManager::SetFrameCapture(void *params, bool enable, HWCDisplay *hwc_
         return -EFAULT;
       } else {
         frame_capture_data->buffer = reinterpret_cast<uint8_t *>(buffer);
-        frame_capture_data->buffer_stride = buffer_info.buffer_config.width;
+        frame_capture_data->buffer_stride = buffer_info.alloc_buffer_info.stride;
         frame_capture_data->buffer_size = buffer_info.alloc_buffer_info.size;
       }
-      ret = hwc_display->FrameCaptureAsync(buffer_info, 1);
-      if (ret < 0) {
-        DLOGE("FrameCaptureAsync failed. ret = %d", ret);
-      }
+      // TODO(user): Call HWC interface to provide the buffer and rectangle information
     }
   } else {
-    ret = hwc_display->GetFrameCaptureStatus();
-    if (!ret) {
-      if (frame_capture_data->buffer != NULL) {
-        if (munmap(frame_capture_data->buffer, buffer_info.alloc_buffer_info.size) != 0) {
-          DLOGE("munmap failed. err = %d", errno);
-        }
+    if (frame_capture_data->buffer != NULL) {
+      if (munmap(frame_capture_data->buffer, buffer_info.alloc_buffer_info.size) != 0) {
+        DLOGE("munmap failed. err = %d", errno);
       }
-      if (buffer_allocator_ != NULL) {
-        std::memset(frame_capture_data, 0x00, sizeof(PPFrameCaptureData));
-        ret = buffer_allocator_->FreeBuffer(&buffer_info);
-        if (ret != 0) {
-          DLOGE("FreeBuffer failed. ret = %d", ret);
-        }
+    }
+    if (buffer_allocator_ != NULL) {
+      std::memset(frame_capture_data, 0x00, sizeof(PPFrameCaptureData));
+      ret = buffer_allocator_->FreeBuffer(&buffer_info);
+      if (ret != 0) {
+        DLOGE("FreeBuffer failed. ret = %d", ret);
       }
-    } else {
-      DLOGE("GetFrameCaptureStatus failed. ret = %d", ret);
     }
   }
   return ret;
-}
-
-int HWCColorManager::SetHWDetailedEnhancerConfig(void *params, HWCDisplay *hwc_display) {
-  int err = -1;
-  DisplayDetailEnhancerData de_data;
-
-  PPDETuningCfgData *de_tuning_cfg_data = reinterpret_cast<PPDETuningCfgData*>(params);
-  if (de_tuning_cfg_data->cfg_pending == true) {
-    if (!de_tuning_cfg_data->cfg_en) {
-      de_data.override_flags = kOverrideDEEnable;
-      de_data.enable = 0;
-    } else {
-      de_data.override_flags = kOverrideDEEnable;
-      de_data.enable = 1;
-
-      if (de_tuning_cfg_data->params.flags & kDeTuningFlagSharpFactor) {
-        de_data.override_flags |= kOverrideDESharpen1;
-        de_data.sharp_factor = de_tuning_cfg_data->params.sharp_factor;
-      }
-
-      if (de_tuning_cfg_data->params.flags & kDeTuningFlagClip) {
-        de_data.override_flags |= kOverrideDEClip;
-        de_data.clip = de_tuning_cfg_data->params.clip;
-      }
-
-      if (de_tuning_cfg_data->params.flags & kDeTuningFlagThrQuiet) {
-        de_data.override_flags |= kOverrideDEThrQuiet;
-        de_data.thr_quiet = de_tuning_cfg_data->params.thr_quiet;
-      }
-
-      if (de_tuning_cfg_data->params.flags & kDeTuningFlagThrDieout) {
-        de_data.override_flags |= kOverrideDEThrDieout;
-        de_data.thr_dieout = de_tuning_cfg_data->params.thr_dieout;
-      }
-
-      if (de_tuning_cfg_data->params.flags & kDeTuningFlagThrLow) {
-        de_data.override_flags |= kOverrideDEThrLow;
-        de_data.thr_low = de_tuning_cfg_data->params.thr_low;
-      }
-
-      if (de_tuning_cfg_data->params.flags & kDeTuningFlagThrHigh) {
-        de_data.override_flags |= kOverrideDEThrHigh;
-        de_data.thr_high = de_tuning_cfg_data->params.thr_high;
-      }
-
-      if (de_tuning_cfg_data->params.flags & kDeTuningFlagContentQualLevel) {
-        switch (de_tuning_cfg_data->params.quality) {
-          case kDeContentQualLow:
-            de_data.quality_level = kContentQualityLow;
-            break;
-          case kDeContentQualMedium:
-            de_data.quality_level = kContentQualityMedium;
-            break;
-          case kDeContentQualHigh:
-            de_data.quality_level = kContentQualityHigh;
-            break;
-          case kDeContentQualUnknown:
-          default:
-            de_data.quality_level = kContentQualityUnknown;
-            break;
-        }
-      }
-    }
-    err = hwc_display->SetDetailEnhancerConfig(de_data);
-    if (err) {
-      DLOGW("SetDetailEnhancerConfig failed. err = %d", err);
-    }
-    de_tuning_cfg_data->cfg_pending = false;
-  }
-  return err;
-}
-
-void HWCColorManager::SetColorModeDetailEnhancer(HWCDisplay *hwc_display) {
-  SCOPE_LOCK(locker_);
-  int err = -1;
-  PPPendingParams pending_action;
-  PPDisplayAPIPayload req_payload;
-
-  pending_action.action = kGetDetailedEnhancerData;
-  pending_action.params = NULL;
-
-  if (hwc_display) {
-    err = hwc_display->ColorSVCRequestRoute(req_payload, NULL, &pending_action);
-    if (!err && pending_action.action == kConfigureDetailedEnhancer) {
-      err = SetHWDetailedEnhancerConfig(pending_action.params, hwc_display);
-    }
-  }
-  return;
-}
-
-int HWCColorManager::SetDetailedEnhancer(void *params, HWCDisplay *hwc_display) {
-  SCOPE_LOCK(locker_);
-  int err = -1;
-  err = SetHWDetailedEnhancerConfig(params, hwc_display);
-  return err;
 }
 
 const HWCQDCMModeManager::ActiveFeatureCMD HWCQDCMModeManager::kActiveFeatureCMD[] = {
@@ -386,17 +284,6 @@ HWCQDCMModeManager *HWCQDCMModeManager::CreateQDCMModeMgr() {
 
     // retrieve system GPU idle timeout value for later to recover.
     mode_mgr->entry_timeout_ = UINT32(HWCDebugHandler::GetIdleTimeoutMs());
-
-    // acquire the binder handle to Android system PowerManager for later use.
-    android::sp<android::IBinder> binder =
-        android::defaultServiceManager()->checkService(android::String16("power"));
-    if (binder == NULL) {
-      DLOGW("Application can't connect to  power manager service");
-      delete mode_mgr;
-      mode_mgr = NULL;
-    } else {
-      mode_mgr->power_mgr_ = android::interface_cast<android::IPowerManager>(binder);
-    }
   }
 
   return mode_mgr;
@@ -405,30 +292,6 @@ HWCQDCMModeManager *HWCQDCMModeManager::CreateQDCMModeMgr() {
 HWCQDCMModeManager::~HWCQDCMModeManager() {
   if (socket_fd_ >= 0)
     ::close(socket_fd_);
-}
-
-int HWCQDCMModeManager::AcquireAndroidWakeLock(bool enable) {
-  int ret = 0;
-
-  if (enable) {
-    if (wakelock_token_ == NULL) {
-      android::sp<android::IBinder> binder = new android::BBinder();
-      android::status_t status = power_mgr_->acquireWakeLock(
-          (kFullWakeLock | kAcquireCauseWakeup | kONAfterRelease), binder,
-          android::String16(kTagName), android::String16(kPackageName));
-      if (status == android::NO_ERROR) {
-        wakelock_token_ = binder;
-      }
-    }
-  } else {
-    if (wakelock_token_ != NULL && power_mgr_ != NULL) {
-      power_mgr_->releaseWakeLock(wakelock_token_, 0);
-      wakelock_token_.clear();
-      wakelock_token_ = NULL;
-    }
-  }
-
-  return ret;
 }
 
 int HWCQDCMModeManager::EnableActiveFeatures(bool enable,
@@ -486,7 +349,6 @@ int HWCQDCMModeManager::EnableQDCMMode(bool enable, HWCDisplay *hwc_display) {
 
   ret = EnableActiveFeatures((enable ? false : true), kActiveFeatureCMD[kCABLFeature],
                              &cabl_was_running_);
-  ret = AcquireAndroidWakeLock(enable);
 
   // if enter QDCM mode, disable GPU fallback idle timeout.
   if (hwc_display) {

@@ -32,13 +32,19 @@
 #include "hw_device.h"
 
 namespace sdm {
+#define MAX_SYSFS_COMMAND_LENGTH 12
+struct DisplayConfigVariableInfo;
 
 class HWPrimary : public HWDevice {
  public:
-  HWPrimary(BufferSyncHandler *buffer_sync_handler, HWInfoInterface *hw_info_intf);
+  static DisplayError Create(HWInterface **intf, HWInfoInterface *hw_info_intf,
+                             BufferSyncHandler *buffer_sync_handler);
+  static DisplayError Destroy(HWInterface *intf);
 
  protected:
+  HWPrimary(BufferSyncHandler *buffer_sync_handler, HWInfoInterface *hw_info_intf);
   virtual DisplayError Init();
+  virtual DisplayError Deinit();
   virtual DisplayError GetNumDisplayAttributes(uint32_t *count);
   virtual DisplayError GetActiveConfig(uint32_t *active_config);
   virtual DisplayError GetDisplayAttributes(uint32_t index,
@@ -55,7 +61,6 @@ class HWPrimary : public HWDevice {
   virtual DisplayError SetDisplayMode(const HWDisplayMode hw_display_mode);
   virtual DisplayError SetRefreshRate(uint32_t refresh_rate);
   virtual DisplayError SetPanelBrightness(int level);
-  virtual DisplayError CachePanelBrightness(int level);
   virtual DisplayError GetPPFeaturesVersion(PPFeatureVersion *vers);
   virtual DisplayError SetPPFeatures(PPFeaturesConfig *feature_list);
   virtual DisplayError GetPanelBrightness(int *level);
@@ -69,16 +74,11 @@ class HWPrimary : public HWDevice {
     kModeLPMCommand,
   };
 
-  enum {
-    kMaxSysfsCommandLength = 12,
-  };
-
   DisplayError PopulateDisplayAttributes();
   void InitializeConfigs();
   bool IsResolutionSwitchEnabled() { return !display_configs_.empty(); }
   bool GetCurrentModeFromSysfs(size_t *curr_x_pixels, size_t *curr_y_pixels);
   void UpdateMixerAttributes();
-  void SetAVRFlags(const HWAVRInfo &hw_avr_info, uint32_t *avr_flags);
 
   std::vector<DisplayConfigVariableInfo> display_configs_;
   std::vector<std::string> display_config_strings_;
@@ -86,7 +86,6 @@ class HWPrimary : public HWDevice {
   const char *kBrightnessNode = "/sys/class/leds/lcd-backlight/brightness";
   const char *kAutoRefreshNode = "/sys/devices/virtual/graphics/fb0/msm_cmd_autorefresh_en";
   bool auto_refresh_ = false;
-  bool avr_prop_disabled_ = false;
 };
 
 }  // namespace sdm

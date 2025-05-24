@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2014 - 2017, The Linux Foundation. All rights reserved.
+* Copyright (c) 2014 - 2016, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without modification, are permitted
 * provided that the following conditions are met:
@@ -25,14 +25,11 @@
 #ifndef __HW_INTERFACE_H__
 #define __HW_INTERFACE_H__
 
-#include <core/buffer_allocator.h>
-#include <core/buffer_sync_handler.h>
 #include <core/display_interface.h>
 #include <private/hw_info_types.h>
 #include <private/color_interface.h>
 #include <utils/constants.h>
-
-#include "hw_info_interface.h"
+#include <core/buffer_sync_handler.h>
 
 namespace sdm {
 
@@ -60,7 +57,6 @@ class HWEventHandler {
   virtual void IdleTimeout() = 0;
   virtual void ThermalEvent(int64_t thermal_level) = 0;
   virtual void CECMessage(char *message) = 0;
-  virtual void IdlePowerCollapse() = 0;
 
  protected:
   virtual ~HWEventHandler() { }
@@ -68,13 +64,6 @@ class HWEventHandler {
 
 class HWInterface {
  public:
-  static DisplayError Create(DisplayType type, HWInfoInterface *hw_info_intf,
-                             BufferSyncHandler *buffer_sync_handler,
-                             BufferAllocator *buffer_allocator, HWInterface **intf);
-  static DisplayError Destroy(HWInterface *intf);
-
-  virtual DisplayError Init() = 0;
-  virtual DisplayError Deinit() = 0;
   virtual DisplayError GetActiveConfig(uint32_t *active_config) = 0;
   virtual DisplayError GetNumDisplayAttributes(uint32_t *count) = 0;
   virtual DisplayError GetDisplayAttributes(uint32_t index,
@@ -98,7 +87,6 @@ class HWInterface {
   virtual DisplayError SetDisplayMode(const HWDisplayMode hw_display_mode) = 0;
   virtual DisplayError SetRefreshRate(uint32_t refresh_rate) = 0;
   virtual DisplayError SetPanelBrightness(int level) = 0;
-  virtual DisplayError CachePanelBrightness(int level) = 0;
   virtual DisplayError GetHWScanInfo(HWScanInfo *scan_info) = 0;
   virtual DisplayError GetVideoFormat(uint32_t config_index, uint32_t *video_format) = 0;
   virtual DisplayError GetMaxCEAFormat(uint32_t *max_cea_format) = 0;

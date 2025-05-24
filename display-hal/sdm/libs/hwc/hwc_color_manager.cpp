@@ -342,12 +342,14 @@ int HWCColorManager::SetFrameCapture(void *params, bool enable, HWCDisplay *hwc_
 
   if (enable) {
     std::memset(&buffer_info, 0x00, sizeof(buffer_info));
-    hwc_display->GetPanelResolution(&buffer_info.buffer_config.width,
-                                    &buffer_info.buffer_config.height);
+    hwc_display->GetFrameBufferResolution(&buffer_info.buffer_config.width,
+                                          &buffer_info.buffer_config.height);
     if (frame_capture_data->input_params.out_pix_format == PP_PIXEL_FORMAT_RGB_888) {
       buffer_info.buffer_config.format = kFormatRGB888;
     } else if (frame_capture_data->input_params.out_pix_format == PP_PIXEL_FORMAT_RGB_2101010) {
-      buffer_info.buffer_config.format = kFormatRGBA1010102;
+      // TODO(user): Complete the implementation
+      DLOGE("RGB 10-bit format NOT supported");
+      return -EFAULT;
     } else {
       DLOGE("Pixel-format: %d NOT support.", frame_capture_data->input_params.out_pix_format);
       return -EFAULT;
@@ -367,7 +369,7 @@ int HWCColorManager::SetFrameCapture(void *params, bool enable, HWCDisplay *hwc_
     ret = buffer_allocator_->AllocateBuffer(&buffer_info);
     if (ret != 0) {
       DLOGE("Buffer allocation failed. ret: %d", ret);
-      delete buffer_allocator_;
+      delete[] buffer_allocator_;
       buffer_allocator_ = NULL;
       return -ENOMEM;
     } else {
@@ -379,136 +381,33 @@ int HWCColorManager::SetFrameCapture(void *params, bool enable, HWCDisplay *hwc_
         DLOGE("mmap failed. err = %d", errno);
         frame_capture_data->buffer = NULL;
         ret = buffer_allocator_->FreeBuffer(&buffer_info);
-        delete buffer_allocator_;
+        delete[] buffer_allocator_;
         buffer_allocator_ = NULL;
         return -EFAULT;
       } else {
         frame_capture_data->buffer = reinterpret_cast<uint8_t *>(buffer);
-        frame_capture_data->buffer_stride = buffer_info.alloc_buffer_info.aligned_width;
+        frame_capture_data->buffer_stride = buffer_info.alloc_buffer_info.stride;
         frame_capture_data->buffer_size = buffer_info.alloc_buffer_info.size;
       }
-      ret = hwc_display->FrameCaptureAsync(buffer_info, 1);
-      if (ret < 0) {
-        DLOGE("FrameCaptureAsync failed. ret = %d", ret);
-      }
+      // TODO(user): Call HWC interface to provide the buffer and rectangle information
     }
   } else {
-    ret = hwc_display->GetFrameCaptureStatus();
-    if (!ret) {
-      if (frame_capture_data->buffer != NULL) {
-        if (munmap(frame_capture_data->buffer, buffer_info.alloc_buffer_info.size) != 0) {
-          DLOGE("munmap failed. err = %d", errno);
-        }
+    if (frame_capture_data->buffer != NULL) {
+      if (munmap(frame_capture_data->buffer, buffer_info.alloc_buffer_info.size) != 0) {
+        DLOGE("munmap failed. err = %d", errno);
       }
-      if (buffer_allocator_ != NULL) {
-        std::memset(frame_capture_data, 0x00, sizeof(PPFrameCaptureData));
-        ret = buffer_allocator_->FreeBuffer(&buffer_info);
-        if (ret != 0) {
-          DLOGE("FreeBuffer failed. ret = %d", ret);
-        }
-        delete buffer_allocator_;
-        buffer_allocator_ = NULL;
+    }
+    if (buffer_allocator_ != NULL) {
+      std::memset(frame_capture_data, 0x00, sizeof(PPFrameCaptureData));
+      ret = buffer_allocator_->FreeBuffer(&buffer_info);
+      if (ret != 0) {
+        DLOGE("FreeBuffer failed. ret = %d", ret);
       }
-    } else {
-      DLOGE("GetFrameCaptureStatus failed. ret = %d", ret);
+      delete[] buffer_allocator_;
+      buffer_allocator_ = NULL;
     }
   }
   return ret;
-}
-
-int HWCColorManager::SetHWDetailedEnhancerConfig(void *params, HWCDisplay *hwc_display) {
-  int err = -1;
-  DisplayDetailEnhancerData de_data;
-
-  PPDETuningCfgData *de_tuning_cfg_data = reinterpret_cast<PPDETuningCfgData*>(params);
-  if (de_tuning_cfg_data->cfg_pending == true) {
-    if (!de_tuning_cfg_data->cfg_en) {
-      de_data.override_flags = kOverrideDEEnable;
-      de_data.enable = 0;
-    } else {
-      de_data.override_flags = kOverrideDEEnable;
-      de_data.enable = 1;
-
-      if (de_tuning_cfg_data->params.flags & kDeTuningFlagSharpFactor) {
-        de_data.override_flags |= kOverrideDESharpen1;
-        de_data.sharp_factor = de_tuning_cfg_data->params.sharp_factor;
-      }
-
-      if (de_tuning_cfg_data->params.flags & kDeTuningFlagClip) {
-        de_data.override_flags |= kOverrideDEClip;
-        de_data.clip = de_tuning_cfg_data->params.clip;
-      }
-
-      if (de_tuning_cfg_data->params.flags & kDeTuningFlagThrQuiet) {
-        de_data.override_flags |= kOverrideDEThrQuiet;
-        de_data.thr_quiet = de_tuning_cfg_data->params.thr_quiet;
-      }
-
-      if (de_tuning_cfg_data->params.flags & kDeTuningFlagThrDieout) {
-        de_data.override_flags |= kOverrideDEThrDieout;
-        de_data.thr_dieout = de_tuning_cfg_data->params.thr_dieout;
-      }
-
-      if (de_tuning_cfg_data->params.flags & kDeTuningFlagThrLow) {
-        de_data.override_flags |= kOverrideDEThrLow;
-        de_data.thr_low = de_tuning_cfg_data->params.thr_low;
-      }
-
-      if (de_tuning_cfg_data->params.flags & kDeTuningFlagThrHigh) {
-        de_data.override_flags |= kOverrideDEThrHigh;
-        de_data.thr_high = de_tuning_cfg_data->params.thr_high;
-      }
-
-      if (de_tuning_cfg_data->params.flags & kDeTuningFlagContentQualLevel) {
-        switch (de_tuning_cfg_data->params.quality) {
-          case kDeContentQualLow:
-            de_data.quality_level = kContentQualityLow;
-            break;
-          case kDeContentQualMedium:
-            de_data.quality_level = kContentQualityMedium;
-            break;
-          case kDeContentQualHigh:
-            de_data.quality_level = kContentQualityHigh;
-            break;
-          case kDeContentQualUnknown:
-          default:
-            de_data.quality_level = kContentQualityUnknown;
-            break;
-        }
-      }
-    }
-    err = hwc_display->SetDetailEnhancerConfig(de_data);
-    if (err) {
-      DLOGW("SetDetailEnhancerConfig failed. err = %d", err);
-    }
-    de_tuning_cfg_data->cfg_pending = false;
-  }
-  return err;
-}
-
-void HWCColorManager::SetColorModeDetailEnhancer(HWCDisplay *hwc_display) {
-  SCOPE_LOCK(locker_);
-  int err = -1;
-  PPPendingParams pending_action;
-  PPDisplayAPIPayload req_payload;
-
-  pending_action.action = kGetDetailedEnhancerData;
-  pending_action.params = NULL;
-
-  if (hwc_display) {
-    err = hwc_display->ColorSVCRequestRoute(req_payload, NULL, &pending_action);
-    if (!err && pending_action.action == kConfigureDetailedEnhancer) {
-      err = SetHWDetailedEnhancerConfig(pending_action.params, hwc_display);
-    }
-  }
-  return;
-}
-
-int HWCColorManager::SetDetailedEnhancer(void *params, HWCDisplay *hwc_display) {
-  SCOPE_LOCK(locker_);
-  int err = -1;
-  err = SetHWDetailedEnhancerConfig(params, hwc_display);
-  return err;
 }
 
 const HWCQDCMModeManager::ActiveFeatureCMD HWCQDCMModeManager::kActiveFeatureCMD[] = {

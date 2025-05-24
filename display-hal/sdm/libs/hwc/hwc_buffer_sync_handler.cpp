@@ -28,6 +28,8 @@
 */
 
 #include <errno.h>
+#include <string.h>
+
 #include <sync/sync.h>
 #include <utils/constants.h>
 #include <utils/debug.h>
@@ -68,8 +70,8 @@ DisplayError HWCBufferSyncHandler::SyncMerge(int fd1, int fd2, int *merged_fd) {
   } else if (fd2 >= 0) {
     *merged_fd = sync_merge("SyncMerge", fd2, fd2);
   } else {
-    *merged_fd = -1;
-    return kErrorNone;
+    DLOGE("Invalid arguments passed");
+    return kErrorParameters;
   }
 
   if (*merged_fd == -1) {

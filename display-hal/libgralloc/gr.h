@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2008 The Android Open Source Project
- * Copyright (c) 2011 - 2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011 - 2016, The Linux Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@
 #include <hardware/gralloc.h>
 #include <pthread.h>
 #include <errno.h>
-#include <unistd.h>
 
 #include <cutils/native_handle.h>
 #include <utils/Singleton.h>
@@ -36,7 +35,7 @@ struct private_module_t;
 struct private_handle_t;
 
 inline unsigned int roundUpToPageSize(unsigned int x) {
-    return (x + (getpagesize()-1)) & ~(getpagesize()-1);
+    return (x + (PAGE_SIZE-1)) & ~(PAGE_SIZE-1);
 }
 
 template <class Type>
@@ -53,6 +52,15 @@ unsigned int getBufferSizeAndDimensions(int width, int height, int format,
         int usage, int& alignedw, int &alignedh);
 unsigned int getBufferSizeAndDimensions(int width, int height, int format,
         int& alignedw, int &alignedh);
+
+
+// Attributes include aligned width, aligned height, tileEnabled and size of the buffer
+void getBufferAttributes(int width, int height, int format, int usage,
+                           int& alignedw, int &alignedh,
+                           int& tileEnabled, unsigned int &size);
+
+
+bool isMacroTileEnabled(int format, int usage);
 
 int decideBufferHandlingMechanism(int format, const char *compositionUsed,
                                   int hasBlitEngine, int *needConversion,
@@ -71,9 +79,6 @@ bool isUBwcEnabled(int format, int usage);
 // Function to check if the format is an RGB format
 bool isUncompressedRgbFormat(int format);
 
-// Returns number of planes, stride and offset of each plane for a given w,h,f
-int getBufferLayout(private_handle_t *hnd, uint32_t stride[4],
-        uint32_t offset[4], uint32_t *num_planes);
 /*****************************************************************************/
 
 class Locker {
@@ -135,13 +140,13 @@ class AdrenoMemInfo : public android::Singleton <AdrenoMemInfo>
                             int tileEnabled, int& alignedw, int &alignedh);
 
     /*
-     * Function to compute unaligned width and unaligned height based on
-     * private handle
+     * Function to return whether GPU support MacroTile feature
      *
-     * @return unaligned width, unaligned height
+     * @return >0 : supported
+     *          0 : not supported
      */
-    void getUnalignedWidthAndHeight(const private_handle_t *hnd, int& unaligned_w,
-                            int& unaligned_h);
+    int isMacroTilingSupportedByGPU();
+
     /*
      * Function to query whether GPU supports UBWC for given HAL format
      * @return > 0 : supported
@@ -175,6 +180,8 @@ class AdrenoMemInfo : public android::Singleton <AdrenoMemInfo>
                                                 int *aligned_w,
                                                 int *aligned_h);
 
+        int (*LINK_adreno_isMacroTilingSupportedByGpu) (void);
+
         void(*LINK_adreno_compute_compressedfmt_aligned_width_and_height)(
                                                 int width,
                                                 int height,
@@ -194,11 +201,18 @@ class AdrenoMemInfo : public android::Singleton <AdrenoMemInfo>
 
 class MDPCapabilityInfo : public android::Singleton <MDPCapabilityInfo>
 {
+    int isMacroTileSupported = 0;
     int isUBwcSupported = 0;
-    int isWBUBWCSupported = 0;
 
     public:
         MDPCapabilityInfo();
+        /*
+        * Function to return whether MDP support MacroTile feature
+        *
+        * @return  1 : supported
+        *          0 : not supported
+        */
+        int isMacroTilingSupportedByMDP() { return isMacroTileSupported; }
         /*
         * Function to return whether MDP supports UBWC feature
         *
@@ -206,13 +220,6 @@ class MDPCapabilityInfo : public android::Singleton <MDPCapabilityInfo>
         *          0 : not supported
         */
         int isUBwcSupportedByMDP() { return isUBwcSupported; }
-        /*
-        * Function to return whether MDP WB block outputs UBWC format
-        *
-        * @return  1 : supported
-        *          0 : not supported
-        */
-        int isWBUBWCSupportedByMDP() { return isWBUBWCSupported; }
 };
 
 #endif /* GR_H_ */

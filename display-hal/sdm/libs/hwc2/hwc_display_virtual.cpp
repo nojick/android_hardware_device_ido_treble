@@ -179,7 +179,6 @@ HWC2::Error HWCDisplayVirtual::SetOutputBuffer(buffer_handle_t buf, int32_t rele
   output_buffer_->acquire_fence_fd = dup(release_fence);
 
   if (output_handle) {
-    output_handle_ = output_handle;
     output_buffer_->buffer_id = reinterpret_cast<uint64_t>(output_handle);
     int output_handle_format = output_handle->format;
 
@@ -203,14 +202,8 @@ HWC2::Error HWCDisplayVirtual::SetOutputBuffer(buffer_handle_t buf, int32_t rele
 
     output_buffer_->width = UINT32(aligned_width);
     output_buffer_->height = UINT32(aligned_height);
-    output_buffer_->unaligned_width = UINT32(output_handle->unaligned_width);
-    output_buffer_->unaligned_height = UINT32(output_handle->unaligned_height);
     output_buffer_->flags.secure = 0;
     output_buffer_->flags.video = 0;
-
-    if (sdm::SetCSC(output_handle, &output_buffer_->color_metadata) != kErrorNone) {
-      return HWC2::Error::BadParameter;
-    }
 
     // TZ Protected Buffer - L1
     if (output_handle->flags & private_handle_t::PRIV_FLAGS_SECURE_BUFFER) {

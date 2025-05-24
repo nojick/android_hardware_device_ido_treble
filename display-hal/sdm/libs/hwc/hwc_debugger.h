@@ -32,11 +32,13 @@
 
 #define ATRACE_TAG (ATRACE_TAG_GRAPHICS | ATRACE_TAG_HAL)
 
-#include <core/sdm_types.h>
-#include <core/debug_interface.h>
+#include <bitset>
+
 #include <log/log.h>
 #include <utils/Trace.h>
-#include <bitset>
+
+#include <core/sdm_types.h>
+#include <core/debug_interface.h>
 
 namespace sdm {
 

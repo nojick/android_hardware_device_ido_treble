@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2014 - 2017, The Linux Foundation. All rights reserved.
+* Copyright (c) 2014 - 2016, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without modification, are permitted
 * provided that the following conditions are met:
@@ -31,23 +31,24 @@
 #include "display_hdmi.h"
 #include "hw_interface.h"
 #include "hw_info_interface.h"
+#include "fb/hw_hdmi.h"
 
 #define __CLASS__ "DisplayHDMI"
 
 namespace sdm {
 
 DisplayHDMI::DisplayHDMI(DisplayEventHandler *event_handler, HWInfoInterface *hw_info_intf,
-                         BufferSyncHandler *buffer_sync_handler, BufferAllocator *buffer_allocator,
-                         CompManager *comp_manager)
-  : DisplayBase(kHDMI, event_handler, kDeviceHDMI, buffer_sync_handler, buffer_allocator,
-                comp_manager, hw_info_intf) {
+                         BufferSyncHandler *buffer_sync_handler, CompManager *comp_manager,
+                         RotatorInterface *rotator_intf)
+  : DisplayBase(kHDMI, event_handler, kDeviceHDMI, buffer_sync_handler, comp_manager,
+                rotator_intf, hw_info_intf) {
 }
 
 DisplayError DisplayHDMI::Init() {
   lock_guard<recursive_mutex> obj(recursive_mutex_);
 
-  DisplayError error = HWInterface::Create(kHDMI, hw_info_intf_, buffer_sync_handler_,
-                                           buffer_allocator_, &hw_intf_);
+  DisplayError error = HWHDMI::Create(&hw_intf_, hw_info_intf_,
+                                      DisplayBase::buffer_sync_handler_);
   if (error != kErrorNone) {
     return error;
   }
@@ -64,12 +65,12 @@ DisplayError DisplayHDMI::Init() {
 
   error = hw_intf_->SetDisplayAttributes(active_mode_index);
   if (error != kErrorNone) {
-    HWInterface::Destroy(hw_intf_);
+    HWHDMI::Destroy(hw_intf_);
   }
 
   error = DisplayBase::Init();
   if (error != kErrorNone) {
-    HWInterface::Destroy(hw_intf_);
+    HWHDMI::Destroy(hw_intf_);
     return error;
   }
 
@@ -87,14 +88,21 @@ DisplayError DisplayHDMI::Init() {
   s3d_format_to_mode_.insert(std::pair<LayerBufferS3DFormat, HWS3DMode>
                             (kS3dFormatFramePacking, kS3DModeFP));
 
-  error = HWEventsInterface::Create(INT(display_type_), this, event_list_, &hw_events_intf_);
+  error = HWEventsInterface::Create(INT(display_type_), this, &event_list_, &hw_events_intf_);
   if (error != kErrorNone) {
     DisplayBase::Deinit();
-    HWInterface::Destroy(hw_intf_);
+    HWHDMI::Destroy(hw_intf_);
     DLOGE("Failed to create hardware events interface. Error = %d", error);
   }
 
-  current_refresh_rate_ = hw_panel_info_.max_fps;
+  return error;
+}
+
+DisplayError DisplayHDMI::Deinit() {
+  lock_guard<recursive_mutex> obj(recursive_mutex_);
+
+  DisplayError error = DisplayBase::Deinit();
+  HWHDMI::Destroy(hw_intf_);
 
   return error;
 }
@@ -116,9 +124,6 @@ DisplayError DisplayHDMI::Prepare(LayerStack *layer_stack) {
 
   SetS3DMode(layer_stack);
 
-  // Clean hw layers for reuse.
-  hw_layers_ = HWLayers();
-
   return DisplayBase::Prepare(layer_stack);
 }
 
@@ -137,22 +142,19 @@ DisplayError DisplayHDMI::GetRefreshRateRange(uint32_t *min_refresh_rate,
   return error;
 }
 
-DisplayError DisplayHDMI::SetRefreshRate(uint32_t refresh_rate, bool final_rate) {
+DisplayError DisplayHDMI::SetRefreshRate(uint32_t refresh_rate) {
   lock_guard<recursive_mutex> obj(recursive_mutex_);
 
   if (!active_) {
     return kErrorPermission;
   }
 
-  if (current_refresh_rate_ != refresh_rate) {
-    DisplayError error = hw_intf_->SetRefreshRate(refresh_rate);
-    if (error != kErrorNone) {
-      return error;
-    }
+  DisplayError error = hw_intf_->SetRefreshRate(refresh_rate);
+  if (error != kErrorNone) {
+    return error;
   }
 
-  current_refresh_rate_ = refresh_rate;
-  return DisplayBase::ReconfigureDisplay();
+  return kErrorNone;
 }
 
 bool DisplayHDMI::IsUnderscanSupported() {
@@ -264,9 +266,9 @@ void DisplayHDMI::SetS3DMode(LayerStack *layer_stack) {
   // 2. Layer stack containing only one secure layer along with one s3d layer
   for (uint32_t i = 0; i < layer_count; i++) {
     Layer *layer = layer_stack->layers.at(i);
-    LayerBuffer &layer_buffer = layer->input_buffer;
+    LayerBuffer *layer_buffer = layer->input_buffer;
 
-    if (layer_buffer.s3d_format != kS3dFormatNone) {
+    if (layer_buffer->s3d_format != kS3dFormatNone) {
       s3d_layer_count++;
       if (s3d_layer_count > 1 || layer->flags.skip) {
         s3d_mode = kS3DModeNone;
@@ -274,11 +276,11 @@ void DisplayHDMI::SetS3DMode(LayerStack *layer_stack) {
       }
 
       std::map<LayerBufferS3DFormat, HWS3DMode>::iterator it =
-                s3d_format_to_mode_.find(layer_buffer.s3d_format);
+                s3d_format_to_mode_.find(layer_buffer->s3d_format);
       if (it != s3d_format_to_mode_.end()) {
         s3d_mode = it->second;
       }
-    } else if (layer_buffer.flags.secure && layer_count > 2) {
+    } else if (layer_buffer->flags.secure && layer_count > 2) {
         s3d_mode = kS3DModeNone;
         break;
     }

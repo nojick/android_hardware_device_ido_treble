@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2014 - 2017, The Linux Foundation. All rights reserved.
+* Copyright (c) 2014 - 2016, 2019, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without modification, are permitted
 * provided that the following conditions are met:
@@ -36,14 +36,11 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
-#include <utility>
 
 #include "layer_stack.h"
 #include "sdm_types.h"
 
 namespace sdm {
-
-typedef std::vector<std::pair<std::string, std::string>> AttrVal;
 
 /*! @brief This enum represents display device types where contents can be rendered.
 
@@ -121,20 +118,6 @@ enum ContentQuality {
   kContentQualityMax,
 };
 
-/*! @brief This enum represents the display port.
-
-  @sa DisplayInterface::GetDisplayPort
-*/
-enum DisplayPort {
-  kPortDefault,
-  kPortDSI,        // Display is connected to DSI port.
-  kPortDTV,        // Display is connected to DTV port
-  kPortWriteBack,  // Display is connected to writeback port
-  kPortLVDS,       // Display is connected to LVDS port
-  kPortEDP,        // Display is connected to EDP port
-  kPortDP,         // Display is connected to DP port.
-};
-
 /*! @brief This structure defines configuration for fixed properties of a display device.
 
   @sa DisplayInterface::GetConfig
@@ -143,11 +126,7 @@ enum DisplayPort {
 struct DisplayConfigFixedInfo {
   bool underscan = false;   //!< If display support CE underscan.
   bool secure = false;      //!< If this display is capable of handling secure content.
-  bool is_cmdmode = false;  //!< If panel is command mode panel.
-  bool hdr_supported = false;  //!< if HDR is enabled
-  uint32_t max_luminance = 0;  //!< From Panel's peak luminance
-  uint32_t average_luminance = 0;  //!< From Panel's average luminance
-  uint32_t min_luminance = 0;  //!< From Panel's blackness level
+  bool partial_update = false;  //!< If display supports Partial Update.
 };
 
 /*! @brief This structure defines configuration for variable properties of a display device.
@@ -408,11 +387,11 @@ class DisplayInterface {
 
   /*! @brief Method to set idle timeout value. Idle fallback is disabled with timeout value 0.
 
-    @param[in] active_ms value in milliseconds.
+    @param[in] timeout value in milliseconds.
 
     @return \link void \endlink
   */
-  virtual void SetIdleTimeoutMs(uint32_t active_ms) = 0;
+  virtual void SetIdleTimeoutMs(uint32_t timeout_ms) = 0;
 
   /*! @brief Method to set maximum number of mixer stages for each display.
 
@@ -455,13 +434,11 @@ class DisplayInterface {
 
   /*! @brief Method to set the refresh rate of a display.
 
-    @param[in] refresh_rate new refresh rate of the display.
-
-    @param[in] final_rate indicates whether refresh rate is final rate or can be changed by sdm
+    @param[in] new refresh rate of the display.
 
     @return \link DisplayError \endlink
   */
-  virtual DisplayError SetRefreshRate(uint32_t refresh_rate, bool final_rate) = 0;
+  virtual DisplayError SetRefreshRate(uint32_t refresh_rate) = 0;
 
   /*! @brief Method to query whether scanning is support for the HDMI display.
 
@@ -476,14 +453,6 @@ class DisplayInterface {
     @return \link DisplayError \endlink
   */
   virtual DisplayError SetPanelBrightness(int level) = 0;
-
-  /*! @brief Method to cache brightness of the primary display.
-
-    @param[in] level the new backlight level.
-
-    @return \link DisplayError \endlink
-  */
-  virtual DisplayError CachePanelBrightness(int level) = 0;
 
   /*! @brief Method to notify display about change in min HDCP encryption level.
 
@@ -523,16 +492,6 @@ class DisplayInterface {
   virtual DisplayError GetColorModes(uint32_t *mode_count,
                                      std::vector<std::string> *color_modes) = 0;
 
-  /*! @brief Method to request the attributes of color mode.
-
-    @param[in] mode name
-    @param[out] vector of mode attributes
-
-    @return \link DisplayError \endlink
-  */
-  virtual DisplayError GetColorModeAttr(const std::string &color_mode,
-                                        AttrVal *attr_map) = 0;
-
   /*! @brief Method to set the color mode
 
     @param[in] mode_name Mode name which needs to be set
@@ -541,13 +500,6 @@ class DisplayInterface {
   */
   virtual DisplayError SetColorMode(const std::string &color_mode) = 0;
 
-  /*! @brief Method to set the color mode by ID. This method is used for debugging only.
-
-  @param[in] mode_name Mode ID which needs to be set
-
-  @return \link DisplayError \endlink
-  */
-  virtual DisplayError SetColorModeById(int32_t color_mode_id) = 0;
   /*! @brief Method to set the color transform
 
     @param[in] length Mode name which needs to be set
@@ -556,14 +508,6 @@ class DisplayInterface {
     @return \link DisplayError \endlink
   */
   virtual DisplayError SetColorTransform(const uint32_t length, const double *color_transform) = 0;
-
-  /*! @brief Method to get the default color mode.
-
-    @param[out] default mode name
-
-    @return \link DisplayError \endlink
-  */
-  virtual DisplayError GetDefaultColorMode(std::string *color_mode) = 0;
 
   /*! @brief Method to request applying default display mode.
 
@@ -629,40 +573,6 @@ class DisplayInterface {
     @return \link DisplayError \endlink
   */
   virtual DisplayError SetDetailEnhancerData(const DisplayDetailEnhancerData &de_data) = 0;
-
-  /*! @brief Method to get display port information.
-
-    @param[out] port \link DisplayPort \endlink
-
-    @return \link DisplayError \endlink
-  */
-  virtual DisplayError GetDisplayPort(DisplayPort *port) = 0;
-
-  /*! @brief Method to query whether it is Primrary device.
-
-    @return true if this interface is primary.
-  */
-  virtual bool IsPrimaryDisplay() = 0;
-
-  /*! @brief Method to toggle composition types handling by SDM.
-
-    @details Client shall call this method to request SDM to enable/disable a specific type of
-    layer composition. If client disables a composition type, SDM will not handle any of the layer
-    composition using the disabled method in a draw cycle. On lack of resources to handle all
-    layers using other enabled composition methods, Prepare() will return an error.
-
-    Request to toggle composition type is applied from subsequent draw cycles.
-
-    Default state of all defined composition types is enabled.
-
-    @param[in] composition_type \link LayerComposition \endlink
-    @param[in] enable \link enable composition type \endlink
-
-    @return \link DisplayError \endlink
-
-    @sa Prepare
-  */
-  virtual DisplayError SetCompositionState(LayerComposition composition_type, bool enable) = 0;
 
  protected:
   virtual ~DisplayInterface() { }

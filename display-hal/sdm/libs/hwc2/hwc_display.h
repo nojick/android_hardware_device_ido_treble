@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016, 2019, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright 2015 The Android Open Source Project
@@ -39,7 +39,6 @@
 namespace sdm {
 
 class BlitEngine;
-class HWCToneMapper;
 
 // Subclasses set this to their type. This has to be different from DisplayType.
 // This is to avoid RTTI and dynamic_cast
@@ -56,11 +55,9 @@ class HWCColorMode {
   ~HWCColorMode() {}
   HWC2::Error Init();
   HWC2::Error DeInit();
-  void Dump(std::ostringstream* os);
   uint32_t GetColorModeCount();
   HWC2::Error GetColorModes(uint32_t *out_num_modes, android_color_mode_t *out_modes);
   HWC2::Error SetColorMode(android_color_mode_t mode);
-  HWC2::Error SetColorModeById(int32_t color_mode_id);
   HWC2::Error SetColorTransform(const float *matrix, android_color_transform_t hint);
 
  private:
@@ -69,25 +66,20 @@ class HWCColorMode {
   HWC2::Error HandleColorModeTransform(android_color_mode_t mode,
                                        android_color_transform_t hint, const double *matrix);
   void PopulateColorModes();
-  void PopulateTransform(const android_color_mode_t &mode,
-                         const std::string &color_mode, const std::string &color_transform);
+  void PopulateTransform(const android_color_mode_t &mode, const std::string &color_mode);
   template <class T>
   void CopyColorTransformMatrix(const T *input_matrix, double *output_matrix) {
     for (uint32_t i = 0; i < kColorTransformMatrixCount; i++) {
       output_matrix[i] = static_cast<double>(input_matrix[i]);
     }
   }
-  HWC2::Error ApplyDefaultColorMode();
 
   DisplayInterface *display_intf_ = NULL;
   android_color_mode_t current_color_mode_ = HAL_COLOR_MODE_NATIVE;
   android_color_transform_t current_color_transform_ = HAL_COLOR_TRANSFORM_IDENTITY;
   typedef std::map<android_color_transform_t, std::string> TransformMap;
   std::map<android_color_mode_t, TransformMap> color_mode_transform_map_ = {};
-  double color_matrix_[kColorTransformMatrixCount] = { 1.0, 0.0, 0.0, 0.0, \
-                                                       0.0, 1.0, 0.0, 0.0, \
-                                                       0.0, 0.0, 1.0, 0.0, \
-                                                       0.0, 0.0, 0.0, 1.0 };
+  double color_matrix_[kColorTransformMatrixCount] = {0};
 };
 
 class HWCDisplay : public DisplayEventHandler {
@@ -127,28 +119,12 @@ class HWCDisplay : public DisplayEventHandler {
   // 0 : Success.
   virtual int GetFrameCaptureStatus() { return -EAGAIN; }
 
-  virtual DisplayError SetDetailEnhancerConfig(const DisplayDetailEnhancerData &de_data) {
-    return kErrorNotSupported;
-  }
-
   // Display Configurations
   virtual int SetActiveDisplayConfig(int config);
   virtual int GetActiveDisplayConfig(uint32_t *config);
   virtual int GetDisplayConfigCount(uint32_t *count);
   virtual int GetDisplayAttributesForConfig(int config,
                                             DisplayConfigVariableInfo *display_attributes);
-  template <typename... Args>
-  int32_t CallLayerFunction(hwc2_layer_t layer, HWC2::Error (HWCLayer::*member)(Args... ),
-                            Args... args) {
-    auto status = HWC2::Error::BadLayer;
-    validated_ = false;
-    auto hwc_layer = GetHWCLayer(layer);
-    if (hwc_layer != nullptr) {
-      status = (hwc_layer->*member)(std::forward<Args>(args)...);
-    }
-
-    return INT32(status);
-  }
 
   int SetPanelBrightness(int level);
   int GetPanelBrightness(int *level);
@@ -170,9 +146,6 @@ class HWCDisplay : public DisplayEventHandler {
   virtual HWC2::Error SetClientTarget(buffer_handle_t target, int32_t acquire_fence,
                                       int32_t dataspace, hwc_region_t damage);
   virtual HWC2::Error SetColorMode(android_color_mode_t mode) {
-    return HWC2::Error::Unsupported;
-  }
-  virtual HWC2::Error SetColorModeById(int32_t color_mode_id) {
     return HWC2::Error::Unsupported;
   }
   virtual HWC2::Error SetColorTransform(const float *matrix, android_color_transform_t hint) {
@@ -205,10 +178,10 @@ class HWCDisplay : public DisplayEventHandler {
   virtual HWC2::Error GetReleaseFences(uint32_t *out_num_elements, hwc2_layer_t *out_layers,
                                        int32_t *out_fences);
   virtual HWC2::Error Present(int32_t *out_retire_fence) = 0;
-  virtual HWC2::Error GetHdrCapabilities(uint32_t *out_num_types, int32_t* out_types,
-                                         float* out_max_luminance,
-                                         float* out_max_average_luminance,
-                                         float* out_min_luminance);
+
+ bool validated_ = false;
+ bool skip_validate_ = false;
+ uint32_t geometry_changes_ = GeometryChanges::kNone;
 
  protected:
   enum DisplayStatus {
@@ -237,16 +210,16 @@ class HWCDisplay : public DisplayEventHandler {
     return kErrorNotSupported;
   }
   LayerBufferFormat GetSDMFormat(const int32_t &source, const int flags);
+  const char *GetHALPixelFormatString(int format);
   const char *GetDisplayString();
   void MarkLayersForGPUBypass(void);
   void MarkLayersForClientComposition(void);
   virtual void ApplyScanAdjustment(hwc_rect_t *display_frame);
   bool SingleLayerUpdating(void);
-  bool IsSurfaceUpdated(const std::vector<LayerRect> &dirty_regions);
-  bool IsLayerUpdating(const Layer *layer);
+  bool IsLayerUpdating(HWCLayer *layer);
   uint32_t SanitizeRefreshRate(uint32_t req_refresh_rate);
   virtual void CloseAcquireFds();
-  virtual void ClearRequestFlags();
+  virtual void GetUnderScanConfig() { }
 
   enum {
     INPUT_LAYER_DUMP,
@@ -290,17 +263,15 @@ class HWCDisplay : public DisplayEventHandler {
   LayerRect solid_fill_rect_ = {};
   uint32_t solid_fill_color_ = 0;
   LayerRect display_rect_;
-  bool validated_ = false;
   bool color_tranform_failed_ = false;
   HWCColorMode *color_mode_ = NULL;
-  HWCToneMapper *tone_mapper_ = nullptr;
-  int disable_hdr_handling_ = 0;  // disables HDR handling.
 
  private:
   void DumpInputBuffers(void);
+  bool CanSkipValidate();
   qService::QService *qservice_ = NULL;
   DisplayClass display_class_;
-  uint32_t geometry_changes_ = GeometryChanges::kNone;
+  bool partial_update_enabled_ = false;
 };
 
 inline int HWCDisplay::Perform(uint32_t operation, ...) {

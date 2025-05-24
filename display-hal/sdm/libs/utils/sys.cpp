@@ -45,7 +45,6 @@ int PthreadCancel(pthread_t /* thread */) {
 
 // Pointer to actual driver interfaces.
 Sys::ioctl Sys::ioctl_ = ::ioctl;
-Sys::access Sys::access_ = ::access;
 Sys::open Sys::open_ = ::open;
 Sys::close Sys::close_ = ::close;
 Sys::poll Sys::poll_ = ::poll;
@@ -71,7 +70,7 @@ bool DynLib::Open(const char *lib_name) {
   Close();
   lib_ = ::dlopen(lib_name, RTLD_NOW);
 
-  return (lib_ != NULL);
+  return (*this);
 }
 
 bool DynLib::Sym(const char *func_name, void **func_ptr) {

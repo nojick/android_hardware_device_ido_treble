@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017, 2019, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright 2015 The Android Open Source Project
@@ -33,45 +33,11 @@ namespace sdm {
 
 std::atomic<hwc2_layer_t> HWCLayer::next_id_(1);
 
-DisplayError SetCSC(const private_handle_t *pvt_handle, ColorMetaData *color_metadata) {
-  if (getMetaData(const_cast<private_handle_t *>(pvt_handle), GET_COLOR_METADATA,
-                  color_metadata) != 0) {
-    ColorSpace_t csc = ITU_R_601;
-    if (getMetaData(const_cast<private_handle_t *>(pvt_handle),  GET_COLOR_SPACE,
-                    &csc) == 0) {
-      if (csc == ITU_R_601_FR || csc == ITU_R_2020_FR) {
-        color_metadata->range = Range_Full;
-      }
-
-      switch (csc) {
-      case ITU_R_601:
-      case ITU_R_601_FR:
-        // video and display driver uses 601_525
-        color_metadata->colorPrimaries = ColorPrimaries_BT601_6_525;
-        break;
-      case ITU_R_709:
-        color_metadata->colorPrimaries = ColorPrimaries_BT709_5;
-        break;
-      case ITU_R_2020:
-      case ITU_R_2020_FR:
-        color_metadata->colorPrimaries = ColorPrimaries_BT2020;
-        break;
-      default:
-        DLOGE("Unsupported CSC: %d", csc);
-        return kErrorNotSupported;
-      }
-    } else {
-      return kErrorNotSupported;
-    }
-  }
-
-  return kErrorNone;
-}
-
 // Layer operations
 HWCLayer::HWCLayer(hwc2_display_t display_id, HWCBufferAllocator *buf_allocator)
   : id_(next_id_++), display_id_(display_id), buffer_allocator_(buf_allocator) {
   layer_ = new Layer();
+  layer_->input_buffer = new LayerBuffer();
   // Fences are deferred, so the first time this layer is presented, return -1
   // TODO(user): Verify that fences are properly obtained on suspend/resume
   release_fences_.push(-1);
@@ -85,6 +51,9 @@ HWCLayer::~HWCLayer() {
   }
   close(ion_fd_);
   if (layer_) {
+    if (layer_->input_buffer) {
+      delete (layer_->input_buffer);
+    }
     delete layer_;
   }
 }
@@ -111,7 +80,7 @@ HWC2::Error HWCLayer::SetLayerBuffer(buffer_handle_t buffer, int32_t acquire_fen
     ion_fd_ = dup(handle->fd);
   }
 
-  LayerBuffer *layer_buffer = &layer_->input_buffer;
+  LayerBuffer *layer_buffer = layer_->input_buffer;
   int aligned_width, aligned_height;
 #ifdef USE_GRALLOC1
   buffer_allocator_->GetCustomWidthAndHeight(handle, &aligned_width, &aligned_height);
@@ -119,52 +88,75 @@ HWC2::Error HWCLayer::SetLayerBuffer(buffer_handle_t buffer, int32_t acquire_fen
   AdrenoMemInfo::getInstance().getAlignedWidthAndHeight(handle, aligned_width, aligned_height);
 #endif
 
+  LayerBufferFormat format = GetSDMFormat(handle->format, handle->flags);
+  if ((format != layer_buffer->format) || (UINT32(aligned_width) != layer_buffer->width) ||
+      (UINT32(aligned_height) != layer_buffer->height)) {
+    // Layer buffer geometry has changed.
+    geometry_changes_ |= kBufferGeometry;
+  }
+
+  layer_buffer->format = format;
   layer_buffer->width = UINT32(aligned_width);
   layer_buffer->height = UINT32(aligned_height);
-  layer_buffer->unaligned_width = UINT32(handle->unaligned_width);
-  layer_buffer->unaligned_height = UINT32(handle->unaligned_height);
 
-  layer_buffer->format = GetSDMFormat(handle->format, handle->flags);
   if (SetMetaData(const_cast<private_handle_t *>(handle), layer_) != kErrorNone) {
     return HWC2::Error::BadLayer;
   }
 
-#ifdef USE_GRALLOC1
-  // TODO(user): Clean this up
-  if (handle->buffer_type == BUFFER_TYPE_VIDEO) {
-#else
-    if (handle->bufferType == BUFFER_TYPE_VIDEO) {
-#endif
-    layer_buffer->flags.video = true;
-  }
+  layer_buffer->flags.video = (handle->buffer_type == BUFFER_TYPE_VIDEO) ? true : false;
+
   // TZ Protected Buffer - L1
-  if (handle->flags & private_handle_t::PRIV_FLAGS_SECURE_BUFFER) {
-    layer_buffer->flags.secure = true;
-    if (handle->flags & private_handle_t::PRIV_FLAGS_CAMERA_WRITE) {
-      layer_buffer->flags.secure_camera = true;
-    }
+  bool secure = (handle->flags & private_handle_t::PRIV_FLAGS_SECURE_BUFFER);
+  bool secure_display = (handle->flags & private_handle_t::PRIV_FLAGS_SECURE_DISPLAY);
+  if (secure != layer_buffer->flags.secure ||
+      secure_display != layer_buffer->flags.secure_display) {
+    // Secure attribute of layer buffer has changed.
+    needs_validate_ = true;
   }
-  if (handle->flags & private_handle_t::PRIV_FLAGS_SECURE_DISPLAY) {
-    layer_buffer->flags.secure_display = true;
-  }
+
+  layer_buffer->flags.secure = secure;
+//  layer_buffer->flags.secure_camera = secure_camera;
+  layer_buffer->flags.secure_display = secure_display;
 
   layer_buffer->planes[0].fd = ion_fd_;
   layer_buffer->planes[0].offset = handle->offset;
   layer_buffer->planes[0].stride = UINT32(handle->width);
   layer_buffer->acquire_fence_fd = acquire_fence;
-  layer_buffer->size = handle->size;
   layer_buffer->buffer_id = reinterpret_cast<uint64_t>(handle);
 
   return HWC2::Error::None;
 }
 
 HWC2::Error HWCLayer::SetLayerSurfaceDamage(hwc_region_t damage) {
-  layer_->dirty_regions.clear();
-  for (uint32_t i = 0; i < damage.numRects; i++) {
-    LayerRect rect;
-    SetRect(damage.rects[i], &rect);
-    layer_->dirty_regions.push_back(rect);
+  surface_updated_ = true;
+  if ((damage.numRects == 1) && (damage.rects[0].bottom == 0) && (damage.rects[0].right == 0)) {
+    surface_updated_ = false;
   }
+
+  if (!layer_->flags.updating && surface_updated_) {
+    needs_validate_ = true;
+  }
+
+  if (!partial_update_enabled_) {
+    SetDirtyRegions(damage);
+    return HWC2::Error::None;
+  }
+
+  // Check if there is an update in SurfaceDamage rects.
+  if (layer_->dirty_regions.size() != damage.numRects) {
+    needs_validate_ = true;
+  } else {
+    for (uint32_t j = 0; j < damage.numRects; j++) {
+      LayerRect damage_rect;
+      SetRect(damage.rects[j], &damage_rect);
+      if (damage_rect != layer_->dirty_regions.at(j)) {
+        needs_validate_ = true;
+        break;
+      }
+    }
+  }
+
+  SetDirtyRegions(damage);
   return HWC2::Error::None;
 }
 
@@ -193,13 +185,17 @@ HWC2::Error HWCLayer::SetLayerBlendMode(HWC2::BlendMode mode) {
 
 HWC2::Error HWCLayer::SetLayerColor(hwc_color_t color) {
   layer_->solid_fill_color = GetUint32Color(color);
-  layer_->input_buffer.format = kFormatARGB8888;
+  layer_->input_buffer->format = kFormatARGB8888;
   DLOGV_IF(kTagCompManager, "[%" PRIu64 "][%" PRIu64 "] Layer color set to %x", display_id_, id_,
            layer_->solid_fill_color);
   return HWC2::Error::None;
 }
 
 HWC2::Error HWCLayer::SetLayerCompositionType(HWC2::Composition type) {
+  // Validation is required when the client changes the composition type
+  if (client_requested_ != type) {
+    needs_validate_ = true;
+  }
   client_requested_ = type;
   switch (type) {
     case HWC2::Composition::Client:
@@ -221,56 +217,21 @@ HWC2::Error HWCLayer::SetLayerCompositionType(HWC2::Composition type) {
 }
 
 HWC2::Error HWCLayer::SetLayerDataspace(int32_t dataspace) {
-  // Map deprecated dataspace values to appropriate
-  // new enums
-  if (dataspace & 0xffff) {
-    switch (dataspace & 0xffff) {
-      case HAL_DATASPACE_SRGB:
-        dataspace = HAL_DATASPACE_V0_SRGB;
-        break;
-      case HAL_DATASPACE_JFIF:
-        dataspace = HAL_DATASPACE_V0_JFIF;
-        break;
-      case HAL_DATASPACE_SRGB_LINEAR:
-        dataspace = HAL_DATASPACE_V0_SRGB_LINEAR;
-        break;
-      case HAL_DATASPACE_BT601_625:
-        dataspace = HAL_DATASPACE_V0_BT601_625;
-        break;
-      case HAL_DATASPACE_BT601_525:
-        dataspace = HAL_DATASPACE_V0_BT601_525;
-        break;
-      case HAL_DATASPACE_BT709:
-        dataspace = HAL_DATASPACE_V0_BT709;
-        break;
-      default:
-        // unknown legacy dataspace
-        DLOGW_IF(kTagQDCM, "Unsupported dataspace type %d", dataspace);
-    }
-  }
-
-  if (dataspace_ != dataspace) {
-    geometry_changes_ |= kDataspace;
+  if (dataspace != dataspace_) {
     dataspace_ = dataspace;
+    geometry_changes_ |= kDataspace;
   }
   return HWC2::Error::None;
 }
 
 HWC2::Error HWCLayer::SetLayerDisplayFrame(hwc_rect_t frame) {
   LayerRect dst_rect = {};
-
   SetRect(frame, &dst_rect);
-  if (dst_rect_ != dst_rect) {
+  if (layer_->dst_rect != dst_rect) {
     geometry_changes_ |= kDisplayFrame;
-    dst_rect_ = dst_rect;
+    layer_->dst_rect = dst_rect;
   }
-
   return HWC2::Error::None;
-}
-
-void HWCLayer::ResetPerFrameData() {
-  layer_->dst_rect = dst_rect_;
-  layer_->transform = layer_transform_;
 }
 
 HWC2::Error HWCLayer::SetLayerPlaneAlpha(float alpha) {
@@ -329,11 +290,10 @@ HWC2::Error HWCLayer::SetLayerTransform(HWC2::Transform transform) {
       break;
   }
 
-  if (layer_transform_ != layer_transform) {
+  if (layer_->transform != layer_transform) {
     geometry_changes_ |= kTransform;
-    layer_transform_ = layer_transform;
+    layer_->transform = layer_transform;
   }
-
   return HWC2::Error::None;
 }
 
@@ -399,11 +359,11 @@ LayerBufferFormat HWCLayer::GetSDMFormat(const int32_t &source, const int flags)
       case HAL_PIXEL_FORMAT_NV12_ENCODEABLE:
         format = kFormatYCbCr420SPVenusUbwc;
         break;
-      case HAL_PIXEL_FORMAT_YCbCr_420_TP10_UBWC:
-        format = kFormatYCbCr420TP10Ubwc;
+      case HAL_PIXEL_FORMAT_RGBA_1010102:
+        format = kFormatRGBA1010102Ubwc;
         break;
-      case HAL_PIXEL_FORMAT_YCbCr_420_P010_UBWC:
-        format = kFormatYCbCr420P010Ubwc;
+      case HAL_PIXEL_FORMAT_RGBX_1010102:
+        format = kFormatRGBX1010102Ubwc;
         break;
       default:
         DLOGE("Unsupported format type for UBWC %d", source);
@@ -433,9 +393,6 @@ LayerBufferFormat HWCLayer::GetSDMFormat(const int32_t &source, const int flags)
       break;
     case HAL_PIXEL_FORMAT_RGB_888:
       format = kFormatRGB888;
-      break;
-    case HAL_PIXEL_FORMAT_BGR_888:
-      format = kFormatBGR888;
       break;
     case HAL_PIXEL_FORMAT_RGB_565:
       format = kFormatRGB565;
@@ -468,9 +425,6 @@ LayerBufferFormat HWCLayer::GetSDMFormat(const int32_t &source, const int flags)
     case HAL_PIXEL_FORMAT_YCbCr_422_I:
       format = kFormatYCbCr422H2V1Packed;
       break;
-    case HAL_PIXEL_FORMAT_CbYCrY_422_I:
-      format = kFormatCbYCrY422H2V1Packed;
-      break;
     case HAL_PIXEL_FORMAT_RGBA_1010102:
       format = kFormatRGBA1010102;
       break;
@@ -500,9 +454,6 @@ LayerBufferFormat HWCLayer::GetSDMFormat(const int32_t &source, const int flags)
       break;
     case HAL_PIXEL_FORMAT_YCbCr_420_TP10_UBWC:
       format = kFormatYCbCr420TP10Ubwc;
-      break;
-    case HAL_PIXEL_FORMAT_YCbCr_420_P010_UBWC:
-      format = kFormatYCbCr420P010Ubwc;
       break;
     default:
       DLOGW("Unsupported format type = %d", source);
@@ -534,36 +485,49 @@ LayerBufferS3DFormat HWCLayer::GetS3DFormat(uint32_t s3d_format) {
 }
 
 DisplayError HWCLayer::SetMetaData(const private_handle_t *pvt_handle, Layer *layer) {
-  LayerBuffer *layer_buffer = &layer->input_buffer;
-  bool use_color_metadata = true;
+  LayerBuffer *layer_buffer = layer->input_buffer;
+  private_handle_t *handle = const_cast<private_handle_t *>(pvt_handle);
 
-#ifdef FEATURE_WIDE_COLOR
-  // Only use color metadata if Android framework metadata is not set
-  use_color_metadata = (dataspace_ == HAL_DATASPACE_UNKNOWN);
+  BufferDim_t  buffer_dim = {};
+  buffer_dim.sliceWidth = pvt_handle->width;
+  buffer_dim.sliceHeight = pvt_handle->height;
+  if (getMetaData(handle, GET_BUFFER_GEOMETRY, &buffer_dim) == 0) {
+#ifdef USE_GRALLOC1
+    buffer_allocator_->GetCustomWidthAndHeight(pvt_handle, &buffer_dim.sliceWidth,
+                                               &buffer_dim.sliceHeight);
+#else
+    AdrenoMemInfo::getInstance().getAlignedWidthAndHeight(handle, &buffer_dim.sliceWidth,
+                                                          &buffer_dim.sliceHeight);
 #endif
+    layer_buffer->width = UINT32(buffer_dim.sliceWidth);
+    layer_buffer->height = UINT32(buffer_dim.sliceHeight);
+  }
 
-  if (use_color_metadata) {
-    if (sdm::SetCSC(pvt_handle, &layer_buffer->color_metadata) != kErrorNone) {
+  ColorSpace_t csc = ITU_R_601;
+  if (getMetaData(const_cast<private_handle_t *>(pvt_handle), GET_COLOR_SPACE, &csc) == 0) {
+    if (SetCSC(csc, &layer_buffer->csc) != kErrorNone) {
       return kErrorNotSupported;
     }
   }
 
-  private_handle_t *handle = const_cast<private_handle_t *>(pvt_handle);
   IGC_t igc = {};
+  LayerIGC layer_igc = layer_buffer->igc;
   if (getMetaData(handle, GET_IGC, &igc) == 0) {
-    if (SetIGC(igc, &layer_buffer->igc) != kErrorNone) {
+    if (SetIGC(igc, &layer_igc) != kErrorNone) {
       return kErrorNotSupported;
     }
   }
 
   uint32_t fps = 0;
-  if (getMetaData(handle, GET_REFRESH_RATE  , &fps) == 0) {
-    layer->frame_rate = RoundToStandardFPS(fps);
+  uint32_t frame_rate = layer->frame_rate;
+  if (getMetaData(handle, GET_REFRESH_RATE, &fps) == 0) {
+    frame_rate = RoundToStandardFPS(fps);
   }
 
   int32_t interlaced = 0;
+  bool interlace = layer_buffer->flags.interlace;
   if (getMetaData(handle, GET_PP_PARAM_INTERLACED, &interlaced) == 0) {
-    layer_buffer->flags.interlace = interlaced ? true : false;
+    interlace = interlaced ? true : false;
   }
 
   uint32_t linear_format = 0;
@@ -572,8 +536,38 @@ DisplayError HWCLayer::SetMetaData(const private_handle_t *pvt_handle, Layer *la
   }
 
   uint32_t s3d = 0;
+  LayerBufferS3DFormat s3d_format = layer_buffer->s3d_format;
   if (getMetaData(handle, GET_S3D_FORMAT, &s3d) == 0) {
-    layer_buffer->s3d_format = GetS3DFormat(s3d);
+    s3d_format = GetS3DFormat(s3d);
+  }
+
+  if ((layer_igc != layer_buffer->igc) || (interlace != layer_buffer->flags.interlace) ||
+      (frame_rate != layer->frame_rate) || (s3d_format != layer_buffer->s3d_format)) {
+    // Layer buffer metadata has changed.
+    needs_validate_ = true;
+    layer_buffer->igc = layer_igc;
+    layer->frame_rate = frame_rate;
+    layer_buffer->s3d_format = s3d_format;
+    layer_buffer->flags.interlace = interlace;
+  }
+
+  return kErrorNone;
+}
+
+DisplayError HWCLayer::SetCSC(ColorSpace_t source, LayerCSC *target) {
+  switch (source) {
+    case ITU_R_601:
+      *target = kCSCLimitedRange601;
+      break;
+    case ITU_R_601_FR:
+      *target = kCSCFullRange601;
+      break;
+    case ITU_R_709:
+      *target = kCSCLimitedRange709;
+      break;
+    default:
+      DLOGE("Unsupported CSC: %d", source);
+      return kErrorNotSupported;
   }
 
   return kErrorNone;
@@ -594,98 +588,6 @@ DisplayError HWCLayer::SetIGC(IGC_t source, LayerIGC *target) {
 
   return kErrorNone;
 }
-
-
-
-bool HWCLayer::SupportLocalConversion(ColorPrimaries working_primaries) {
-  if (layer_->input_buffer.color_metadata.colorPrimaries <= ColorPrimaries_BT601_6_525 &&
-      working_primaries <= ColorPrimaries_BT601_6_525) {
-    return true;
-  }
-  return false;
-}
-
-bool HWCLayer::SupportedDataspace() {
-  if (dataspace_ == HAL_DATASPACE_UNKNOWN) {
-    // Pick values from metadata
-    return true;
-  }
-
-  LayerBuffer *layer_buffer = &layer_->input_buffer;
-
-  GammaTransfer sdm_transfer = {};
-  ColorPrimaries sdm_primaries = {};
-  ColorRange sdm_range = {};
-
-  auto transfer = dataspace_ & HAL_DATASPACE_TRANSFER_MASK;
-  // Handle transfer
-  switch (transfer) {
-    case HAL_DATASPACE_TRANSFER_SRGB:
-      sdm_transfer = Transfer_sRGB;
-      break;
-    case HAL_DATASPACE_TRANSFER_SMPTE_170M:
-      sdm_transfer = Transfer_SMPTE_170M;
-      break;
-    case HAL_DATASPACE_TRANSFER_ST2084:
-      sdm_transfer = Transfer_SMPTE_ST2084;
-      break;
-    case HAL_DATASPACE_TRANSFER_HLG:
-      sdm_transfer = Transfer_HLG;
-      break;
-    case HAL_DATASPACE_TRANSFER_LINEAR:
-      sdm_transfer = Transfer_Linear;
-      break;
-    case HAL_DATASPACE_TRANSFER_GAMMA2_2:
-      sdm_transfer = Transfer_Gamma2_2;
-      break;
-    default:
-      return false;
-  }
-
-  // Handle standard
-  auto standard = dataspace_ & HAL_DATASPACE_STANDARD_MASK;
-  switch (standard) {
-    case  HAL_DATASPACE_STANDARD_BT709:
-      sdm_primaries = ColorPrimaries_BT709_5;
-      break;
-    case HAL_DATASPACE_STANDARD_BT601_525:
-    case HAL_DATASPACE_STANDARD_BT601_525_UNADJUSTED:
-      sdm_primaries = ColorPrimaries_BT601_6_525;
-      break;
-    case HAL_DATASPACE_STANDARD_BT601_625:
-    case HAL_DATASPACE_STANDARD_BT601_625_UNADJUSTED:
-      sdm_primaries = ColorPrimaries_BT601_6_625;
-      break;
-    case HAL_DATASPACE_STANDARD_DCI_P3:
-      sdm_primaries = ColorPrimaries_DCIP3;
-      break;
-    case HAL_DATASPACE_STANDARD_BT2020:
-      sdm_primaries = ColorPrimaries_BT2020;
-      break;
-    default:
-      return false;
-  }
-  // TODO(user): Check transfer + primary combination
-
-  // Handle range
-  auto range = dataspace_ & HAL_DATASPACE_RANGE_MASK;
-  switch (range) {
-    case HAL_DATASPACE_RANGE_FULL:
-      sdm_range = Range_Full;
-      break;
-    case HAL_DATASPACE_RANGE_LIMITED:
-    default:
-      sdm_range = Range_Limited;
-      break;
-  }
-
-  // If we got here, the value is supported, update the layer
-  layer_buffer->color_metadata.transfer = sdm_transfer;
-  layer_buffer->color_metadata.colorPrimaries = sdm_primaries;
-  layer_buffer->color_metadata.range = sdm_range;
-  return true;
-}
-
 
 uint32_t HWCLayer::RoundToStandardFPS(float fps) {
   static const uint32_t standard_fps[4] = {24, 30, 48, 60};
@@ -709,7 +611,7 @@ void HWCLayer::SetComposition(const LayerComposition &sdm_composition) {
     case kCompositionGPU:
       hwc_composition = HWC2::Composition::Client;
       break;
-    case kCompositionCursor:
+    case kCompositionHWCursor:
       hwc_composition = HWC2::Composition::Cursor;
       break;
     default:
@@ -733,6 +635,15 @@ int32_t HWCLayer::PopReleaseFence(void) {
   auto fence = release_fences_.front();
   release_fences_.pop();
   return fence;
+}
+
+void HWCLayer::SetDirtyRegions(hwc_region_t surface_damage) {
+  layer_->dirty_regions.clear();
+  for (uint32_t i = 0; i < surface_damage.numRects; i++) {
+    LayerRect rect;
+    SetRect(surface_damage.rects[i], &rect);
+    layer_->dirty_regions.push_back(rect);
+  }
 }
 
 }  // namespace sdm

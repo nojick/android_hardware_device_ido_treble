@@ -29,15 +29,20 @@
 
 #define DEBUG 0
 #define ATRACE_TAG (ATRACE_TAG_GRAPHICS | ATRACE_TAG_HAL)
+
+#include <errno.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
-#include <string.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <log/log.h>
-#include <errno.h>
-#include <utils/Trace.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include <cutils/trace.h>
+#include <log/log.h>
+#include <utils/Trace.h>
+
 #include "gralloc_priv.h"
 #include "ionalloc.h"
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright 2015 The Android Open Source Project
@@ -30,7 +30,6 @@
 #include "hwc_display_external.h"
 #include "hwc_display_virtual.h"
 #include "hwc_color_manager.h"
-#include "hwc_socket_handler.h"
 
 namespace sdm {
 
@@ -54,7 +53,7 @@ class HWCSession : hwc2_device_t, public qClient::BnQClient {
 
     HWCSession *hwc_session = static_cast<HWCSession *>(device);
     auto status = HWC2::Error::BadDisplay;
-    if (hwc_session->hwc_display_[display]) {
+    if (display < HWC_NUM_DISPLAY_TYPES && hwc_session->hwc_display_[display]) {
       auto hwc_display = hwc_session->hwc_display_[display];
       status = (hwc_display->*member)(std::forward<Args>(args)...);
     }
@@ -70,11 +69,18 @@ class HWCSession : hwc2_device_t, public qClient::BnQClient {
     }
 
     HWCSession *hwc_session = static_cast<HWCSession *>(device);
-    int32_t status = INT32(HWC2::Error::BadDisplay);
-    if (hwc_session->hwc_display_[display]) {
-      status = hwc_session->hwc_display_[display]->CallLayerFunction(layer, member, args...);
+    auto status = HWC2::Error::BadDisplay;
+    if (display < HWC_NUM_DISPLAY_TYPES && hwc_session->hwc_display_[display]) {
+      status = HWC2::Error::BadLayer;
+      auto hwc_layer = hwc_session->hwc_display_[display]->GetHWCLayer(layer);
+      if (hwc_layer != nullptr) {
+        status = (hwc_layer->*member)(std::forward<Args>(args)...);
+        if (hwc_session->hwc_display_[display]->geometry_changes_) {
+          hwc_session->hwc_display_[display]->validated_ = false;
+        }
+      }
     }
-    return status;
+    return INT32(status);
   }
 
   // HWC2 Functions that require a concrete implementation in hwc session
@@ -103,6 +109,8 @@ class HWCSession : hwc2_device_t, public qClient::BnQClient {
                               int32_t /*android_color_mode_t*/ int_mode);
   static int32_t SetColorTransform(hwc2_device_t *device, hwc2_display_t display,
                                    const float *matrix, int32_t /*android_color_transform_t*/ hint);
+  static int32_t GetDozeSupport(hwc2_device_t *device, hwc2_display_t display,
+                                int32_t *outSupported);
 
  private:
   static const int kExternalConnectionTimeoutMs = 500;
@@ -166,8 +174,6 @@ class HWCSession : hwc2_device_t, public qClient::BnQClient {
 
   android::status_t SetColorModeOverride(const android::Parcel *input_parcel);
 
-  android::status_t SetColorModeById(const android::Parcel *input_parcel);
-
   static Locker locker_;
   CoreInterface *core_intf_ = NULL;
   HWCDisplay *hwc_display_[HWC_NUM_DISPLAY_TYPES] = {NULL};
@@ -185,7 +191,6 @@ class HWCSession : hwc2_device_t, public qClient::BnQClient {
   bool need_invalidate_ = false;
   int bw_mode_release_fd_ = -1;
   qService::QService *qservice_ = NULL;
-  HWCSocketHandler socket_handler_;
 };
 
 }  // namespace sdm
