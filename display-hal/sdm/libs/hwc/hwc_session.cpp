@@ -33,7 +33,7 @@
 #include <utils/constants.h>
 #include <utils/String16.h>
 #include <cutils/properties.h>
-#include <hardware_legacy/uevent.h>
+#include "android/uevent.h"
 #include <sys/resource.h>
 #include <sys/prctl.h>
 #include <binder/Parcel.h>

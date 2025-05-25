@@ -1,4 +1,3 @@
-#Common headers
 display_top := $(call my-dir)
 
 use_hwc2 := false
@@ -6,12 +5,9 @@ ifeq ($(TARGET_USES_HWC2), true)
     use_hwc2 := true
 endif
 
-common_includes := $(display_top)/libqdutils
-common_includes += $(display_top)/libqservice
-common_includes += $(display_top)/libcopybit
-common_includes += $(display_top)/sdm/include
-
-common_header_export_path := qcom/display
+ifeq ($(TARGET_USES_POST_PROCESSING),true)
+    common_flags     += -DUSES_POST_PROCESSING
+endif
 
 #Common libraries external to display HAL
 common_libs := liblog libutils libcutils libhardware

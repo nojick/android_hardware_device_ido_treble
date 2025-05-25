@@ -5,10 +5,8 @@ include $(CLEAR_VARS)
 LOCAL_MODULE                  := libqservice
 LOCAL_VENDOR_MODULE      := true
 LOCAL_MODULE_TAGS             := optional
-LOCAL_C_INCLUDES              := $(common_includes) $(kernel_includes)
+LOCAL_HEADER_LIBRARIES        := display_headers generated_kernel_headers libcutils_headers libbinder_headers1
 LOCAL_SHARED_LIBRARIES        := $(common_libs) libbinder_vendor
-LOCAL_EXPORT_SHARED_LIBRARY_HEADERS := libbinder
-LOCAL_HEADER_LIBRARIES        := libcutils_headers
 LOCAL_CFLAGS                  := $(common_flags) -DLOG_TAG=\"qdqservice\" -Wno-sign-conversion
 LOCAL_CFLAGS                  += -Wno-error
 LOCAL_CLANG                   := true
