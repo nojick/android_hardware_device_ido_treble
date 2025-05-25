@@ -27,8 +27,10 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define DEBUG 0
+#define ATRACE_TAG (ATRACE_TAG_GRAPHICS | ATRACE_TAG_HAL)
 #include <cutils/log.h>
+#include <utils/Trace.h>
+#include <cutils/trace.h>
 #include <sync/sync.h>
 #include <algorithm>
 #include <sstream>
@@ -166,12 +168,6 @@ gralloc1_function_pointer_t GrallocImpl::GetFunction(gralloc1_device_t *device, 
       return reinterpret_cast<gralloc1_function_pointer_t>(UnlockBuffer);
     case GRALLOC1_FUNCTION_PERFORM:
       return reinterpret_cast<gralloc1_function_pointer_t>(Gralloc1Perform);
-    case GRALLOC1_FUNCTION_VALIDATE_BUFFER_SIZE:
-      return reinterpret_cast<gralloc1_function_pointer_t>(validateBufferSize);
-    case GRALLOC1_FUNCTION_GET_TRANSPORT_SIZE:
-      return reinterpret_cast<gralloc1_function_pointer_t>(getTransportSize);
-    case GRALLOC1_FUNCTION_IMPORT_BUFFER:
-      return reinterpret_cast<gralloc1_function_pointer_t>(importBuffer);
     default:
       ALOGE("%s:Gralloc Error. Client Requested for unsupported function", __FUNCTION__);
       return NULL;
@@ -181,13 +177,25 @@ gralloc1_function_pointer_t GrallocImpl::GetFunction(gralloc1_device_t *device, 
 }
 
 gralloc1_error_t GrallocImpl::Dump(gralloc1_device_t *device, uint32_t *out_size,
-                                   char *out_buffer __unused) {
+                                   char *out_buffer) {
   if (!device) {
     ALOGE("Gralloc Error : device=%p", (void *)device);
     return GRALLOC1_ERROR_BAD_DESCRIPTOR;
   }
-  // nothing to dump
-  *out_size = 0;
+  const size_t max_dump_size = 8192;
+  if (out_buffer == nullptr) {
+    *out_size = max_dump_size;
+  } else {
+    std::ostringstream os;
+    os << "-------------------------------" << std::endl;
+    os << "QTI gralloc dump:" << std::endl;
+    os << "-------------------------------" << std::endl;
+    GrallocImpl const *dev = GRALLOC_IMPL(device);
+    dev->buf_mgr_->Dump(&os);
+    os << "-------------------------------" << std::endl;
+    auto copied = os.str().copy(out_buffer, std::min(os.str().size(), max_dump_size), 0);
+    *out_size = UINT(copied);
+  }
 
   return GRALLOC1_ERROR_NONE;
 }
@@ -416,6 +424,7 @@ gralloc1_error_t GrallocImpl::LockBuffer(gralloc1_device_t *device, buffer_handl
                                          gralloc1_consumer_usage_t cons_usage,
                                          const gralloc1_rect_t *region, void **out_data,
                                          int32_t acquire_fence) {
+  ATRACE_CALL();
   gralloc1_error_t status = CheckDeviceAndHandle(device, buffer);
   if (status != GRALLOC1_ERROR_NONE) {
     CloseFdIfValid(acquire_fence);
@@ -423,7 +432,9 @@ gralloc1_error_t GrallocImpl::LockBuffer(gralloc1_device_t *device, buffer_handl
   }
 
   if (acquire_fence > 0) {
+    ATRACE_BEGIN("fence wait");
     int error = sync_wait(acquire_fence, 1000);
+    ATRACE_END();
     CloseFdIfValid(acquire_fence);
     if (error < 0) {
       ALOGE("%s: sync_wait timedout! error = %s", __FUNCTION__, strerror(errno));
@@ -497,78 +508,6 @@ gralloc1_error_t GrallocImpl::Gralloc1Perform(gralloc1_device_t *device, int ope
   va_end(args);
 
   return err;
-}
-
-gralloc1_error_t GrallocImpl::validateBufferSize(gralloc1_device_t *device,
-                                                 buffer_handle_t buffer,
-                                                 const gralloc1_buffer_descriptor_info_t *info,
-                                                 uint32_t /* stride */) {
-  GrallocImpl const *dev = GRALLOC_IMPL(device);
-  auto hnd = static_cast<private_handle_t *>(const_cast<native_handle_t *>(buffer));
-  if (dev != NULL && buffer != NULL && private_handle_t::validate(hnd) == 0) {
-    if (dev->buf_mgr_->IsBufferImported(hnd) != GRALLOC1_ERROR_NONE) {
-      return GRALLOC1_ERROR_BAD_HANDLE;
-    }
-    BufferDescriptor descriptor(static_cast<int>(info->width), 
-                                static_cast<int>(info->height), info->format);
-    gralloc1_producer_usage_t prod_usage = static_cast<gralloc1_producer_usage_t >
-                                                       (info->producerUsage);
-
-    gralloc1_consumer_usage_t con_usage = static_cast<gralloc1_consumer_usage_t >
-                                                       (info->consumerUsage);
-    descriptor.SetProducerUsage(prod_usage);
-    descriptor.SetConsumerUsage(con_usage);
-    descriptor.SetLayerCount(info->layerCount);
-
-    return dev->buf_mgr_->ValidateBufferSize(hnd, descriptor);
-  }
-  return GRALLOC1_ERROR_BAD_HANDLE;
-}
-
-gralloc1_error_t GrallocImpl::getTransportSize(gralloc1_device_t* /* device */,
-                                               buffer_handle_t buffer,
-                                               uint32_t *out_num_fds, uint32_t *out_num_ints) {
-  auto err = GRALLOC1_ERROR_BAD_HANDLE;
-  auto hnd = static_cast<private_handle_t *>(const_cast<native_handle_t *>(buffer));
-  if (buffer != NULL && private_handle_t::validate(hnd) == 0) {
-    *out_num_fds = 2; // Verify
-    *out_num_ints = static_cast<uint32_t >(hnd->numInts);
-    err = GRALLOC1_ERROR_NONE;
-  }
-  ALOGD_IF(DEBUG, "GetTransportSize: num fds: %d num ints: %d err:%d",
-        *out_num_fds, *out_num_ints, err);
-  return err;
-}
-
-gralloc1_error_t GrallocImpl::importBuffer(gralloc1_device_t *device, const buffer_handle_t raw_handle,
-                                           buffer_handle_t *out_handle) {
-  if (!raw_handle) {
-    ALOGE("%s: handle is NULL", __FUNCTION__);
-    *out_handle = NULL;
-    return GRALLOC1_ERROR_BAD_HANDLE;
-  }
-
-  native_handle_t *buffer_handle = native_handle_clone(raw_handle);
-  if (!buffer_handle) {
-    ALOGE("%s: Unable to clone handle", __FUNCTION__);
-    *out_handle = NULL;
-    return GRALLOC1_ERROR_NO_RESOURCES;
-  }
-
-  GrallocImpl const *dev = GRALLOC_IMPL(device);
-  auto error = dev->buf_mgr_->RetainBuffer(PRIV_HANDLE_CONST(buffer_handle));
-  if (error != GRALLOC1_ERROR_NONE) {
-    ALOGE("%s: Unable to retain handle: %p", __FUNCTION__, buffer_handle);
-    native_handle_close(buffer_handle);
-    native_handle_delete(buffer_handle);
-    *out_handle = NULL;
-    return error;
-  }
-  ALOGD_IF(DEBUG, "Imported handle: %p id: %" PRIu64, buffer_handle,
-        PRIV_HANDLE_CONST(buffer_handle)->id);
-
-  *out_handle = buffer_handle;
-  return GRALLOC1_ERROR_NONE;
 }
 
 }  // namespace gralloc1

@@ -3,21 +3,22 @@ include $(LOCAL_PATH)/../common.mk
 include $(CLEAR_VARS)
 
 LOCAL_MODULE                  := libqservice
-LOCAL_VENDOR_MODULE      := true
+LOCAL_VENDOR_MODULE           := true
 LOCAL_MODULE_TAGS             := optional
 LOCAL_C_INCLUDES              := $(common_includes) $(kernel_includes)
 LOCAL_SHARED_LIBRARIES        := $(common_libs) libbinder_vendor
-LOCAL_EXPORT_SHARED_LIBRARY_HEADERS := libbinder
-LOCAL_HEADER_LIBRARIES        := libcutils_headers
 LOCAL_CFLAGS                  := $(common_flags) -DLOG_TAG=\"qdqservice\" -Wno-sign-conversion
-LOCAL_CFLAGS                  += -Wno-error
-LOCAL_CLANG                   := true
 LOCAL_ADDITIONAL_DEPENDENCIES := $(common_deps)
 LOCAL_SRC_FILES               := QService.cpp \
                                  IQService.cpp \
                                  IQClient.cpp \
                                  IQHDMIClient.cpp
-LOCAL_EXPORT_C_INCLUDE_DIRS   := $(LOCAL_PATH)
+LOCAL_COPY_HEADERS_TO         := $(common_header_export_path)
+LOCAL_COPY_HEADERS            := IQService.h \
+                                 IQClient.h \
+                                 QService.h \
+                                 QServiceUtils.h \
+                                 IQHDMIClient.h
 
 
 include $(BUILD_SHARED_LIBRARY)

@@ -4,22 +4,20 @@ include $(LOCAL_PATH)/../../../common.mk
 ifeq ($(use_hwc2),false)
 
 LOCAL_MODULE                  := hwcomposer.$(TARGET_BOARD_PLATFORM)
+LOCAL_VENDOR_MODULE           := true
 LOCAL_MODULE_RELATIVE_PATH    := hw
-LOCAL_VENDOR_MODULE      := true
 LOCAL_MODULE_TAGS             := optional
 LOCAL_C_INCLUDES              := $(common_includes)
+LOCAL_HEADER_LIBRARIES        := display_headers libhardware_headers libhardware_legacy_headers libui_v_headers
 
-LOCAL_CFLAGS                  := -Wno-missing-field-initializers -Wno-unused-parameter \
-                                 -std=c++11 -fcolor-diagnostics\
-                                 -DLOG_TAG=\"SDM\" $(common_flags)
+LOCAL_CFLAGS                  := $(common_flags) -Wno-missing-field-initializers -Wno-unused-parameter \
+                                 -std=c++11 -fcolor-diagnostics -Wno-sign-conversion -DLOG_TAG=\"SDM\" -Wno-shorten-64-to-32
 LOCAL_CLANG                   := true
 
-LOCAL_SHARED_LIBRARIES        := libsdmcore libqservice libbinder libhardware libhardware_legacy \
-                                 libutils liblog libcutils libsync libmemalloc libqdutils libdl \
-                                 libsdmutils libc++
-
-# Allow implicit fallthroughs in hwc_display.cpp until they are fixed.
-LOCAL_CFLAGS                  += -Wno-error=implicit-fallthrough
+LOCAL_SHARED_LIBRARIES        := libsdmcore libqservice libbinder libhardware \
+                                 libutils libcutils libsync libmemalloc libqdutils libdl \
+                                 libsdmutils libgpu_tonemapper  libc++ liblog \
+                                 libdrmutils libui_v
 
 LOCAL_SRC_FILES               := hwc_session.cpp \
                                  hwc_display.cpp \
@@ -32,7 +30,11 @@ LOCAL_SRC_FILES               := hwc_session.cpp \
                                  hwc_buffer_sync_handler.cpp \
                                  hwc_color_manager.cpp \
                                  blit_engine_c2d.cpp \
-                                 cpuhint.cpp
+                                 cpuhint.cpp \
+                                 hwc_tonemapper.cpp \
+                                 hwc_socket_handler.cpp \
+                                 hwc_display_external_test.cpp \
+                                 android/uevent.cpp
 
 include $(BUILD_SHARED_LIBRARY)
 endif

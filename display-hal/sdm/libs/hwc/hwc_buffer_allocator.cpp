@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2015 - 2016, The Linux Foundation. All rights reserved.
+* Copyright (c) 2015 - 2017, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -64,7 +64,11 @@ DisplayError HWCBufferAllocator::AllocateBuffer(BufferInfo *buffer_info) {
   int height = INT(buffer_config.height);
   int format;
 
-  if (buffer_config.secure) {
+  if (buffer_config.secure_camera) {
+    alloc_flags = GRALLOC_USAGE_HW_CAMERA_WRITE;
+    alloc_flags |= (GRALLOC_USAGE_PROTECTED | GRALLOC_USAGE_HW_COMPOSER);
+    data.align = SZ_2M;
+  } else if (buffer_config.secure) {
     alloc_flags = INT(GRALLOC_USAGE_PRIVATE_MM_HEAP);
     alloc_flags |= INT(GRALLOC_USAGE_PROTECTED);
     data.align = SECURE_ALIGN;
@@ -103,7 +107,10 @@ DisplayError HWCBufferAllocator::AllocateBuffer(BufferInfo *buffer_info) {
   }
 
   alloc_buffer_info->fd = data.fd;
+  // TODO(user): define stride for all planes and fix stride in bytes
   alloc_buffer_info->stride = UINT32(aligned_width);
+  alloc_buffer_info->aligned_width = UINT32(aligned_width);
+  alloc_buffer_info->aligned_height = UINT32(aligned_height);
   alloc_buffer_info->size = buffer_size;
 
   meta_buffer_info->base_addr = data.base;
@@ -116,7 +123,6 @@ DisplayError HWCBufferAllocator::AllocateBuffer(BufferInfo *buffer_info) {
 
 DisplayError HWCBufferAllocator::FreeBuffer(BufferInfo *buffer_info) {
   int ret = 0;
-
   AllocatedBufferInfo *alloc_buffer_info = &buffer_info->alloc_buffer_info;
 
   // Deallocate the buffer, only if the buffer fd is valid.
@@ -138,6 +144,8 @@ DisplayError HWCBufferAllocator::FreeBuffer(BufferInfo *buffer_info) {
 
     alloc_buffer_info->fd = -1;
     alloc_buffer_info->stride = 0;
+    alloc_buffer_info->aligned_width = 0;
+    alloc_buffer_info->aligned_height = 0;
     alloc_buffer_info->size = 0;
 
     meta_buffer_info->base_addr = NULL;
@@ -161,7 +169,11 @@ uint32_t HWCBufferAllocator::GetBufferSize(BufferInfo *buffer_info) {
   int height = INT(buffer_config.height);
   int format;
 
-  if (buffer_config.secure) {
+  if (buffer_config.secure_camera) {
+    alloc_flags = GRALLOC_USAGE_HW_CAMERA_WRITE;
+    alloc_flags |= (GRALLOC_USAGE_PROTECTED | GRALLOC_USAGE_HW_COMPOSER);
+    align = SZ_2M;
+  } else if (buffer_config.secure) {
     alloc_flags = INT(GRALLOC_USAGE_PRIVATE_MM_HEAP);
     alloc_flags |= INT(GRALLOC_USAGE_PROTECTED);
     align = SECURE_ALIGN;
@@ -198,10 +210,14 @@ int HWCBufferAllocator::SetBufferInfo(LayerBufferFormat format, int *target, int
   case kFormatYCrCb420SemiPlanar:       *target = HAL_PIXEL_FORMAT_YCrCb_420_SP;          break;
   case kFormatYCbCr420SemiPlanar:       *target = HAL_PIXEL_FORMAT_YCbCr_420_SP;          break;
   case kFormatYCbCr422H2V1Packed:       *target = HAL_PIXEL_FORMAT_YCbCr_422_I;           break;
+  case kFormatCbYCrY422H2V1Packed:      *target = HAL_PIXEL_FORMAT_CbYCrY_422_I;          break;
   case kFormatYCbCr422H2V1SemiPlanar:   *target = HAL_PIXEL_FORMAT_YCbCr_422_SP;          break;
   case kFormatYCbCr420SemiPlanarVenus:  *target = HAL_PIXEL_FORMAT_YCbCr_420_SP_VENUS;    break;
   case kFormatYCrCb420SemiPlanarVenus:  *target = HAL_PIXEL_FORMAT_YCrCb_420_SP_VENUS;    break;
-  case kFormatYCbCr420SPVenusUbwc:    *target = HAL_PIXEL_FORMAT_YCbCr_420_SP_VENUS_UBWC; break;
+  case kFormatYCbCr420SPVenusUbwc:
+    *target = HAL_PIXEL_FORMAT_YCbCr_420_SP_VENUS_UBWC;
+    *flags |= GRALLOC_USAGE_PRIVATE_ALLOC_UBWC;
+    break;
   case kFormatRGBA5551:                 *target = HAL_PIXEL_FORMAT_RGBA_5551;             break;
   case kFormatRGBA4444:                 *target = HAL_PIXEL_FORMAT_RGBA_4444;             break;
   case kFormatRGBA1010102:              *target = HAL_PIXEL_FORMAT_RGBA_1010102;          break;
@@ -213,7 +229,14 @@ int HWCBufferAllocator::SetBufferInfo(LayerBufferFormat format, int *target, int
   case kFormatBGRX1010102:              *target = HAL_PIXEL_FORMAT_BGRX_1010102;          break;
   case kFormatXBGR2101010:              *target = HAL_PIXEL_FORMAT_XBGR_2101010;          break;
   case kFormatYCbCr420P010:             *target = HAL_PIXEL_FORMAT_YCbCr_420_P010;        break;
-  case kFormatYCbCr420TP10Ubwc:         *target = HAL_PIXEL_FORMAT_YCbCr_420_TP10_UBWC;   break;
+  case kFormatYCbCr420TP10Ubwc:
+    *target = HAL_PIXEL_FORMAT_YCbCr_420_TP10_UBWC;
+    *flags |= GRALLOC_USAGE_PRIVATE_ALLOC_UBWC;
+    break;
+  case kFormatYCbCr420P010Ubwc:
+    *target = HAL_PIXEL_FORMAT_YCbCr_420_P010_UBWC;
+    *flags |= GRALLOC_USAGE_PRIVATE_ALLOC_UBWC;
+    break;
   case kFormatRGBA8888Ubwc:
     *target = HAL_PIXEL_FORMAT_RGBA_8888;
     *flags |= GRALLOC_USAGE_PRIVATE_ALLOC_UBWC;
@@ -240,6 +263,68 @@ int HWCBufferAllocator::SetBufferInfo(LayerBufferFormat format, int *target, int
   }
 
   return 0;
+}
+
+DisplayError HWCBufferAllocator::GetAllocatedBufferInfo(const BufferConfig &buffer_config,
+                                 AllocatedBufferInfo *allocated_buffer_info) {
+  int width = INT(buffer_config.width);
+  int height = INT(buffer_config.height);
+  int alloc_flags = INT(GRALLOC_USAGE_PRIVATE_IOMMU_HEAP);
+
+  if (buffer_config.secure) {
+    alloc_flags = INT(GRALLOC_USAGE_PRIVATE_MM_HEAP);
+    alloc_flags |= INT(GRALLOC_USAGE_PROTECTED);
+  }
+
+  if (buffer_config.cache == false) {
+    // Allocate uncached buffers
+    alloc_flags |= GRALLOC_USAGE_PRIVATE_UNCACHED;
+  }
+
+  int format;
+  int error = SetBufferInfo(buffer_config.format, &format, &alloc_flags);
+  if (error) {
+    DLOGE("Failed: format = %d or width = %d height = %d", buffer_config.format, width, height);
+    return kErrorNotSupported;
+  }
+
+  int width_aligned = 0, height_aligned = 0;
+  uint32_t buffer_size = 0;
+  buffer_size = getBufferSizeAndDimensions(width, height, format, alloc_flags,
+                                           width_aligned, height_aligned);
+
+  allocated_buffer_info->stride = UINT32(width_aligned);
+  allocated_buffer_info->aligned_width = UINT32(width_aligned);
+  allocated_buffer_info->aligned_height = UINT32(height_aligned);
+  allocated_buffer_info->size = UINT32(buffer_size);
+  allocated_buffer_info->format = buffer_config.format;
+
+  return kErrorNone;
+}
+
+DisplayError HWCBufferAllocator::GetBufferLayout(const AllocatedBufferInfo &buf_info,
+                                                 uint32_t stride[4], uint32_t offset[4],
+                                                 uint32_t *num_planes) {
+  private_handle_t hnd(-1, 0, 0, 0, 0, 0, 0);
+  int format = HAL_PIXEL_FORMAT_RGBA_8888;
+  int flags = 0;
+
+  SetBufferInfo(buf_info.format, &format, &flags);
+  // Setup only the required stuff, skip rest
+  hnd.format = format;
+  hnd.width = buf_info.aligned_width;
+  hnd.height = buf_info.aligned_height;
+  if (flags & GRALLOC_USAGE_PRIVATE_ALLOC_UBWC) {
+    hnd.flags = private_handle_t::PRIV_FLAGS_UBWC_ALIGNED;
+  }
+
+  int ret = getBufferLayout(&hnd, stride, offset, num_planes);
+  if (ret < 0) {
+    DLOGE("getBufferLayout failed");
+    return kErrorParameters;
+  }
+
+  return kErrorNone;
 }
 
 }  // namespace sdm

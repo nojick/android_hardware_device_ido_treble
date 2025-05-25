@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2014 - 2016, The Linux Foundation. All rights reserved.
+* Copyright (c) 2014 - 2017, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -112,8 +112,9 @@ int HWCDisplayPrimary::Init() {
     return status;
   }
   color_mode_ = new HWCColorMode(display_intf_);
+  color_mode_->Init();
 
-  return INT(color_mode_->Init());
+  return status;
 }
 
 void HWCDisplayPrimary::ProcessBootAnimCompleted() {
@@ -187,17 +188,11 @@ HWC2::Error HWCDisplayPrimary::Validate(uint32_t *out_num_types, uint32_t *out_n
   ToggleCPUHint(one_updating_layer);
 
   uint32_t refresh_rate = GetOptimalRefreshRate(one_updating_layer);
-  if (current_refresh_rate_ != refresh_rate) {
-    error = display_intf_->SetRefreshRate(refresh_rate);
-  }
-
+  bool final_rate = force_refresh_rate_ ? true : false;
+  error = display_intf_->SetRefreshRate(refresh_rate, final_rate);
   if (error == kErrorNone) {
     // On success, set current refresh rate to new refresh rate
     current_refresh_rate_ = refresh_rate;
-  }
-
-  if (handle_idle_timeout_) {
-    handle_idle_timeout_ = false;
   }
 
   if (layer_set_.empty()) {
@@ -244,7 +239,6 @@ HWC2::Error HWCDisplayPrimary::GetColorModes(uint32_t *out_num_modes,
 }
 
 HWC2::Error HWCDisplayPrimary::SetColorMode(android_color_mode_t mode) {
-  validated_ = false;
   auto status = color_mode_->SetColorMode(mode);
   if (status != HWC2::Error::None) {
     DLOGE("failed for mode = %d", mode);
@@ -256,9 +250,20 @@ HWC2::Error HWCDisplayPrimary::SetColorMode(android_color_mode_t mode) {
   return status;
 }
 
+HWC2::Error HWCDisplayPrimary::SetColorModeById(int32_t color_mode_id) {
+  auto status = color_mode_->SetColorModeById(color_mode_id);
+  if (status != HWC2::Error::None) {
+    DLOGE("failed for mode = %d", color_mode_id);
+    return status;
+  }
+
+  callbacks_->Refresh(HWC_DISPLAY_PRIMARY);
+
+  return status;
+}
+
 HWC2::Error HWCDisplayPrimary::SetColorTransform(const float *matrix,
                                                  android_color_transform_t hint) {
-  validated_ = false;
   if (!matrix) {
     return HWC2::Error::BadParameter;
   }
@@ -382,8 +387,6 @@ void HWCDisplayPrimary::ForceRefreshRate(uint32_t refresh_rate) {
 uint32_t HWCDisplayPrimary::GetOptimalRefreshRate(bool one_updating_layer) {
   if (force_refresh_rate_) {
     return force_refresh_rate_;
-  } else if (handle_idle_timeout_) {
-    return min_refresh_rate_;
   } else if (use_metadata_refresh_rate_ && one_updating_layer && metadata_refresh_rate_) {
     return metadata_refresh_rate_;
   }
@@ -395,8 +398,6 @@ DisplayError HWCDisplayPrimary::Refresh() {
   DisplayError error = kErrorNone;
 
   callbacks_->Refresh(HWC_DISPLAY_PRIMARY);
-  handle_idle_timeout_ = true;
-  validated_ = false;
 
   return error;
 }
@@ -406,11 +407,16 @@ void HWCDisplayPrimary::SetIdleTimeoutMs(uint32_t timeout_ms) {
 }
 
 static void SetLayerBuffer(const BufferInfo &output_buffer_info, LayerBuffer *output_buffer) {
-  output_buffer->width = output_buffer_info.buffer_config.width;
-  output_buffer->height = output_buffer_info.buffer_config.height;
-  output_buffer->format = output_buffer_info.buffer_config.format;
-  output_buffer->planes[0].fd = output_buffer_info.alloc_buffer_info.fd;
-  output_buffer->planes[0].stride = output_buffer_info.alloc_buffer_info.stride;
+  const BufferConfig& buffer_config = output_buffer_info.buffer_config;
+  const AllocatedBufferInfo &alloc_buffer_info = output_buffer_info.alloc_buffer_info;
+
+  output_buffer->width = alloc_buffer_info.aligned_width;
+  output_buffer->height = alloc_buffer_info.aligned_height;
+  output_buffer->unaligned_width = buffer_config.width;
+  output_buffer->unaligned_height = buffer_config.height;
+  output_buffer->format = buffer_config.format;
+  output_buffer->planes[0].fd = alloc_buffer_info.fd;
+  output_buffer->planes[0].stride = alloc_buffer_info.stride;
 }
 
 void HWCDisplayPrimary::HandleFrameOutput() {
@@ -535,6 +541,16 @@ int HWCDisplayPrimary::FrameCaptureAsync(const BufferInfo &output_buffer_info,
   return 0;
 }
 
+DisplayError HWCDisplayPrimary::SetDetailEnhancerConfig
+                                   (const DisplayDetailEnhancerData &de_data) {
+  DisplayError error = kErrorNotSupported;
+
+  if (display_intf_) {
+    error = display_intf_->SetDetailEnhancerData(de_data);
+  }
+  return error;
+}
+
 DisplayError HWCDisplayPrimary::ControlPartialUpdate(bool enable, uint32_t *pending) {
   DisplayError error = kErrorNone;
 
@@ -557,7 +573,6 @@ DisplayError HWCDisplayPrimary::DisablePartialUpdateOneFrame() {
 
 
 DisplayError HWCDisplayPrimary::SetMixerResolution(uint32_t width, uint32_t height) {
-  validated_ = false;
   return display_intf_->SetMixerResolution(width, height);
 }
 

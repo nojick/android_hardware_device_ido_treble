@@ -15,28 +15,33 @@
  * limitations under the License.
  */
 
-#include <dlfcn.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <linux/fb.h>
-#include <linux/msm_mdp.h>
-#include <pthread.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/ioctl.h>
 #include <sys/mman.h>
 
-#include <cutils/atomic.h>
-#include <cutils/properties.h>
 #include <log/log.h>
+#include <cutils/properties.h>
+#include <dlfcn.h>
 
 #include <hardware/hardware.h>
 
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/ioctl.h>
+#include <string.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <cutils/atomic.h>
+
+#include <linux/fb.h>
+#include <linux/msm_mdp.h>
+
+#ifndef TARGET_HEADLESS
 #include <GLES/gl.h>
+#endif
 
 #include "gralloc_priv.h"
 #include "fb_priv.h"
 #include "gr.h"
+#include <cutils/properties.h>
 #include <profiler.h>
 
 #define EVEN_OUT(x) if (x & 0x0001) {x--;}
@@ -96,7 +101,9 @@ static int fb_compositionComplete(struct framebuffer_device_t* dev)
     if(!dev) {
         return -1;
     }
+#ifndef TARGET_HEADLESS
     glFinish();
+#endif
 
     return 0;
 }

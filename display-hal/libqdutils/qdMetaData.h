@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -30,14 +30,22 @@
 #ifndef _QDMETADATA_H
 #define _QDMETADATA_H
 
+#ifdef USE_COLOR_METADATA
+#include <color_metadata.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define MAX_UBWC_STATS_LENGTH 32
 
 enum ColorSpace_t{
     ITU_R_601,
     ITU_R_601_FR,
     ITU_R_709,
+    ITU_R_2020,
+    ITU_R_2020_FR,
 };
 
 enum IGC_t {
@@ -55,6 +63,40 @@ struct HSICData_t {
 struct BufferDim_t {
     int32_t sliceWidth;
     int32_t sliceHeight;
+};
+
+enum UBWC_Version {
+    UBWC_UNUSED      = 0,
+    UBWC_1_0         = 0x1,
+    UBWC_2_0         = 0x2,
+    UBWC_MAX_VERSION = 0xFF,
+};
+
+struct UBWC_2_0_Stats {
+    uint32_t nCRStatsTile32;  /**< UBWC Stats info for  32 Byte Tile */
+    uint32_t nCRStatsTile64;  /**< UBWC Stats info for  64 Byte Tile */
+    uint32_t nCRStatsTile96;  /**< UBWC Stats info for  96 Byte Tile */
+    uint32_t nCRStatsTile128; /**< UBWC Stats info for 128 Byte Tile */
+    uint32_t nCRStatsTile160; /**< UBWC Stats info for 160 Byte Tile */
+    uint32_t nCRStatsTile192; /**< UBWC Stats info for 192 Byte Tile */
+    uint32_t nCRStatsTile256; /**< UBWC Stats info for 256 Byte Tile */
+};
+
+struct UBWCStats {
+    enum UBWC_Version version; /* Union depends on this version. */
+    uint8_t bDataValid;      /* If [non-zero], CR Stats data is valid.
+                               * Consumers may use stats data.
+                               * If [zero], CR Stats data is invalid.
+                               * Consumers *Shall* not use stats data */
+    union {
+        struct UBWC_2_0_Stats ubwc_stats;
+        uint32_t reserved[MAX_UBWC_STATS_LENGTH]; /* This is for future */
+    };
+};
+
+struct S3DGpuComp_t {
+    int32_t displayId; /* on which display S3D is composed by client */
+    uint32_t s3dMode; /* the S3D format of this layer to be accessed by client */
 };
 
 struct MetaData_t {
@@ -79,31 +121,49 @@ struct MetaData_t {
     /* Set by graphics to indicate that this buffer will be written to but not
      * swapped out */
     uint32_t isSingleBufferMode;
+    /* Indicate GPU to draw S3D layer on dedicate display device */
+    struct S3DGpuComp_t s3dComp;
+
     /* Set by camera to program the VT Timestamp */
     uint64_t vtTimeStamp;
+#ifdef USE_COLOR_METADATA
+    /* Color Aspects + HDR info */
+    ColorMetaData color;
+#endif
+    /* Consumer should read this data as follows based on
+     * Gralloc flag "interlaced" listed above.
+     * [0] : If it is progressive.
+     * [0] : Top field, if it is interlaced.
+     * [1] : Do not read, if it is progressive.
+     * [1] : Bottom field, if it is interlaced.
+     */
+    struct UBWCStats ubwcCRStats[2];
 };
 
 enum DispParamType {
-    UNUSED0                = 0x0001,
-    UNUSED1                = 0x0002,
-    PP_PARAM_INTERLACED    = 0x0004,
-    UNUSED2                = 0x0008,
-    UNUSED3                = 0x0010,
-    UNUSED4                = 0x0020,
-    UNUSED5                = 0x0040,
-    UPDATE_BUFFER_GEOMETRY = 0x0080,
-    UPDATE_REFRESH_RATE    = 0x0100,
-    UPDATE_COLOR_SPACE     = 0x0200,
-    MAP_SECURE_BUFFER      = 0x0400,
-    S3D_FORMAT             = 0x0800,
-    LINEAR_FORMAT          = 0x1000,
-    SET_IGC                = 0x2000,
-    SET_SINGLE_BUFFER_MODE = 0x4000,
-    SET_VT_TIMESTAMP       = 0x8000,
+    SET_VT_TIMESTAMP         = 0x0001,
+    COLOR_METADATA           = 0x0002,
+    PP_PARAM_INTERLACED      = 0x0004,
+    UNUSED2                  = 0x0008,
+    UNUSED3                  = 0x0010,
+    UNUSED4                  = 0x0020,
+    SET_UBWC_CR_STATS_INFO   = 0x0040,
+    UPDATE_BUFFER_GEOMETRY   = 0x0080,
+    UPDATE_REFRESH_RATE      = 0x0100,
+    UPDATE_COLOR_SPACE       = 0x0200,
+    MAP_SECURE_BUFFER        = 0x0400,
+    S3D_FORMAT               = 0x0800,
+    LINEAR_FORMAT            = 0x1000,
+    SET_IGC                  = 0x2000,
+    SET_SINGLE_BUFFER_MODE   = 0x4000,
+    SET_S3D_COMP             = 0x8000,
 };
 
 enum DispFetchParamType {
+    GET_VT_TIMESTAMP         = 0x0001,
+    GET_COLOR_METADATA       = 0x0002,
     GET_PP_PARAM_INTERLACED  = 0x0004,
+    GET_UBWC_CR_STATS_INFO   = 0x0040,
     GET_BUFFER_GEOMETRY      = 0x0080,
     GET_REFRESH_RATE         = 0x0100,
     GET_COLOR_SPACE          = 0x0200,
@@ -112,17 +172,31 @@ enum DispFetchParamType {
     GET_LINEAR_FORMAT        = 0x1000,
     GET_IGC                  = 0x2000,
     GET_SINGLE_BUFFER_MODE   = 0x4000,
-    GET_VT_TIMESTAMP         = 0x8000,
+    GET_S3D_COMP             = 0x8000,
 };
 
 struct private_handle_t;
 int setMetaData(struct private_handle_t *handle, enum DispParamType paramType,
-        void *param);
+                void *param);
+int setMetaDataVa(struct MetaData_t* data, enum DispParamType paramType,
+                  void *param);
 
-int getMetaData(struct private_handle_t *handle, enum DispFetchParamType paramType,
-        void *param);
+int getMetaData(struct private_handle_t *handle,
+                enum DispFetchParamType paramType,
+                void *param);
+int getMetaDataVa(struct MetaData_t* data, enum DispFetchParamType paramType,
+                  void *param);
 
 int copyMetaData(struct private_handle_t *src, struct private_handle_t *dst);
+int copyMetaDataVaToHandle(struct MetaData_t *src, struct private_handle_t *dst);
+int copyMetaDataHandleToVa(struct private_handle_t* src, struct MetaData_t *dst);
+int copyMetaDataVaToVa(struct MetaData_t *src, struct MetaData_t *dst);
+
+int clearMetaData(struct private_handle_t *handle, enum DispParamType paramType);
+int clearMetaDataVa(struct MetaData_t *data, enum DispParamType paramType);
+
+unsigned long getMetaDataSize();
+
 #ifdef __cplusplus
 }
 #endif

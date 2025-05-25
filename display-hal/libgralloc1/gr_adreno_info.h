@@ -46,6 +46,7 @@ typedef enum {
   ADRENO_PIXELFORMAT_B8G8R8A8_SRGB = 91,
   ADRENO_PIXELFORMAT_B8G8R8X8_SRGB = 93,
   ADRENO_PIXELFORMAT_NV12 = 103,
+  ADRENO_PIXELFORMAT_P010 = 104,
   ADRENO_PIXELFORMAT_YUY2 = 107,
   ADRENO_PIXELFORMAT_B4G4R4A4 = 115,
   ADRENO_PIXELFORMAT_NV12_EXT = 506,       // NV12 with non-std alignment and offsets
@@ -65,14 +66,11 @@ typedef enum {
   ADRENO_PIXELFORMAT_NV21 = 619,
   ADRENO_PIXELFORMAT_Y8U8V8A8 = 620,  // YUV 4:4:4 packed (1 plane)
   ADRENO_PIXELFORMAT_Y8 = 625,        //  Single 8-bit luma only channel YUV format
+  ADRENO_PIXELFORMAT_TP10 = 648,      // YUV 4:2:0 planar 10 bits/comp (2 planes)
 } ADRENOPIXELFORMAT;
 
 class AdrenoMemInfo {
  public:
-  AdrenoMemInfo();
-
-  ~AdrenoMemInfo();
-
   bool Init();
 
   /*
@@ -122,7 +120,10 @@ class AdrenoMemInfo {
    */
   ADRENOPIXELFORMAT GetGpuPixelFormat(int hal_format);
 
+  static AdrenoMemInfo *GetInstance();
+
  private:
+  ~AdrenoMemInfo();
   // link(s)to adreno surface padding library.
   int (*LINK_adreno_compute_padding)(int width, int bpp, int surface_tile_height,
                                      int screen_tile_height, int padding_threshold) = NULL;
@@ -130,6 +131,11 @@ class AdrenoMemInfo {
                                                        int tile_mode, int raster_mode,
                                                        int padding_threshold, int *aligned_w,
                                                        int *aligned_h) = NULL;
+  void (*LINK_adreno_compute_fmt_aligned_width_and_height)(int width, int height, int plane_id,
+                                                           int format, int num_samples,
+                                                           int tile_mode, int raster_mode,
+                                                           int padding_threshold, int *aligned_w,
+                                                           int *aligned_h) = NULL;
   void (*LINK_adreno_compute_compressedfmt_aligned_width_and_height)(
       int width, int height, int format, int tile_mode, int raster_mode, int padding_threshold,
       int *aligned_w, int *aligned_h, int *bpp) = NULL;
@@ -139,6 +145,8 @@ class AdrenoMemInfo {
   bool gfx_ubwc_disable_ = false;
   bool map_fb_ = false;
   void *libadreno_utils_ = NULL;
+
+  static AdrenoMemInfo *s_instance;
 };
 
 }  // namespace gralloc1

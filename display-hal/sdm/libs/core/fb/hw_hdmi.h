@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2015 - 2016, The Linux Foundation. All rights reserved.
+* Copyright (c) 2015 - 2017, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without modification, are permitted
 * provided that the following conditions are met:
@@ -37,9 +37,7 @@ using std::vector;
 
 class HWHDMI : public HWDevice {
  public:
-  static DisplayError Create(HWInterface **intf, HWInfoInterface *hw_info_intf,
-                             BufferSyncHandler *buffer_sync_handler);
-  static DisplayError Destroy(HWInterface *intf);
+  HWHDMI(BufferSyncHandler *buffer_sync_handler, HWInfoInterface *hw_info_intf);
 
  protected:
   enum HWFramerateUpdate {
@@ -51,12 +49,30 @@ class HWHDMI : public HWDevice {
     kModeVFP,
     // Switch framerate by tuning horizontal front porch
     kModeHFP,
+    // Switch framerate by tuning horizontal front porch and clock
+    kModeClockHFP,
+    // Switch framerate by tuning horizontal front porch and re-caculate clock
+    kModeHFPCalcClock,
     kModeMAX
   };
 
-  HWHDMI(BufferSyncHandler *buffer_sync_handler, HWInfoInterface *hw_info_intf);
+  /**
+   * struct DynamicFPSData - defines dynamic fps related data
+   * @hor_front_porch: horizontal front porch
+   * @hor_back_porch: horizontal back porch
+   * @hor_pulse_width: horizontal pulse width
+   * @clk_rate_hz: panel clock rate in HZ
+   * @fps: frames per second
+   */
+  struct DynamicFPSData {
+    uint32_t hor_front_porch;
+    uint32_t hor_back_porch;
+    uint32_t hor_pulse_width;
+    uint32_t clk_rate_hz;
+    uint32_t fps;
+  };
+
   virtual DisplayError Init();
-  virtual DisplayError Deinit();
   virtual DisplayError GetNumDisplayAttributes(uint32_t *count);
   // Requirement to call this only after the first config has been explicitly set by client
   virtual DisplayError GetActiveConfig(uint32_t *active_config);
@@ -69,6 +85,7 @@ class HWHDMI : public HWDevice {
   virtual DisplayError SetDisplayAttributes(uint32_t index);
   virtual DisplayError GetConfigIndex(uint32_t mode, uint32_t *index);
   virtual DisplayError Validate(HWLayers *hw_layers);
+  virtual DisplayError Commit(HWLayers *hw_layers);
   virtual DisplayError SetS3DMode(HWS3DMode s3d_mode);
   virtual DisplayError SetRefreshRate(uint32_t refresh_rate);
 
@@ -82,11 +99,16 @@ class HWHDMI : public HWDevice {
   bool ReadResolutionFile(char *config_buffer);
   bool IsResolutionFilePresent();
   void SetSourceProductInformation(const char *node, const char *name);
-  DisplayError GetDisplayS3DSupport(uint32_t num_modes,
+  DisplayError GetDisplayS3DSupport(uint32_t index,
                                     HWDisplayAttributes *attrib);
+  DisplayError GetPanelS3DMode();
   bool IsSupportedS3DMode(HWS3DMode s3d_mode);
   void UpdateMixerAttributes();
+  DisplayError UpdateHDRMetaData(HWLayers *hw_layers);
 
+  DisplayError GetDynamicFrameRateMode(uint32_t refresh_rate, uint32_t*mode,
+                                       DynamicFPSData *data, uint32_t *config_index);
+  static const int kThresholdRefreshRate = 1000;
   vector<uint32_t> hdmi_modes_;
   // Holds the hdmi timing information. Ex: resolution, fps etc.,
   vector<msm_hdmi_mode_timing_info> supported_video_modes_;
@@ -94,7 +116,7 @@ class HWHDMI : public HWDevice {
   uint32_t active_config_index_;
   std::map<HWS3DMode, msm_hdmi_s3d_mode> s3d_mode_sdm_to_mdp_;
   vector<HWS3DMode> supported_s3d_modes_;
-  int active_mdp_s3d_mode_ = HDMI_S3D_NONE;
+  msm_hdmi_s3d_mode active_mdp_s3d_mode_ = HDMI_S3D_NONE;
   uint32_t frame_rate_ = 0;
 };
 

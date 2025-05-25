@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2015-2016, The Linux Foundation. All rights reserved.
+* Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without modification, are permitted
 * provided that the following conditions are met:
@@ -34,8 +34,12 @@
 #include <bitset>
 
 namespace sdm {
-const int kMaxSDELayers = 16;   // Maximum number of layers that can be handled by hardware in a
-                                // given layer stack.
+using std::string;
+
+const int kMaxSDELayers = 16;   // Maximum number of layers that can be handled by MDP5 hardware
+                                // in a given layer stack.
+const int kMaxBlitLayers = 32;   // Maximum number of layers that can be handled by MDP3 hardware
+                                // in a given layer stack.
 #define MAX_PLANES 4
 
 #define MAX_DETAIL_ENHANCE_CURVE 3
@@ -61,15 +65,6 @@ enum HWDisplayMode {
   kModeDefault,
   kModeVideo,
   kModeCommand,
-};
-
-enum HWDisplayPort {
-  kPortDefault,
-  kPortDSI,
-  kPortDTv,
-  kPortWriteBack,
-  kPortLVDS,
-  kPortEDP,
 };
 
 enum PipeType {
@@ -110,17 +105,24 @@ enum HWPipeFlags {
   kMultiRectParallelMode = 0x04,
 };
 
+enum HWAVRModes {
+  kContinuousMode,  // Mode to enable AVR feature for every frame.
+  kOneShotMode,     // Mode to enable AVR feature for particular frame.
+};
+
 typedef std::map<HWSubBlockType, std::vector<LayerBufferFormat>> FormatsMap;
+typedef std::map<LayerBufferFormat, float> CompRatioMap;
 
 struct HWDynBwLimitInfo {
   uint32_t cur_mode = kBwDefault;
-  uint32_t total_bw_limit[kBwModeMax] = { 0 };
-  uint32_t pipe_bw_limit[kBwModeMax] = { 0 };
+  uint64_t total_bw_limit[kBwModeMax] = { 0 };
+  uint64_t pipe_bw_limit[kBwModeMax] = { 0 };
 };
 
 struct HWPipeCaps {
   PipeType type = kPipeTypeUnused;
   uint32_t id = 0;
+  uint32_t master_pipe_id = 0;
   uint32_t max_rects = 1;
 };
 
@@ -130,6 +132,8 @@ struct HWRotatorInfo {
   uint32_t num_rotator = 0;
   bool has_downscale = false;
   std::string device_path = "";
+  float min_downscale = 2.0f;
+  bool downscale_compression = false;
 
   void Reset() { *this = HWRotatorInfo(); }
 };
@@ -139,6 +143,12 @@ struct HWDestScalarInfo {
   uint32_t max_input_width = 0;
   uint32_t max_output_width = 0;
   uint32_t max_scale_up = 1;
+  uint32_t prefill_lines = 4;
+};
+
+enum SmartDMARevision {
+  V1,
+  V2,
 };
 
 struct HWResourceInfo {
@@ -161,7 +171,7 @@ struct HWResourceInfo {
   uint32_t max_mixer_width = 2048;
   uint32_t max_pipe_width = 2048;
   uint32_t max_cursor_size = 0;
-  uint32_t max_pipe_bw =  0;
+  uint64_t max_pipe_bw =  0;
   uint32_t max_sde_clk = 0;
   float clk_fudge_factor = 1.0f;
   uint32_t macrotile_nv12_factor = 0;
@@ -177,17 +187,24 @@ struct HWResourceInfo {
   bool has_macrotile = false;
   bool has_non_scalar_rgb = false;
   bool is_src_split = false;
-  bool perf_calc = false;
   bool has_dyn_bw_support = false;
   bool separate_rotator = false;
   bool has_qseed3 = false;
   bool has_concurrent_writeback = false;
+  bool has_ppp = false;
   uint32_t writeback_index = kHWBlockMax;
   HWDynBwLimitInfo dyn_bw_info;
   std::vector<HWPipeCaps> hw_pipes;
   FormatsMap supported_formats_map;
   HWRotatorInfo hw_rot_info;
   HWDestScalarInfo hw_dest_scalar_info;
+  bool has_avr = false;
+  bool has_hdr = false;
+  SmartDMARevision smart_dma_rev = SmartDMARevision::V1;
+  float ib_fudge_factor = 1.0f;
+  uint32_t undersized_prefill_lines = 0;
+  CompRatioMap comp_ratio_rt_map;
+  CompRatioMap comp_ratio_nrt_map;
 
   void Reset() { *this = HWResourceInfo(); }
 };
@@ -214,18 +231,33 @@ enum HWS3DMode {
   kS3DModeMax,
 };
 
+struct HWColorPrimaries {
+  uint32_t white_point[2] = {};       // White point
+  uint32_t red[2] = {};               // Red color primary
+  uint32_t green[2] = {};             // Green color primary
+  uint32_t blue[2] = {};              // Blue color primary
+};
+
+struct HWPanelOrientation {
+  bool rotation = false;
+  bool flip_horizontal = false;
+  bool flip_vertical = false;
+};
+
 struct HWPanelInfo {
-  HWDisplayPort port = kPortDefault;  // Display port
+  DisplayPort port = kPortDefault;    // Display port
   HWDisplayMode mode = kModeDefault;  // Display mode
   bool partial_update = false;        // Partial update feature
-  int left_align = 0;                 // ROI left alignment restriction
-  int width_align = 0;                // ROI width alignment restriction
-  int top_align = 0;                  // ROI top alignment restriction
-  int height_align = 0;               // ROI height alignment restriction
-  int min_roi_width = 0;              // Min width needed for ROI
-  int min_roi_height = 0;             // Min height needed for ROI
+  int left_align = 1;                 // ROI left alignment restriction
+  int width_align = 1;                // ROI width alignment restriction
+  int top_align = 1;                  // ROI top alignment restriction
+  int height_align = 1;               // ROI height alignment restriction
+  int min_roi_width = 1;              // Min width needed for ROI
+  int min_roi_height = 1;             // Min height needed for ROI
   bool needs_roi_merge = false;       // Merge ROI's of both the DSI's
   bool dynamic_fps = false;           // Panel Supports dynamic fps
+  bool dfps_porch_mode = false;       // dynamic fps VFP or HFP mode
+  bool ping_pong_split = false;       // Supports Ping pong split
   uint32_t min_fps = 0;               // Min fps supported by panel
   uint32_t max_fps = 0;               // Max fps supported by panel
   bool is_primary_panel = false;      // Panel is primary display
@@ -234,6 +266,14 @@ struct HWPanelInfo {
   char panel_name[256] = {0};         // Panel name
   HWS3DMode s3d_mode = kS3DModeNone;  // Panel's current s3d mode.
   int panel_max_brightness = 0;       // Max panel brightness
+  uint32_t left_roi_count = 1;        // Number if ROI supported on left panel
+  uint32_t right_roi_count = 1;       // Number if ROI supported on right panel
+  bool hdr_enabled = false;           // HDR feature supported
+  uint32_t peak_luminance = 0;        // Panel's peak luminance level
+  uint32_t average_luminance = 0;     // Panel's average luminance level
+  uint32_t blackness_level = 0;       // Panel's blackness level
+  HWColorPrimaries primaries = {};    // WRGB color primaries
+  HWPanelOrientation panel_orientation = {};  // Panel Orientation
 
   bool operator !=(const HWPanelInfo &panel_info) {
     return ((port != panel_info.port) || (mode != panel_info.mode) ||
@@ -244,9 +284,12 @@ struct HWPanelInfo {
             (min_roi_height != panel_info.min_roi_height) ||
             (needs_roi_merge != panel_info.needs_roi_merge) ||
             (dynamic_fps != panel_info.dynamic_fps) || (min_fps != panel_info.min_fps) ||
+            (dfps_porch_mode != panel_info.dfps_porch_mode) ||
+            (ping_pong_split != panel_info.ping_pong_split) ||
             (max_fps != panel_info.max_fps) || (is_primary_panel != panel_info.is_primary_panel) ||
-            (split_info != panel_info.split_info) ||
-            (s3d_mode != panel_info.s3d_mode));
+            (split_info != panel_info.split_info) || (s3d_mode != panel_info.s3d_mode) ||
+            (left_roi_count != panel_info.left_roi_count) ||
+            (right_roi_count != panel_info.right_roi_count));
   }
 
   bool operator ==(const HWPanelInfo &panel_info) {
@@ -261,6 +304,7 @@ struct HWSessionConfig {
   bool secure = false;
   uint32_t frame_rate = 0;
   LayerTransform transform;
+  bool secure_camera = false;
 
   bool operator==(const HWSessionConfig& config) const {
     return (src_rect == config.src_rect &&
@@ -268,7 +312,8 @@ struct HWSessionConfig {
             buffer_count == config.buffer_count &&
             secure == config.secure &&
             frame_rate == config.frame_rate &&
-            transform == config.transform);
+            transform == config.transform &&
+            secure_camera == config.secure_camera);
   }
 
   bool operator!=(const HWSessionConfig& config) const {
@@ -382,11 +427,19 @@ struct HWDestScaleInfo {
   uint32_t mixer_height = 0;
   bool scale_update = false;
   HWScaleData scale_data = {};
+  LayerRect panel_roi = {};
 };
 
 typedef std::map<uint32_t, HWDestScaleInfo *> DestScaleInfoMap;
 
+struct HWAVRInfo {
+  bool enable = false;                // Flag to Enable AVR feature
+  HWAVRModes mode = kContinuousMode;  // Specifies the AVR mode
+};
+
 struct HWPipeInfo {
+  HWPipeInfo *pair = NULL;
+  uint8_t rect = 255;
   uint32_t pipe_id = 0;
   HWSubBlockType sub_block_type = kHWSubBlockMax;
   LayerRect src_roi;
@@ -410,32 +463,50 @@ struct HWLayerConfig {
   void Reset() { *this = HWLayerConfig(); }
 };
 
+struct HWHDRLayerInfo {
+  enum HDROperation {
+    kNoOp,   // No-op.
+    kSet,    // Sets the HDR MetaData - Start of HDR
+    kReset,  // resets the previously set HDR Metadata, End of HDR
+  };
+
+  int32_t layer_index = -1;
+  HDROperation operation = kNoOp;
+};
+
 struct HWLayersInfo {
   LayerStack *stack = NULL;        // Input layer stack. Set by the caller.
+  uint32_t app_layer_count = 0;    // Total number of app layers. Must not be 0.
+  uint32_t gpu_target_index = 0;   // GPU target layer index. 0 if not present.
 
-  uint32_t index[kMaxSDELayers];   // Indexes of the layers from the layer stack which need to be
-                                   // programmed on hardware.
-  LayerRect updated_src_rect[kMaxSDELayers];  // Updated layer src rects in s3d mode
-  LayerRect updated_dst_rect[kMaxSDELayers];  // Updated layer dst rects in s3d mode
-  bool updating[kMaxSDELayers] = {0};  // Updated by strategy, considering plane_alpha+updating
+  std::vector<Layer> hw_layers = {};  // Layers which need to be programmed on the HW
 
-  uint32_t count = 0;              // Total number of layers which need to be set on hardware.
+  uint32_t index[kMaxSDELayers] = {};   // Indexes of the layers from the layer stack which need to
+                                        // be programmed on hardware.
+  uint32_t roi_index[kMaxSDELayers] = {0};  // Stores the ROI index where the layers are visible.
 
-  int sync_handle = -1;
+  int sync_handle = -1;         // Release fence id for current draw cycle.
+  int set_idle_time_ms = -1;    // Set idle time to the new specified value.
+                                //    -1 indicates no change in idle time since last set value.
 
-  LayerRect left_partial_update;   // Left ROI.
-  LayerRect right_partial_update;  // Right ROI.
-
-  bool use_hw_cursor = false;      // Indicates that HWCursor pipe needs to be used for cursor layer
+  std::vector<LayerRect> left_frame_roi = {};   // Left ROI.
+  std::vector<LayerRect> right_frame_roi = {};  // Right ROI.
+  LayerRect partial_fb_roi = {};   // Damaged area in framebuffer.
+  bool roi_split = false;          // Indicates separated left and right ROI
+  bool async_cursor_updates = false;  // Cursor layer allowed to have async updates
   DestScaleInfoMap dest_scale_info_map = {};
+  HWHDRLayerInfo hdr_layer_info = {};
+  Handle pvt_data = NULL;   // Private data used by sdm extension only.
 };
 
 struct HWLayers {
   HWLayersInfo info;
   HWLayerConfig config[kMaxSDELayers];
   float output_compression = 1.0f;
-  uint32_t bandwidth = 0;
-  uint32_t clock = 0;
+  uint64_t ab_bps = 0;
+  uint64_t ib_bps = 0;
+  uint32_t clock_hz = 0;
+  HWAVRInfo hw_avr_info = {};
 };
 
 struct HWDisplayAttributes : DisplayConfigVariableInfo {
@@ -444,6 +515,7 @@ struct HWDisplayAttributes : DisplayConfigVariableInfo {
   uint32_t v_back_porch = 0;   //!< Vertical back porch of panel
   uint32_t v_pulse_width = 0;  //!< Vertical pulse width of panel
   uint32_t h_total = 0;        //!< Total width of panel (hActive + hFP + hBP + hPulseWidth)
+  uint32_t v_total = 0;        //!< Total height of panel (vActive + vFP + vBP + vPulseWidth)
   std::bitset<32> s3d_config;  //!< Stores the bit mask of S3D modes
 
   void Reset() { *this = HWDisplayAttributes(); }
@@ -459,6 +531,7 @@ struct HWDisplayAttributes : DisplayConfigVariableInfo {
             (v_front_porch != display_attributes.v_front_porch) ||
             (v_back_porch != display_attributes.v_back_porch) ||
             (v_pulse_width != display_attributes.v_pulse_width) ||
+            (h_total != display_attributes.h_total) ||
             (is_yuv != display_attributes.is_yuv));
   }
 
