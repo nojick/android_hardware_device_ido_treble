@@ -3,9 +3,9 @@ include $(CLEAR_VARS)
 include $(LOCAL_PATH)/../../../common.mk
 
 LOCAL_MODULE                  := libsdmcore
-LOCAL_VENDOR_MODULE      := true
+LOCAL_PROPRIETARY_MODULE      := true
 LOCAL_MODULE_TAGS             := optional
-LOCAL_HEADER_LIBRARIES        := display_headers generated_kernel_headers
+LOCAL_C_INCLUDES              := $(common_includes) $(kernel_includes)
 LOCAL_CFLAGS                  := -Wno-missing-field-initializers -Wno-unused-parameter \
                                  -std=c++11 -fcolor-diagnostics\
                                  -DLOG_TAG=\"SDM\" $(common_flags)

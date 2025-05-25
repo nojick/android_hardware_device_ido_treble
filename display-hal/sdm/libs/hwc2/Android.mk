@@ -6,12 +6,12 @@ ifeq ($(use_hwc2),true)
 
 LOCAL_MODULE                  := hwcomposer.$(TARGET_BOARD_PLATFORM)
 LOCAL_MODULE_RELATIVE_PATH    := hw
-LOCAL_VENDOR_MODULE      := true
+LOCAL_PROPRIETARY_MODULE      := true
 LOCAL_MODULE_TAGS             := optional
 LOCAL_C_INCLUDES              := $(common_includes)
 
 LOCAL_CFLAGS                  := -Wno-missing-field-initializers -Wno-unused-parameter \
-                                 -fcolor-diagnostics\
+                                 -std=c++11 -fcolor-diagnostics\
                                  -DLOG_TAG=\"SDM\" $(common_flags) \
                                  -I $(display_top)/sdm/libs/hwc
 
@@ -26,7 +26,7 @@ ifneq ($(TARGET_USES_GRALLOC1), true)
 endif
 
 # Allow implicit fallthroughs in hwc_display.cpp until they are fixed.
-LOCAL_CFLAGS                  += -Wno-implicit-fallthrough
+LOCAL_CFLAGS                  += -Wno-error=implicit-fallthrough
 
 LOCAL_SRC_FILES               := hwc_session.cpp \
                                  hwc_display.cpp \

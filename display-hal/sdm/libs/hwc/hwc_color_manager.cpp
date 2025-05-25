@@ -436,7 +436,6 @@ HWCQDCMModeManager *HWCQDCMModeManager::CreateQDCMModeMgr() {
 
     // retrieve system GPU idle timeout value for later to recover.
     mode_mgr->entry_timeout_ = UINT32(HWCDebugHandler::GetIdleTimeoutMs());
-
   }
 
   return mode_mgr;
