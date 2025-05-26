@@ -137,7 +137,7 @@ AdrenoMemInfo::AdrenoMemInfo()
     // that disables UBWC allocations for the graphics stack is set
     gfx_ubwc_disable = 0;
     char property[PROPERTY_VALUE_MAX];
-    property_get("debug.gralloc.gfx_ubwc_disable", property, "0");
+    property_get("DISABLE_UBWC_PROP", property, "0");
     if(!(strncmp(property, "1", PROPERTY_VALUE_MAX)) ||
        !(strncmp(property, "true", PROPERTY_VALUE_MAX))) {
         gfx_ubwc_disable = 1;
