@@ -1038,7 +1038,8 @@ void HWCDisplay::DumpInputBuffers(hwc_display_contents_1_t *content_list) {
     return;
   }
 
-  snprintf(dir_path, sizeof(dir_path), "/data/misc/display/frame_dump_%s", GetDisplayString());
+	snprintf(dir_path, sizeof(dir_path), "%s/frame_dump_%s", HWCDebugHandler::DumpDir(),
+           GetDisplayString());
 
   if (mkdir(dir_path, 0777) != 0 && errno != EEXIST) {
     DLOGW("Failed to create %s directory errno = %d, desc = %s", dir_path, errno, strerror(errno));
@@ -1085,7 +1086,8 @@ void HWCDisplay::DumpInputBuffers(hwc_display_contents_1_t *content_list) {
 void HWCDisplay::DumpOutputBuffer(const BufferInfo& buffer_info, void *base, int fence) {
   char dir_path[PATH_MAX];
 
-  snprintf(dir_path, sizeof(dir_path), "/data/misc/display/frame_dump_%s", GetDisplayString());
+  snprintf(dir_path, sizeof(dir_path), "%s/frame_dump_%s", HWCDebugHandler::DumpDir(),
+           GetDisplayString());
 
   if (mkdir(dir_path, 777) != 0 && errno != EEXIST) {
     DLOGW("Failed to create %s directory errno = %d, desc = %s", dir_path, errno, strerror(errno));
