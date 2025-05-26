@@ -1367,9 +1367,10 @@ void HWCDisplay::DumpInputBuffers() {
     auto acquire_fence_fd = layer->input_buffer.acquire_fence_fd;
 
     if (acquire_fence_fd >= 0) {
-      DisplayError error = buffer_allocator_->MapBuffer(pvt_handle, acquire_fence_fd);
-      if (error != kErrorNone) {
-        continue;
+      int error = sync_wait(acquire_fence_fd, 1000);
+      if (error < 0) {
+        DLOGW("sync_wait error errno = %d, desc = %s", errno, strerror(errno));
+        return;
       }
     }
 
