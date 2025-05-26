@@ -32,15 +32,13 @@ class Tonemapper {
   unsigned int tonemapTexture;
   unsigned int lutXformTexture;
   unsigned int programID;
-  float lutXformScaleOffset[2];
-  float tonemapScaleOffset[2];
   EGLImageWrapper* eglImageWrapper;
   Tonemapper();
 
  public:
   ~Tonemapper();
   static Tonemapper *build(int type, void *colorMap, int colorMapSize, void *lutXform,
-                           int lutXformSize, bool isSecure);
+                           int lutXformSize);
   int blit(const void *dst, const void *src, int srcFenceFd);
 };
 

@@ -23,13 +23,6 @@
 #include <unistd.h>
 #include "gr_priv_handle.h"
 
-#define GRALLOC_PROP_PREFIX  "vendor.gralloc."
-#define GRALLOC_PROP(prop_name) GRALLOC_PROP_PREFIX prop_name
-
-#define DISABLE_UBWC_PROP                    GRALLOC_PROP("disable_ubwc")
-#define ENABLE_FB_UBWC_PROP                  GRALLOC_PROP("enable_fb_ubwc")
-#define MAP_FB_MEMORY_PROP                   GRALLOC_PROP("map_fb_memory")
-
 #define ROUND_UP_PAGESIZE(x) roundUpToPageSize(x)
 inline int roundUpToPageSize(int x) {
     return (x + (getpagesize()-1)) & ~(getpagesize()-1);
@@ -104,7 +97,6 @@ inline int roundUpToPageSize(int x) {
 #define GRALLOC_MODULE_PERFORM_SET_SINGLE_BUFFER_MODE 13
 #define GRALLOC1_MODULE_PERFORM_GET_BUFFER_SIZE_AND_DIMENSIONS 14
 #define GRALLOC1_MODULE_PERFORM_ALLOCATE_BUFFER 15
-#define GRALLOC1_MODULE_PERFORM_GET_INTERLACE_FLAG 16
 
 // OEM specific HAL formats
 #define HAL_PIXEL_FORMAT_RGBA_5551 6
@@ -136,9 +128,6 @@ inline int roundUpToPageSize(int x) {
 #define HAL_PIXEL_FORMAT_XBGR_2101010 0x11D
 #define HAL_PIXEL_FORMAT_YCbCr_420_P010 0x11F
 #define HAL_PIXEL_FORMAT_YCbCr_420_P010_UBWC 0x124
-
-#define HAL_PIXEL_FORMAT_CbYCrY_422_I            0x120
-#define HAL_PIXEL_FORMAT_BGR_888                 0x121
 
 #define HAL_PIXEL_FORMAT_INTERLACE 0x180
 

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2014 - 2017, The Linux Foundation. All rights reserved.
+* Copyright (c) 2014 - 2016, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -34,7 +34,7 @@
 
 #include <core/sdm_types.h>
 #include <core/debug_interface.h>
-#include <log/log.h>
+#include <cutils/log.h>
 #include <utils/Trace.h>
 #include <bitset>
 
@@ -43,7 +43,6 @@ namespace sdm {
 class HWCDebugHandler : public DebugHandler {
  public:
   static inline DebugHandler* Get() { return &debug_handler_; }
-  static const char* DumpDir() { return "/data/vendor/display"; }
 
   static void DebugAll(bool enable, int verbose_level);
   static void DebugResources(bool enable, int verbose_level);
@@ -51,10 +50,7 @@ class HWCDebugHandler : public DebugHandler {
   static void DebugCompManager(bool enable, int verbose_level);
   static void DebugDriverConfig(bool enable, int verbose_level);
   static void DebugRotator(bool enable, int verbose_level);
-  static void DebugScalar(bool enable, int verbose_level);
   static void DebugQdcm(bool enable, int verbose_level);
-  static void DebugClient(bool enable, int verbose_level);
-  static void DebugDisplay(bool enable, int verbose_level);
   static int  GetIdleTimeoutMs();
 
   virtual void Error(DebugTag tag, const char *format, ...);

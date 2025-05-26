@@ -89,7 +89,7 @@ int HWCSession::Init() {
     iqservice->connect(android::sp<qClient::IQClient>(this));
     qservice_ = reinterpret_cast<qService::QService *>(iqservice.get());
   } else {
-    ALOGE("%s::%s: Failed to acquire %s", __CLASS__, __FUNCTION__, qservice_name);
+    DLOGE("Failed to acquire %s", qservice_name);
     return -EINVAL;
   }
 
@@ -99,16 +99,7 @@ int HWCSession::Init() {
                                                  &buffer_sync_handler_, &socket_handler_,
                                                  &core_intf_);
   if (error != kErrorNone) {
-    ALOGE("%s::%s: Buffer allocaor initialization failed. Error = %d",
-          __CLASS__, __FUNCTION__, error);
-    return -EINVAL;
-  }
-
-  error = CoreInterface::CreateCore(HWCDebugHandler::Get(), &buffer_allocator_,
-                                    &buffer_sync_handler_, &socket_handler_, &core_intf_);
-  if (error != kErrorNone) {
-    buffer_allocator_.Deinit();
-    ALOGE("%s::%s: Display core initialization failed. Error = %d", __CLASS__, __FUNCTION__, error);
+    DLOGE("Display core initialization failed. Error = %d", error);
     return -EINVAL;
   }
 
@@ -172,7 +163,7 @@ int HWCSession::Deinit() {
 
   DisplayError error = CoreInterface::DestroyCore();
   if (error != kErrorNone) {
-    ALOGE("Display core de-initialization failed. Error = %d", error);
+    DLOGE("Display core de-initialization failed. Error = %d", error);
   }
 
   if (buffer_allocator_ != nullptr) {
@@ -187,7 +178,7 @@ int HWCSession::Open(const hw_module_t *module, const char *name, hw_device_t **
   SEQUENCE_WAIT_SCOPE_LOCK(locker_);
 
   if (!module || !name || !device) {
-    ALOGE("%s::%s: Invalid parameters.", __CLASS__, __FUNCTION__);
+    DLOGE("Invalid parameters.");
     return -EINVAL;
   }
 
@@ -881,10 +872,6 @@ android::status_t HWCSession::notifyCallback(uint32_t command, const android::Pa
       status = SetColorModeOverride(input_parcel);
       break;
 
-    case qService::IQService::SET_COLOR_MODE_BY_ID:
-      status = SetColorModeById(input_parcel);
-      break;
-
     default:
       DLOGW("QService command = %d is not supported", command);
       return -EINVAL;
@@ -1258,16 +1245,6 @@ android::status_t HWCSession::SetColorModeOverride(const android::Parcel *input_
   return 0;
 }
 
-android::status_t HWCSession::SetColorModeById(const android::Parcel *input_parcel) {
-  auto display = static_cast<hwc2_display_t >(input_parcel->readInt32());
-  auto mode = input_parcel->readInt32();
-  auto device = static_cast<hwc2_device_t *>(this);
-  auto err = CallDisplayFunction(device, display, &HWCDisplay::SetColorModeById, mode);
-  if (err != HWC2_ERROR_NONE)
-    return -EINVAL;
-  return 0;
-}
-
 void HWCSession::DynamicDebug(const android::Parcel *input_parcel) {
   int type = input_parcel->readInt32();
   bool enable = (input_parcel->readInt32() > 0);
@@ -1300,18 +1277,6 @@ void HWCSession::DynamicDebug(const android::Parcel *input_parcel) {
 
     case qService::IQService::DEBUG_QDCM:
       HWCDebugHandler::DebugQdcm(enable, verbose_level);
-      break;
-
-    case qService::IQService::DEBUG_SCALAR:
-      HWCDebugHandler::DebugScalar(enable, verbose_level);
-      break;
-
-    case qService::IQService::DEBUG_CLIENT:
-      HWCDebugHandler::DebugClient(enable, verbose_level);
-      break;
-
-    case qService::IQService::DEBUG_DISPLAY:
-      HWCDebugHandler::DebugDisplay(enable, verbose_level);
       break;
 
     default:

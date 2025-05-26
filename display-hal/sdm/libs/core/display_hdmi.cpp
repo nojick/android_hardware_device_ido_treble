@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2014 - 2018, The Linux Foundation. All rights reserved.
+* Copyright (c) 2014 - 2017, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without modification, are permitted
 * provided that the following conditions are met:
@@ -54,7 +54,7 @@ DisplayError DisplayHDMI::Init() {
 
   uint32_t active_mode_index;
   char value[64] = "0";
-  Debug::GetProperty(HDMI_S3D_MODE_PROP, value);
+  Debug::GetProperty("sdm.hdmi.s3d_mode", value);
   HWS3DMode mode = (HWS3DMode)atoi(value);
   if (mode > kS3DModeNone && mode < kS3DModeMax) {
     active_mode_index = GetBestConfig(mode);
@@ -93,8 +93,6 @@ DisplayError DisplayHDMI::Init() {
     HWInterface::Destroy(hw_intf_);
     DLOGE("Failed to create hardware events interface. Error = %d", error);
   }
-
-  current_refresh_rate_ = hw_panel_info_.max_fps;
 
   return error;
 }
@@ -137,21 +135,18 @@ DisplayError DisplayHDMI::GetRefreshRateRange(uint32_t *min_refresh_rate,
   return error;
 }
 
-DisplayError DisplayHDMI::SetRefreshRate(uint32_t refresh_rate, bool final_rate) {
+DisplayError DisplayHDMI::SetRefreshRate(uint32_t refresh_rate) {
   lock_guard<recursive_mutex> obj(recursive_mutex_);
 
   if (!active_) {
     return kErrorPermission;
   }
 
-  if (current_refresh_rate_ != refresh_rate) {
-    DisplayError error = hw_intf_->SetRefreshRate(refresh_rate);
-    if (error != kErrorNone) {
-      return error;
-    }
+  DisplayError error = hw_intf_->SetRefreshRate(refresh_rate);
+  if (error != kErrorNone) {
+    return error;
   }
 
-  current_refresh_rate_ = refresh_rate;
   return DisplayBase::ReconfigureDisplay();
 }
 

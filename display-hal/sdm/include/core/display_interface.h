@@ -36,14 +36,11 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
-#include <utility>
 
 #include "layer_stack.h"
 #include "sdm_types.h"
 
 namespace sdm {
-
-typedef std::vector<std::pair<std::string, std::string>> AttrVal;
 
 /*! @brief This enum represents display device types where contents can be rendered.
 
@@ -455,13 +452,11 @@ class DisplayInterface {
 
   /*! @brief Method to set the refresh rate of a display.
 
-    @param[in] refresh_rate new refresh rate of the display.
-
-    @param[in] final_rate indicates whether refresh rate is final rate or can be changed by sdm
+    @param[in] new refresh rate of the display.
 
     @return \link DisplayError \endlink
   */
-  virtual DisplayError SetRefreshRate(uint32_t refresh_rate, bool final_rate) = 0;
+  virtual DisplayError SetRefreshRate(uint32_t refresh_rate) = 0;
 
   /*! @brief Method to query whether scanning is support for the HDMI display.
 
@@ -523,16 +518,6 @@ class DisplayInterface {
   virtual DisplayError GetColorModes(uint32_t *mode_count,
                                      std::vector<std::string> *color_modes) = 0;
 
-  /*! @brief Method to request the attributes of color mode.
-
-    @param[in] mode name
-    @param[out] vector of mode attributes
-
-    @return \link DisplayError \endlink
-  */
-  virtual DisplayError GetColorModeAttr(const std::string &color_mode,
-                                        AttrVal *attr_map) = 0;
-
   /*! @brief Method to set the color mode
 
     @param[in] mode_name Mode name which needs to be set
@@ -541,13 +526,6 @@ class DisplayInterface {
   */
   virtual DisplayError SetColorMode(const std::string &color_mode) = 0;
 
-  /*! @brief Method to set the color mode by ID. This method is used for debugging only.
-
-  @param[in] mode_name Mode ID which needs to be set
-
-  @return \link DisplayError \endlink
-  */
-  virtual DisplayError SetColorModeById(int32_t color_mode_id) = 0;
   /*! @brief Method to set the color transform
 
     @param[in] length Mode name which needs to be set
@@ -556,14 +534,6 @@ class DisplayInterface {
     @return \link DisplayError \endlink
   */
   virtual DisplayError SetColorTransform(const uint32_t length, const double *color_transform) = 0;
-
-  /*! @brief Method to get the default color mode.
-
-    @param[out] default mode name
-
-    @return \link DisplayError \endlink
-  */
-  virtual DisplayError GetDefaultColorMode(std::string *color_mode) = 0;
 
   /*! @brief Method to request applying default display mode.
 

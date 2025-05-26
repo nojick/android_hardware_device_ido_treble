@@ -6,6 +6,12 @@ ifneq ($(TARGET_IS_HEADLESS), true)
                     $(sdm-libs)/hwc $(sdm-libs)/hwc2 gpu_tonemapper libdrmutils
 endif
 
+ifeq ($(TARGET_USES_GRALLOC1), true)
+    LOCAL_EXPORT_C_INCLUDE_DIRS += $(display_top)/libgralloc1
+else
+    LOCAL_EXPORT_C_INCLUDE_DIRS += $(display_top)/libgralloc
+endif
+
 ifneq ($(TARGET_USES_GRALLOC1), true)
     display-hals += libgralloc
 else

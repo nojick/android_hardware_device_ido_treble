@@ -39,7 +39,6 @@
 namespace sdm {
 
 class BlitEngine;
-class HWCToneMapper;
 
 // Subclasses set this to their type. This has to be different from DisplayType.
 // This is to avoid RTTI and dynamic_cast
@@ -56,11 +55,9 @@ class HWCColorMode {
   ~HWCColorMode() {}
   HWC2::Error Init();
   HWC2::Error DeInit();
-  void Dump(std::ostringstream* os);
   uint32_t GetColorModeCount();
   HWC2::Error GetColorModes(uint32_t *out_num_modes, android_color_mode_t *out_modes);
   HWC2::Error SetColorMode(android_color_mode_t mode);
-  HWC2::Error SetColorModeById(int32_t color_mode_id);
   HWC2::Error SetColorTransform(const float *matrix, android_color_transform_t hint);
 
  private:
@@ -69,25 +66,20 @@ class HWCColorMode {
   HWC2::Error HandleColorModeTransform(android_color_mode_t mode,
                                        android_color_transform_t hint, const double *matrix);
   void PopulateColorModes();
-  void PopulateTransform(const android_color_mode_t &mode,
-                         const std::string &color_mode, const std::string &color_transform);
+  void PopulateTransform(const android_color_mode_t &mode, const std::string &color_mode);
   template <class T>
   void CopyColorTransformMatrix(const T *input_matrix, double *output_matrix) {
     for (uint32_t i = 0; i < kColorTransformMatrixCount; i++) {
       output_matrix[i] = static_cast<double>(input_matrix[i]);
     }
   }
-  HWC2::Error ApplyDefaultColorMode();
 
   DisplayInterface *display_intf_ = NULL;
   android_color_mode_t current_color_mode_ = HAL_COLOR_MODE_NATIVE;
   android_color_transform_t current_color_transform_ = HAL_COLOR_TRANSFORM_IDENTITY;
   typedef std::map<android_color_transform_t, std::string> TransformMap;
   std::map<android_color_mode_t, TransformMap> color_mode_transform_map_ = {};
-  double color_matrix_[kColorTransformMatrixCount] = { 1.0, 0.0, 0.0, 0.0, \
-                                                       0.0, 1.0, 0.0, 0.0, \
-                                                       0.0, 0.0, 1.0, 0.0, \
-                                                       0.0, 0.0, 0.0, 1.0 };
+  double color_matrix_[kColorTransformMatrixCount] = {0};
 };
 
 class HWCDisplay : public DisplayEventHandler {
@@ -137,18 +129,6 @@ class HWCDisplay : public DisplayEventHandler {
   virtual int GetDisplayConfigCount(uint32_t *count);
   virtual int GetDisplayAttributesForConfig(int config,
                                             DisplayConfigVariableInfo *display_attributes);
-  template <typename... Args>
-  int32_t CallLayerFunction(hwc2_layer_t layer, HWC2::Error (HWCLayer::*member)(Args... ),
-                            Args... args) {
-    auto status = HWC2::Error::BadLayer;
-    validated_ = false;
-    auto hwc_layer = GetHWCLayer(layer);
-    if (hwc_layer != nullptr) {
-      status = (hwc_layer->*member)(std::forward<Args>(args)...);
-    }
-
-    return INT32(status);
-  }
 
   int SetPanelBrightness(int level);
   int GetPanelBrightness(int *level);
@@ -170,9 +150,6 @@ class HWCDisplay : public DisplayEventHandler {
   virtual HWC2::Error SetClientTarget(buffer_handle_t target, int32_t acquire_fence,
                                       int32_t dataspace, hwc_region_t damage);
   virtual HWC2::Error SetColorMode(android_color_mode_t mode) {
-    return HWC2::Error::Unsupported;
-  }
-  virtual HWC2::Error SetColorModeById(int32_t color_mode_id) {
     return HWC2::Error::Unsupported;
   }
   virtual HWC2::Error SetColorTransform(const float *matrix, android_color_transform_t hint) {
@@ -246,7 +223,6 @@ class HWCDisplay : public DisplayEventHandler {
   bool IsLayerUpdating(const Layer *layer);
   uint32_t SanitizeRefreshRate(uint32_t req_refresh_rate);
   virtual void CloseAcquireFds();
-  virtual void ClearRequestFlags();
 
   enum {
     INPUT_LAYER_DUMP,
@@ -293,8 +269,6 @@ class HWCDisplay : public DisplayEventHandler {
   bool validated_ = false;
   bool color_tranform_failed_ = false;
   HWCColorMode *color_mode_ = NULL;
-  HWCToneMapper *tone_mapper_ = nullptr;
-  int disable_hdr_handling_ = 0;  // disables HDR handling.
 
  private:
   void DumpInputBuffers(void);

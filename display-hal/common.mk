@@ -3,7 +3,7 @@ display_top := $(call my-dir)
 
 #Common C flags
 common_flags := -DDEBUG_CALC_FPS -Wno-missing-field-initializers
-common_flags += -Wconversion -Wall -Werror 
+common_flags += -Wconversion -Wall -Werror -std=c++11
 ifeq ($(TARGET_IS_HEADLESS), true)
     common_flags += -DTARGET_HEADLESS
     LOCAL_CLANG := false

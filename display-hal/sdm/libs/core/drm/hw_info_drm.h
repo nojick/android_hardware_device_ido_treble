@@ -60,10 +60,6 @@ class HWInfoDRM: public HWInfoInterface {
   void GetRotatorFormatsForType(int fd, uint32_t type,
                                 std::vector<LayerBufferFormat> *supported_formats);
   DisplayError GetRotatorSupportedFormats(uint32_t v4l2_index, HWResourceInfo *hw_resource);
-  void PopulateSupportedFmts(HWSubBlockType sub_blk_type, const sde_drm::DRMPlaneTypeInfo  &info,
-                             HWResourceInfo *hw_resource);
-  void PopulatePipeCaps(const sde_drm::DRMPlaneTypeInfo &info, HWResourceInfo *hw_resource);
-
 
   sde_drm::DRMManagerInterface *drm_mgr_intf_ = {};
   bool default_mode_ = false;
@@ -71,8 +67,6 @@ class HWInfoDRM: public HWInfoInterface {
   // TODO(user): Read Mdss version from the driver
   static const int kHWMdssVersion5 = 500;  // MDSS_V5
   static const int kMaxStringLength = 1024;
-  static const int kKiloUnit = 1000;
-
   static HWResourceInfo *hw_resource_;
 };
 

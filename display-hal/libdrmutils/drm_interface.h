@@ -39,9 +39,6 @@
 #include "xf86drmMode.h"
 
 namespace sde_drm {
-
-typedef std::map<std::pair<uint32_t, uint64_t>, float> CompRatioMap;
-
 /*
  * Drm Atomic Operation Codes
  */
@@ -144,24 +141,6 @@ enum struct DRMOps {
    */
   CRTC_SET_OUTPUT_FENCE_OFFSET,
   /*
-   * Op: Sets overall SDE core clock
-   * Arg: uint32_t - CRTC ID
-   *      uint32_t - core_clk
-   */
-  CRTC_SET_CORE_CLK,
-   /*
-   * Op: Sets overall SDE core average bandwidth
-   * Arg: uint32_t - CRTC ID
-   *      uint32_t - core_ab
-   */
-  CRTC_SET_CORE_AB,
-   /*
-   * Op: Sets overall SDE core instantaneous bandwidth
-   * Arg: uint32_t - CRTC ID
-   *      uint32_t - core_ib
-   */
-  CRTC_SET_CORE_IB,
-  /*
    * Op: Returns release fence for this frame. Should be called after Commit() on
    * DRMAtomicReqInterface.
    * Arg: uint32_t - CRTC ID
@@ -174,13 +153,6 @@ enum struct DRMOps {
    *      DRMPPFeatureInfo * - PP feature data pointer
    */
   CRTC_SET_POST_PROC,
-  /*
-   * Op: Sets CRTC ROIs.
-   * Arg: uint32_t - CRTC ID
-   *      uint32_t - number of ROIs
-   *      DRMRect * - Array of CRTC ROIs
-   */
-  CRTC_SET_ROI,
   /*
    * Op: Returns retire fence for this commit. Should be called after Commit() on
    * DRMAtomicReqInterface.
@@ -200,33 +172,12 @@ enum struct DRMOps {
    *      uint32_t - Framebuffer ID
    */
   CONNECTOR_SET_OUTPUT_FB_ID,
-  /*
-   * Op: Sets power mode for connector.
-   * Arg: uint32_t - Connector ID
-   *      uint32_t - Power Mode
-   */
-  CONNECTOR_SET_POWER_MODE,
-  /*
-   * Op: Sets panel ROIs.
-   * Arg: uint32_t - Connector ID
-   *      uint32_t - number of ROIs
-   *      DRMRect * - Array of Connector ROIs
-   */
-  CONNECTOR_SET_ROI,
 };
 
 enum struct DRMRotation {
   FLIP_H = 0x1,
   FLIP_V = 0x2,
-  ROT_180 = FLIP_H | FLIP_V,
   ROT_90 = 0x4,
-};
-
-enum struct DRMPowerMode {
-  ON,
-  DOZE,
-  DOZE_SUSPEND,
-  OFF,
 };
 
 enum struct DRMBlendType {
@@ -264,32 +215,11 @@ enum struct QSEEDVersion {
   V3,
 };
 
-enum struct SmartDMARevision {
-  V1,
-  V2,
-};
-
 /* Per CRTC Resource Info*/
 struct DRMCrtcInfo {
   bool has_src_split;
   uint32_t max_blend_stages;
   QSEEDVersion qseed_version;
-  SmartDMARevision smart_dma_rev;
-  float ib_fudge_factor;
-  float clk_fudge_factor;
-  uint32_t dest_scale_prefill_lines;
-  uint32_t undersized_prefill_lines;
-  uint32_t macrotile_prefill_lines;
-  uint32_t nv12_prefill_lines;
-  uint32_t linear_prefill_lines;
-  uint32_t downscale_prefill_lines;
-  uint32_t extra_prefill_lines;
-  uint32_t amortized_threshold;
-  uint64_t max_bandwidth_low;
-  uint64_t max_bandwidth_high;
-  uint32_t max_sde_clk;
-  CompRatioMap comp_ratio_rt_map;
-  CompRatioMap comp_ratio_nrt_map;
 };
 
 enum struct DRMPlaneType {
@@ -305,8 +235,6 @@ enum struct DRMPlaneType {
 };
 
 struct DRMPlaneTypeInfo {
-  DRMPlaneType type;
-  uint32_t master_plane_id;
   // FourCC format enum and modifier
   std::vector<std::pair<uint32_t, uint64_t>> formats_supported;
   uint32_t max_linewidth;
@@ -314,11 +242,15 @@ struct DRMPlaneTypeInfo {
   uint32_t max_downscale;
   uint32_t max_horizontal_deci;
   uint32_t max_vertical_deci;
-  uint64_t max_pipe_bandwidth;
 };
 
-// All DRM Planes as map<Plane_id , plane_type_info> listed from highest to lowest priority
-typedef std::vector<std::pair<uint32_t, DRMPlaneTypeInfo>>  DRMPlanesInfo;
+/* All DRM Planes Info*/
+struct DRMPlanesInfo {
+  // Plane id and plane type sorted by highest to lowest priority
+  std::vector<std::pair<uint32_t, DRMPlaneType>> planes;
+  // Plane type and type info
+  std::map<DRMPlaneType, DRMPlaneTypeInfo> types;
+};
 
 enum struct DRMTopology {
   UNKNOWN,  // To be compat with driver defs in sde_kms.h
@@ -350,16 +282,6 @@ struct DRMConnectorInfo {
   std::vector<std::pair<uint32_t, uint64_t>> formats_supported;
   // Valid only if type is DRM_MODE_CONNECTOR_VIRTUAL
   uint32_t max_linewidth;
-  // Valid only if mode is command
-  int num_roi;
-  int xstart;
-  int ystart;
-  int walign;
-  int halign;
-  int wmin;
-  int hmin;
-  bool roi_merge;
-  DRMRotation panel_orientation;
 };
 
 /* Identifier token for a display */
@@ -476,7 +398,7 @@ class DRMManagerInterface {
    * Will query post propcessing feature info of a CRTC.
    * [output]: DRMPPFeatureInfo: CRTC post processing feature info
    */
-  virtual void GetCrtcPPInfo(uint32_t crtc_id, DRMPPFeatureInfo &info) = 0;
+   virtual void GetCrtcPPInfo(uint32_t crtc_id, DRMPPFeatureInfo &info) = 0;
   /*
    * Register a logical display to receive a token.
    * Each display pipeline in DRM is identified by its CRTC and Connector(s).

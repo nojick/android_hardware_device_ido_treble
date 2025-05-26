@@ -18,17 +18,17 @@
  */
 
 #include "TonemapFactory.h"
-#include <log/log.h>
+#include <utils/Log.h>
 #include "Tonemapper.h"
 #include "engine.h"
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------
 Tonemapper *TonemapperFactory_GetInstance(int type, void *colorMap, int colorMapSize,
-                                          void *lutXform, int lutXformSize, bool isSecure)
+                                          void *lutXform, int lutXformSize)
 //----------------------------------------------------------------------------------------------------------------------------------------------------------
 {
   // build the tonemapper
-  Tonemapper *tonemapper = Tonemapper::build(type, colorMap, colorMapSize, lutXform, lutXformSize, isSecure);
+  Tonemapper *tonemapper = Tonemapper::build(type, colorMap, colorMapSize, lutXform, lutXformSize);
 
   return tonemapper;
 }

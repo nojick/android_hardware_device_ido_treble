@@ -4,20 +4,20 @@ include $(LOCAL_PATH)/../../../common.mk
 ifeq ($(use_hwc2),false)
 
 LOCAL_MODULE                  := hwcomposer.$(TARGET_BOARD_PLATFORM)
-LOCAL_VENDOR_MODULE           := true
+LOCAL_VENDOR_MODULE       := true
 LOCAL_MODULE_RELATIVE_PATH    := hw
 LOCAL_MODULE_TAGS             := optional
 LOCAL_C_INCLUDES              := $(common_includes)
-LOCAL_HEADER_LIBRARIES        := display_headers libhardware_headers libhardware_legacy_headers libui_v_headers
+LOCAL_HEADER_LIBRARIES        := display_headers
 
 LOCAL_CFLAGS                  := $(common_flags) -Wno-missing-field-initializers -Wno-unused-parameter \
-                                  -fcolor-diagnostics -Wno-sign-conversion -DLOG_TAG=\"SDM\" -Wno-shorten-64-to-32
+                                 -std=c++11 -fcolor-diagnostics -Wno-sign-conversion -DLOG_TAG=\"SDM\"
 LOCAL_CLANG                   := true
 
-LOCAL_SHARED_LIBRARIES        := libsdmcore libqservice libbinder libhardware \
+LOCAL_SHARED_LIBRARIES        := libsdmcore libqservice libbinder libhardware libhardware_legacy \
                                  libutils libcutils libsync libmemalloc libqdutils libdl \
-                                 libsdmutils libgpu_tonemapper  libc++ liblog \
-                                 libdrmutils libui_v
+                                 libpowermanager libsdmutils libgpu_tonemapper  libc++ liblog \
+                                 libdrmutils libui
 
 LOCAL_SRC_FILES               := hwc_session.cpp \
                                  hwc_display.cpp \
@@ -33,8 +33,7 @@ LOCAL_SRC_FILES               := hwc_session.cpp \
                                  cpuhint.cpp \
                                  hwc_tonemapper.cpp \
                                  hwc_socket_handler.cpp \
-                                 hwc_display_external_test.cpp \
-                                 android/uevent.c
+                                 hwc_display_external_test.cpp
 
 include $(BUILD_SHARED_LIBRARY)
 endif

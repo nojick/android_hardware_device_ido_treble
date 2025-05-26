@@ -58,6 +58,15 @@
 
 namespace sdm {
 
+static void ApplyDeInterlaceAdjustment(Layer *layer) {
+  // De-interlacing adjustment
+  if (layer->input_buffer.flags.interlace) {
+    float height = (layer->src_rect.bottom - layer->src_rect.top) / 2.0f;
+    layer->src_rect.top = ROUND_UP_ALIGN_DOWN(layer->src_rect.top / 2.0f, 2);
+    layer->src_rect.bottom = layer->src_rect.top + floorf(height);
+  }
+}
+
 void HWCColorMode::Init() {
   int ret = PopulateColorModes();
   if (ret != 0) {
@@ -147,19 +156,19 @@ int HWCDisplay::Init() {
     return -EINVAL;
   }
 
-  HWCDebugHandler::Get()->GetProperty(DISABLE_HDR, &disable_hdr_handling_);
+  HWCDebugHandler::Get()->GetProperty("sys.hwc_disable_hdr", &disable_hdr_handling_);
   if (disable_hdr_handling_) {
     DLOGI("HDR Handling disabled");
   }
 
   int property_swap_interval = 1;
-  HWCDebugHandler::Get()->GetProperty(ZERO_SWAP_INTERVAL, &property_swap_interval);
+  HWCDebugHandler::Get()->GetProperty("debug.egl.swapinterval", &property_swap_interval);
   if (property_swap_interval == 0) {
     swap_interval_zero_ = true;
   }
 
   int blit_enabled = 0;
-  HWCDebugHandler::Get()->GetProperty(DISABLE_BLIT_COMPOSITION_PROP, &blit_enabled);
+  HWCDebugHandler::Get()->GetProperty("persist.hwc.blit.comp", &blit_enabled);
   if (needs_blit_ && blit_enabled) {
     blit_engine_ = new BlitEngineC2d();
     if (!blit_engine_) {
@@ -480,11 +489,10 @@ int HWCDisplay::PrepareLayerParams(hwc_layer_1_t *hwc_layer, Layer* layer) {
       int aligned_height;
       int usage = GRALLOC_USAGE_HW_FB;
       int format = HAL_PIXEL_FORMAT_RGBA_8888;
-      int ubwc_disabled = 0;
+      int ubwc_enabled = 0;
       int flags = 0;
-      HWCDebugHandler::Get()->GetProperty(DISABLE_UBWC_PROP, &ubwc_disabled);
-      bool linear = layer_stack_.output_buffer && !IsUBWCFormat(layer_stack_.output_buffer->format);
-      if ((ubwc_disabled == 1) && !linear) {
+      HWCDebugHandler::Get()->GetProperty("debug.gralloc.enable_fb_ubwc", &ubwc_enabled);
+      if (ubwc_enabled == 1) {
         usage |= GRALLOC_USAGE_PRIVATE_ALLOC_UBWC;
         flags |= private_handle_t::PRIV_FLAGS_UBWC_ALIGNED;
       }
@@ -566,6 +574,7 @@ int HWCDisplay::PrePrepareLayerStack(hwc_display_contents_1_t *content_list) {
         }
     }
     SetRect(hwc_layer.sourceCropf, &layer->src_rect);
+    ApplyDeInterlaceAdjustment(layer);
 
     uint32_t num_visible_rects = UINT32(hwc_layer.visibleRegionScreen.numRects);
     uint32_t num_dirty_rects = UINT32(hwc_layer.surfaceDamage.numRects);
@@ -943,7 +952,7 @@ void HWCDisplay::SetComposition(const LayerComposition &source, int32_t *target)
   case kCompositionGPUTarget:   *target = HWC_FRAMEBUFFER_TARGET; break;
   case kCompositionGPU:         *target = HWC_FRAMEBUFFER;        break;
   case kCompositionGPUS3D:      *target = HWC_FRAMEBUFFER;        break;
-  case kCompositionCursor:      *target = HWC_CURSOR_OVERLAY;     break;
+  case kCompositionHWCursor:    *target = HWC_CURSOR_OVERLAY;     break;
   default:                      *target = HWC_OVERLAY;            break;
   }
 }
@@ -1038,8 +1047,7 @@ void HWCDisplay::DumpInputBuffers(hwc_display_contents_1_t *content_list) {
     return;
   }
 
-	snprintf(dir_path, sizeof(dir_path), "%s/frame_dump_%s", HWCDebugHandler::DumpDir(),
-           GetDisplayString());
+  snprintf(dir_path, sizeof(dir_path), "/data/misc/display/frame_dump_%s", GetDisplayString());
 
   if (mkdir(dir_path, 0777) != 0 && errno != EEXIST) {
     DLOGW("Failed to create %s directory errno = %d, desc = %s", dir_path, errno, strerror(errno));
@@ -1086,8 +1094,7 @@ void HWCDisplay::DumpInputBuffers(hwc_display_contents_1_t *content_list) {
 void HWCDisplay::DumpOutputBuffer(const BufferInfo& buffer_info, void *base, int fence) {
   char dir_path[PATH_MAX];
 
-  snprintf(dir_path, sizeof(dir_path), "%s/frame_dump_%s", HWCDebugHandler::DumpDir(),
-           GetDisplayString());
+  snprintf(dir_path, sizeof(dir_path), "/data/misc/display/frame_dump_%s", GetDisplayString());
 
   if (mkdir(dir_path, 777) != 0 && errno != EEXIST) {
     DLOGW("Failed to create %s directory errno = %d, desc = %s", dir_path, errno, strerror(errno));
@@ -1193,13 +1200,11 @@ int HWCDisplay::SetDisplayStatus(uint32_t display_status) {
   switch (display_status) {
   case kDisplayStatusResume:
     display_paused_ = false;
-    break;
   case kDisplayStatusOnline:
     status = SetPowerMode(HWC_POWER_MODE_NORMAL);
     break;
   case kDisplayStatusPause:
     display_paused_ = true;
-    break;
   case kDisplayStatusOffline:
     status = SetPowerMode(HWC_POWER_MODE_OFF);
     break;

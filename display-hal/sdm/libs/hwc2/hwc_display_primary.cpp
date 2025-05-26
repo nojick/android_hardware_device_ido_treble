@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2014 - 2017, The Linux Foundation. All rights reserved.
+* Copyright (c) 2014 - 2016, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -62,8 +62,8 @@ int HWCDisplayPrimary::Create(CoreInterface *core_intf, BufferAllocator *buffer_
 
   hwc_display_primary->GetMixerResolution(&primary_width, &primary_height);
   int width = 0, height = 0;
-  HWCDebugHandler::Get()->GetProperty(FB_WIDTH_PROP, &width);
-  HWCDebugHandler::Get()->GetProperty(FB_HEIGHT_PROP, &height);
+  HWCDebugHandler::Get()->GetProperty("sdm.fb_size_width", &width);
+  HWCDebugHandler::Get()->GetProperty("sdm.fb_size_height", &height);
   if (width > 0 && height > 0) {
     primary_width = UINT32(width);
     primary_height = UINT32(height);
@@ -102,7 +102,7 @@ int HWCDisplayPrimary::Init() {
 
   use_metadata_refresh_rate_ = true;
   int disable_metadata_dynfps = 0;
-  HWCDebugHandler::Get()->GetProperty(DISABLE_METADATA_DYNAMIC_FPS_PROP, &disable_metadata_dynfps);
+  HWCDebugHandler::Get()->GetProperty("persist.metadata_dynfps.disable", &disable_metadata_dynfps);
   if (disable_metadata_dynfps) {
     use_metadata_refresh_rate_ = false;
   }
@@ -112,9 +112,8 @@ int HWCDisplayPrimary::Init() {
     return status;
   }
   color_mode_ = new HWCColorMode(display_intf_);
-  color_mode_->Init();
 
-  return status;
+  return INT(color_mode_->Init());
 }
 
 void HWCDisplayPrimary::ProcessBootAnimCompleted() {
@@ -188,11 +187,17 @@ HWC2::Error HWCDisplayPrimary::Validate(uint32_t *out_num_types, uint32_t *out_n
   ToggleCPUHint(one_updating_layer);
 
   uint32_t refresh_rate = GetOptimalRefreshRate(one_updating_layer);
-  bool final_rate = force_refresh_rate_ ? true : false;
-  error = display_intf_->SetRefreshRate(refresh_rate, final_rate);
+  if (current_refresh_rate_ != refresh_rate) {
+    error = display_intf_->SetRefreshRate(refresh_rate);
+  }
+
   if (error == kErrorNone) {
     // On success, set current refresh rate to new refresh rate
     current_refresh_rate_ = refresh_rate;
+  }
+
+  if (handle_idle_timeout_) {
+    handle_idle_timeout_ = false;
   }
 
   if (layer_set_.empty()) {
@@ -242,18 +247,6 @@ HWC2::Error HWCDisplayPrimary::SetColorMode(android_color_mode_t mode) {
   auto status = color_mode_->SetColorMode(mode);
   if (status != HWC2::Error::None) {
     DLOGE("failed for mode = %d", mode);
-    return status;
-  }
-
-  callbacks_->Refresh(HWC_DISPLAY_PRIMARY);
-
-  return status;
-}
-
-HWC2::Error HWCDisplayPrimary::SetColorModeById(int32_t color_mode_id) {
-  auto status = color_mode_->SetColorModeById(color_mode_id);
-  if (status != HWC2::Error::None) {
-    DLOGE("failed for mode = %d", color_mode_id);
     return status;
   }
 
@@ -335,7 +328,7 @@ DisplayError HWCDisplayPrimary::SetDisplayMode(uint32_t mode) {
 void HWCDisplayPrimary::SetMetaDataRefreshRateFlag(bool enable) {
   int disable_metadata_dynfps = 0;
 
-  HWCDebugHandler::Get()->GetProperty(DISABLE_METADATA_DYNAMIC_FPS_PROP, &disable_metadata_dynfps);
+  HWCDebugHandler::Get()->GetProperty("persist.metadata_dynfps.disable", &disable_metadata_dynfps);
   if (disable_metadata_dynfps) {
     return;
   }
@@ -387,6 +380,8 @@ void HWCDisplayPrimary::ForceRefreshRate(uint32_t refresh_rate) {
 uint32_t HWCDisplayPrimary::GetOptimalRefreshRate(bool one_updating_layer) {
   if (force_refresh_rate_) {
     return force_refresh_rate_;
+  } else if (handle_idle_timeout_) {
+    return min_refresh_rate_;
   } else if (use_metadata_refresh_rate_ && one_updating_layer && metadata_refresh_rate_) {
     return metadata_refresh_rate_;
   }
@@ -398,6 +393,7 @@ DisplayError HWCDisplayPrimary::Refresh() {
   DisplayError error = kErrorNone;
 
   callbacks_->Refresh(HWC_DISPLAY_PRIMARY);
+  handle_idle_timeout_ = true;
 
   return error;
 }

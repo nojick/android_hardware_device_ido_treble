@@ -37,7 +37,6 @@
 #include "fb/hw_virtual.h"
 #ifdef COMPILE_DRM
 #include "drm/hw_device_drm.h"
-#include "drm/hw_virtual_drm.h"
 #endif
 
 #define __CLASS__ "HWInterface"
@@ -70,11 +69,9 @@ DisplayError HWInterface::Create(DisplayType type, HWInfoInterface *hw_info_intf
       break;
     case kVirtual:
       if (driver_type == DriverType::FB) {
-        hw = new HWVirtual(buffer_sync_handler,hw_info_intf);
+        hw = new HWVirtual(buffer_sync_handler, hw_info_intf);
       } else {
-#ifdef COMPILE_DRM
-        hw = new HWVirtualDRM(buffer_sync_handler, buffer_allocator, hw_info_intf);
-#endif
+        return kErrorNotSupported;
       }
       break;
     default:

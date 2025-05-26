@@ -1,12 +1,11 @@
-HEADER_PATH := ${WORKSPACE}/display/display-hal/include
 h_sources = alloc_controller.h \
             memalloc.h
 
 cpp_sources = ionalloc.cpp \
               alloc_controller.cpp
 
-memalloc_includedir = $(pkgincludedir)
-memalloc_include_HEADERS = $(h_sources)
+library_includedir = $(pkgincludedir)
+library_include_HEADERS = $(h_sources)
 
 lib_LTLIBRARIES = libmemalloc.la
 libmemalloc_la_CC = @CC@
@@ -18,9 +17,7 @@ libmemalloc_la_LIBADD += -lhardware -lcutils -llog -lutils -ldl
 libmemalloc_la_LDFLAGS = -shared -avoid-version
 
 header_sources = gralloc_priv.h \
-                 gr.h \
-                 adreno_utils.h \
-                 $(HEADER_PATH)/color_metadata.h
+                 gr.h
 
 c_sources = gpu.cpp \
             gralloc.cpp \

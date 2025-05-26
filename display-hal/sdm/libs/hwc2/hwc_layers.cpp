@@ -68,105 +68,6 @@ DisplayError SetCSC(const private_handle_t *pvt_handle, ColorMetaData *color_met
   return kErrorNone;
 }
 
-// Returns true when color primary is supported
-bool GetColorPrimary(const int32_t &dataspace, ColorPrimaries *color_primary) {
-  auto standard = dataspace & HAL_DATASPACE_STANDARD_MASK;
-  bool supported_csc = true;
-  switch (standard) {
-    case  HAL_DATASPACE_STANDARD_BT709:
-      *color_primary = ColorPrimaries_BT709_5;
-      break;
-    case HAL_DATASPACE_STANDARD_BT601_525:
-    case HAL_DATASPACE_STANDARD_BT601_525_UNADJUSTED:
-      *color_primary = ColorPrimaries_BT601_6_525;
-      break;
-    case HAL_DATASPACE_STANDARD_BT601_625:
-    case HAL_DATASPACE_STANDARD_BT601_625_UNADJUSTED:
-      *color_primary = ColorPrimaries_BT601_6_625;
-      break;
-    case HAL_DATASPACE_STANDARD_DCI_P3:
-      *color_primary = ColorPrimaries_DCIP3;
-      break;
-    case HAL_DATASPACE_STANDARD_BT2020:
-      *color_primary = ColorPrimaries_BT2020;
-      break;
-    default:
-      DLOGV_IF(kTagClient, "Unsupported Standard Request = %d", standard);
-      supported_csc = false;
-  }
-  return supported_csc;
-}
-
-bool GetTransfer(const int32_t &dataspace, GammaTransfer *gamma_transfer) {
-  auto transfer = dataspace & HAL_DATASPACE_TRANSFER_MASK;
-  bool supported_transfer = true;
-  switch (transfer) {
-    case HAL_DATASPACE_TRANSFER_SRGB:
-      *gamma_transfer = Transfer_sRGB;
-      break;
-    case HAL_DATASPACE_TRANSFER_SMPTE_170M:
-      *gamma_transfer = Transfer_SMPTE_170M;
-      break;
-    case HAL_DATASPACE_TRANSFER_ST2084:
-      *gamma_transfer = Transfer_SMPTE_ST2084;
-      break;
-    case HAL_DATASPACE_TRANSFER_HLG:
-      *gamma_transfer = Transfer_HLG;
-      break;
-    case HAL_DATASPACE_TRANSFER_LINEAR:
-      *gamma_transfer = Transfer_Linear;
-      break;
-    case HAL_DATASPACE_TRANSFER_GAMMA2_2:
-      *gamma_transfer = Transfer_Gamma2_2;
-      break;
-    default:
-      DLOGV_IF(kTagClient, "Unsupported Transfer Request = %d", transfer);
-      supported_transfer = false;
-  }
-  return supported_transfer;
-}
-
-void GetRange(const int32_t &dataspace, ColorRange *color_range) {
-  auto range = dataspace & HAL_DATASPACE_RANGE_MASK;
-  switch (range) {
-    case HAL_DATASPACE_RANGE_FULL:
-      *color_range = Range_Full;
-      break;
-    case HAL_DATASPACE_RANGE_LIMITED:
-      *color_range = Range_Limited;
-      break;
-    default:
-      DLOGV_IF(kTagClient, "Unsupported Range Request = %d", range);
-      break;
-  }
-}
-
-bool IsBT2020(const ColorPrimaries &color_primary) {
-  switch (color_primary) {
-  case ColorPrimaries_BT2020:
-    return true;
-    break;
-  default:
-    return false;
-  }
-}
-
-// Retrieve ColorMetaData from android_data_space_t (STANDARD|TRANSFER|RANGE)
-bool GetSDMColorSpace(const int32_t &dataspace, ColorMetaData *color_metadata) {
-  bool valid = false;
-  valid = GetColorPrimary(dataspace, &(color_metadata->colorPrimaries));
-  if (!valid) {
-    return valid;
-  }
-  valid = GetTransfer(dataspace, &(color_metadata->transfer));
-  if (!valid) {
-    return valid;
-  }
-  GetRange(dataspace, &(color_metadata->range));
-
-  return true;
-}
-
 // Layer operations
 HWCLayer::HWCLayer(hwc2_display_t display_id, HWCBufferAllocator *buf_allocator)
   : id_(next_id_++), display_id_(display_id), buffer_allocator_(buf_allocator) {
@@ -253,6 +154,7 @@ HWC2::Error HWCLayer::SetLayerBuffer(buffer_handle_t buffer, int32_t acquire_fen
   layer_buffer->acquire_fence_fd = acquire_fence;
   layer_buffer->size = handle->size;
   layer_buffer->buffer_id = reinterpret_cast<uint64_t>(handle);
+  layer_buffer->fb_id = handle->fb_id;
 
   return HWC2::Error::None;
 }
@@ -293,7 +195,7 @@ HWC2::Error HWCLayer::SetLayerBlendMode(HWC2::BlendMode mode) {
 HWC2::Error HWCLayer::SetLayerColor(hwc_color_t color) {
   layer_->solid_fill_color = GetUint32Color(color);
   layer_->input_buffer.format = kFormatARGB8888;
-  DLOGV_IF(kTagClient, "[%" PRIu64 "][%" PRIu64 "] Layer color set to %x", display_id_, id_,
+  DLOGV_IF(kTagCompManager, "[%" PRIu64 "][%" PRIu64 "] Layer color set to %x", display_id_, id_,
            layer_->solid_fill_color);
   return HWC2::Error::None;
 }
@@ -320,56 +222,19 @@ HWC2::Error HWCLayer::SetLayerCompositionType(HWC2::Composition type) {
 }
 
 HWC2::Error HWCLayer::SetLayerDataspace(int32_t dataspace) {
-  // Map deprecated dataspace values to appropriate
-  // new enums
-  if (dataspace & 0xffff) {
-    switch (dataspace & 0xffff) {
-      case HAL_DATASPACE_SRGB:
-        dataspace = HAL_DATASPACE_V0_SRGB;
-        break;
-      case HAL_DATASPACE_JFIF:
-        dataspace = HAL_DATASPACE_V0_JFIF;
-        break;
-      case HAL_DATASPACE_SRGB_LINEAR:
-        dataspace = HAL_DATASPACE_V0_SRGB_LINEAR;
-        break;
-      case HAL_DATASPACE_BT601_625:
-        dataspace = HAL_DATASPACE_V0_BT601_625;
-        break;
-      case HAL_DATASPACE_BT601_525:
-        dataspace = HAL_DATASPACE_V0_BT601_525;
-        break;
-      case HAL_DATASPACE_BT709:
-        dataspace = HAL_DATASPACE_V0_BT709;
-        break;
-      default:
-        // unknown legacy dataspace
-        DLOGW_IF(kTagClient, "Unsupported dataspace type %d", dataspace);
-    }
-  }
-
-  if (dataspace_ != dataspace) {
-    geometry_changes_ |= kDataspace;
-    dataspace_ = dataspace;
-  }
+  // TODO(user): Implement later
+  geometry_changes_ |= kDataspace;
   return HWC2::Error::None;
 }
 
 HWC2::Error HWCLayer::SetLayerDisplayFrame(hwc_rect_t frame) {
   LayerRect dst_rect = {};
-
   SetRect(frame, &dst_rect);
-  if (dst_rect_ != dst_rect) {
+  if (layer_->dst_rect != dst_rect) {
     geometry_changes_ |= kDisplayFrame;
-    dst_rect_ = dst_rect;
+    layer_->dst_rect = dst_rect;
   }
-
   return HWC2::Error::None;
-}
-
-void HWCLayer::ResetPerFrameData() {
-  layer_->dst_rect = dst_rect_;
-  layer_->transform = layer_transform_;
 }
 
 HWC2::Error HWCLayer::SetLayerPlaneAlpha(float alpha) {
@@ -428,11 +293,10 @@ HWC2::Error HWCLayer::SetLayerTransform(HWC2::Transform transform) {
       break;
   }
 
-  if (layer_transform_ != layer_transform) {
+  if (layer_->transform != layer_transform) {
     geometry_changes_ |= kTransform;
-    layer_transform_ = layer_transform;
+    layer_->transform = layer_transform;
   }
-
   return HWC2::Error::None;
 }
 
@@ -533,9 +397,6 @@ LayerBufferFormat HWCLayer::GetSDMFormat(const int32_t &source, const int flags)
     case HAL_PIXEL_FORMAT_RGB_888:
       format = kFormatRGB888;
       break;
-    case HAL_PIXEL_FORMAT_BGR_888:
-      format = kFormatBGR888;
-      break;
     case HAL_PIXEL_FORMAT_RGB_565:
       format = kFormatRGB565;
       break;
@@ -566,9 +427,6 @@ LayerBufferFormat HWCLayer::GetSDMFormat(const int32_t &source, const int flags)
       break;
     case HAL_PIXEL_FORMAT_YCbCr_422_I:
       format = kFormatYCbCr422H2V1Packed;
-      break;
-    case HAL_PIXEL_FORMAT_CbYCrY_422_I:
-      format = kFormatCbYCrY422H2V1Packed;
       break;
     case HAL_PIXEL_FORMAT_RGBA_1010102:
       format = kFormatRGBA1010102;
@@ -634,17 +492,8 @@ LayerBufferS3DFormat HWCLayer::GetS3DFormat(uint32_t s3d_format) {
 
 DisplayError HWCLayer::SetMetaData(const private_handle_t *pvt_handle, Layer *layer) {
   LayerBuffer *layer_buffer = &layer->input_buffer;
-  bool use_color_metadata = true;
-
-#ifdef FEATURE_WIDE_COLOR
-  // Only use color metadata if Android framework metadata is not set
-  use_color_metadata = (dataspace_ == HAL_DATASPACE_UNKNOWN);
-#endif
-
-  if (use_color_metadata) {
-    if (sdm::SetCSC(pvt_handle, &layer_buffer->color_metadata) != kErrorNone) {
-      return kErrorNotSupported;
-    }
+  if (sdm::SetCSC(pvt_handle, &layer_buffer->color_metadata) != kErrorNone) {
+    return kErrorNotSupported;
   }
 
   private_handle_t *handle = const_cast<private_handle_t *>(pvt_handle);
@@ -663,10 +512,6 @@ DisplayError HWCLayer::SetMetaData(const private_handle_t *pvt_handle, Layer *la
   int32_t interlaced = 0;
   if (getMetaData(handle, GET_PP_PARAM_INTERLACED, &interlaced) == 0) {
     layer_buffer->flags.interlace = interlaced ? true : false;
-  }
-  if (interlace != layer_buffer->flags.interlace) {
-    DLOGI("Layer buffer interlaced metadata has changed. old=%d, new=%d",
-          layer_buffer->flags.interlace, interlace);
   }
 
   uint32_t linear_format = 0;
@@ -698,98 +543,6 @@ DisplayError HWCLayer::SetIGC(IGC_t source, LayerIGC *target) {
   return kErrorNone;
 }
 
-
-
-bool HWCLayer::SupportLocalConversion(ColorPrimaries working_primaries) {
-  if (layer_->input_buffer.color_metadata.colorPrimaries <= ColorPrimaries_BT601_6_525 &&
-      working_primaries <= ColorPrimaries_BT601_6_525) {
-    return true;
-  }
-  return false;
-}
-
-bool HWCLayer::SupportedDataspace() {
-  if (dataspace_ == HAL_DATASPACE_UNKNOWN) {
-    // Pick values from metadata
-    return true;
-  }
-
-  LayerBuffer *layer_buffer = &layer_->input_buffer;
-
-  GammaTransfer sdm_transfer = {};
-  ColorPrimaries sdm_primaries = {};
-  ColorRange sdm_range = {};
-
-  auto transfer = dataspace_ & HAL_DATASPACE_TRANSFER_MASK;
-  // Handle transfer
-  switch (transfer) {
-    case HAL_DATASPACE_TRANSFER_SRGB:
-      sdm_transfer = Transfer_sRGB;
-      break;
-    case HAL_DATASPACE_TRANSFER_SMPTE_170M:
-      sdm_transfer = Transfer_SMPTE_170M;
-      break;
-    case HAL_DATASPACE_TRANSFER_ST2084:
-      sdm_transfer = Transfer_SMPTE_ST2084;
-      break;
-    case HAL_DATASPACE_TRANSFER_HLG:
-      sdm_transfer = Transfer_HLG;
-      break;
-    case HAL_DATASPACE_TRANSFER_LINEAR:
-      sdm_transfer = Transfer_Linear;
-      break;
-    case HAL_DATASPACE_TRANSFER_GAMMA2_2:
-      sdm_transfer = Transfer_Gamma2_2;
-      break;
-    default:
-      return false;
-  }
-
-  // Handle standard
-  auto standard = dataspace_ & HAL_DATASPACE_STANDARD_MASK;
-  switch (standard) {
-    case  HAL_DATASPACE_STANDARD_BT709:
-      sdm_primaries = ColorPrimaries_BT709_5;
-      break;
-    case HAL_DATASPACE_STANDARD_BT601_525:
-    case HAL_DATASPACE_STANDARD_BT601_525_UNADJUSTED:
-      sdm_primaries = ColorPrimaries_BT601_6_525;
-      break;
-    case HAL_DATASPACE_STANDARD_BT601_625:
-    case HAL_DATASPACE_STANDARD_BT601_625_UNADJUSTED:
-      sdm_primaries = ColorPrimaries_BT601_6_625;
-      break;
-    case HAL_DATASPACE_STANDARD_DCI_P3:
-      sdm_primaries = ColorPrimaries_DCIP3;
-      break;
-    case HAL_DATASPACE_STANDARD_BT2020:
-      sdm_primaries = ColorPrimaries_BT2020;
-      break;
-    default:
-      return false;
-  }
-  // TODO(user): Check transfer + primary combination
-
-  // Handle range
-  auto range = dataspace_ & HAL_DATASPACE_RANGE_MASK;
-  switch (range) {
-    case HAL_DATASPACE_RANGE_FULL:
-      sdm_range = Range_Full;
-      break;
-    case HAL_DATASPACE_RANGE_LIMITED:
-    default:
-      sdm_range = Range_Limited;
-      break;
-  }
-
-  // If we got here, the value is supported, update the layer
-  layer_buffer->color_metadata.transfer = sdm_transfer;
-  layer_buffer->color_metadata.colorPrimaries = sdm_primaries;
-  layer_buffer->color_metadata.range = sdm_range;
-  return true;
-}
-
-
 uint32_t HWCLayer::RoundToStandardFPS(float fps) {
   static const uint32_t standard_fps[4] = {24, 30, 48, 60};
   uint32_t frame_rate = (uint32_t)(fps);
@@ -812,7 +565,7 @@ void HWCLayer::SetComposition(const LayerComposition &sdm_composition) {
     case kCompositionGPU:
       hwc_composition = HWC2::Composition::Client;
       break;
-    case kCompositionCursor:
+    case kCompositionHWCursor:
       hwc_composition = HWC2::Composition::Cursor;
       break;
     default:

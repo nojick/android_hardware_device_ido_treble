@@ -14,16 +14,11 @@
 
 LOCAL_PATH:= $(call my-dir)
 include $(LOCAL_PATH)/../common.mk
-include $(CLEAR_VARS)
-
-LOCAL_MODULE                  := copybit_headers
-LOCAL_EXPORT_C_INCLUDE_DIRS   := $(LOCAL_PATH)
-include $(BUILD_HEADER_LIBRARY)
 
 include $(CLEAR_VARS)
 ifneq ($(TARGET_USES_GRALLOC1), true)
 LOCAL_MODULE                  := copybit.$(TARGET_BOARD_PLATFORM)
-LOCAL_VENDOR_MODULE           := true
+LOCAL_VENDOR_MODULE       := true
 LOCAL_MODULE_RELATIVE_PATH    := hw
 LOCAL_MODULE_TAGS             := optional
 LOCAL_C_INCLUDES              := $(common_includes) $(kernel_includes)

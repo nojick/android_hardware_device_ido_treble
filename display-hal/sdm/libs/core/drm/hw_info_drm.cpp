@@ -85,18 +85,17 @@ namespace sdm {
 
 class DRMLoggerImpl : public DRMLogger {
  public:
-#define PRINTLOG(tag, method, format, buf)        \
+#define PRINTLOG(method, format, buf)        \
   va_list list;                              \
   va_start(list, format);                    \
   vsnprintf(buf, sizeof(buf), format, list); \
   va_end(list);                              \
-  Debug::Get()->method(tag, "%s", buf);
+  Debug::Get()->method(kTagNone, "%s", buf);
 
-  void Error(const char *format, ...) { PRINTLOG(kTagNone, Error, format, buf_); }
-  void Warning(const char *format, ...) { PRINTLOG(kTagDriverConfig, Warning, format, buf_); }
-  void Info(const char *format, ...) { PRINTLOG(kTagDriverConfig, Info, format, buf_); }
-  void Debug(const char *format, ...) { PRINTLOG(kTagDriverConfig, Debug, format, buf_); }
-  void Verbose(const char *format, ...) { PRINTLOG(kTagDriverConfig, Verbose, format, buf_); }
+  void Error(const char *format, ...) { PRINTLOG(Error, format, buf_); }
+  void Warning(const char *format, ...) { PRINTLOG(Warning, format, buf_); }
+  void Info(const char *format, ...) { PRINTLOG(Info, format, buf_); }
+  void Debug(const char *format, ...) { PRINTLOG(Debug, format, buf_); }
 
  private:
   char buf_[1024] = {};
@@ -136,7 +135,7 @@ HWInfoDRM::~HWInfoDRM() {
 DisplayError HWInfoDRM::GetDynamicBWLimits(HWResourceInfo *hw_resource) {
   HWDynBwLimitInfo* bw_info = &hw_resource->dyn_bw_info;
   for (int index = 0; index < kBwModeMax; index++) {
-    bw_info->total_bw_limit[index] = hw_resource->max_bandwidth_low;
+    bw_info->total_bw_limit[index] = UINT32(hw_resource->max_bandwidth_low);
     bw_info->pipe_bw_limit[index] = hw_resource->max_pipe_bw;
   }
 
@@ -165,13 +164,14 @@ DisplayError HWInfoDRM::GetHWResourceInfo(HWResourceInfo *hw_resource) {
   hw_resource->linear_factor = 1;
   hw_resource->scale_factor = 1;
   hw_resource->extra_fudge_factor = 2;
-  hw_resource->amortizable_threshold = 25;
+  hw_resource->amortizable_threshold = 0;
   hw_resource->system_overhead_lines = 0;
   hw_resource->hw_dest_scalar_info.count = 0;
   hw_resource->hw_dest_scalar_info.max_scale_up = 0;
   hw_resource->hw_dest_scalar_info.max_input_width = 0;
   hw_resource->hw_dest_scalar_info.max_output_width = 0;
   hw_resource->is_src_split = true;
+  hw_resource->perf_calc = false;
   hw_resource->has_dyn_bw_support = false;
   hw_resource->has_qseed3 = false;
   hw_resource->has_concurrent_writeback = false;
@@ -252,101 +252,85 @@ void HWInfoDRM::GetSystemInfo(HWResourceInfo *hw_resource) {
   hw_resource->is_src_split = info.has_src_split;
   hw_resource->has_qseed3 = (info.qseed_version == sde_drm::QSEEDVersion::V3);
   hw_resource->num_blending_stages = info.max_blend_stages;
-  hw_resource->smart_dma_rev = (info.smart_dma_rev == sde_drm::SmartDMARevision::V2) ?
-    SmartDMARevision::V2 : SmartDMARevision::V1;
-  hw_resource->ib_fudge_factor = info.ib_fudge_factor;
-  hw_resource->hw_dest_scalar_info.prefill_lines = info.dest_scale_prefill_lines;
-  hw_resource->undersized_prefill_lines = info.undersized_prefill_lines;
-  hw_resource->macrotile_factor = info.macrotile_prefill_lines;
-  hw_resource->macrotile_nv12_factor = info.nv12_prefill_lines;
-  hw_resource->linear_factor = info.linear_prefill_lines;
-  hw_resource->scale_factor = info.downscale_prefill_lines;
-  hw_resource->extra_fudge_factor = info.extra_prefill_lines;
-  hw_resource->amortizable_threshold = info.amortized_threshold;
-  hw_resource->max_bandwidth_low = info.max_bandwidth_low / kKiloUnit;
-  hw_resource->max_bandwidth_high = info.max_bandwidth_high / kKiloUnit;
-  hw_resource->max_sde_clk = info.max_sde_clk;
-
-  std::vector<LayerBufferFormat> sdm_format;
-  for (auto &it : info.comp_ratio_rt_map) {
-    std::pair<uint32_t, uint64_t> drm_format = it.first;
-    GetSDMFormat(drm_format.first, drm_format.second, &sdm_format);
-    hw_resource->comp_ratio_rt_map.insert(std::make_pair(sdm_format[0], it.second));
-    sdm_format.clear();
-  }
-
-  for (auto &it : info.comp_ratio_nrt_map) {
-    std::pair<uint32_t, uint64_t> drm_format = it.first;
-    GetSDMFormat(drm_format.first, drm_format.second, &sdm_format);
-    hw_resource->comp_ratio_rt_map.insert(std::make_pair(sdm_format[0], it.second));
-    sdm_format.clear();
-  }
 }
 
 void HWInfoDRM::GetHWPlanesInfo(HWResourceInfo *hw_resource) {
-  DRMPlanesInfo planes;
-  drm_mgr_intf_->GetPlanesInfo(&planes);
-  for (auto &pipe_obj : planes) {
+  DRMPlanesInfo info;
+  drm_mgr_intf_->GetPlanesInfo(&info);
+  for (auto &pipe_obj : info.planes) {
     HWPipeCaps pipe_caps;
     string name = {};
-    switch (pipe_obj.second.type) {
-      case DRMPlaneType::DMA:
-        name = "DMA";
-        pipe_caps.type = kPipeTypeDMA;
-        if (!hw_resource->num_dma_pipe) {
-          PopulateSupportedFmts(kHWDMAPipe, pipe_obj.second, hw_resource);
-        }
-        hw_resource->num_dma_pipe++;
+    switch (pipe_obj.second) {
+      case DRMPlaneType::RGB:
+        pipe_caps.type = kPipeTypeRGB;
+        hw_resource->num_rgb_pipe++;
+        name = "RGB";
         break;
       case DRMPlaneType::VIG:
-        name = "VIG";
         pipe_caps.type = kPipeTypeVIG;
-        if (!hw_resource->num_vig_pipe) {
-          PopulatePipeCaps(pipe_obj.second, hw_resource);
-          PopulateSupportedFmts(kHWVIGPipe, pipe_obj.second, hw_resource);
-        }
         hw_resource->num_vig_pipe++;
+        name = "VIG";
+        break;
+      case DRMPlaneType::DMA:
+        pipe_caps.type = kPipeTypeDMA;
+        hw_resource->num_dma_pipe++;
+        name = "DMA";
         break;
       case DRMPlaneType::CURSOR:
-        name = "CURSOR";
         pipe_caps.type = kPipeTypeCursor;
-        if (!hw_resource->num_cursor_pipe) {
-          PopulateSupportedFmts(kHWCursorPipe, pipe_obj.second, hw_resource);
-          hw_resource->max_cursor_size = pipe_obj.second.max_linewidth;
-        }
         hw_resource->num_cursor_pipe++;
+        name = "CURSOR";
         break;
       default:
-        continue;  // Not adding any other pipe type
+        break;
     }
     pipe_caps.id = pipe_obj.first;
-    pipe_caps.master_pipe_id = pipe_obj.second.master_plane_id;
-    DLOGI("Adding %s Pipe : Id %d", name.c_str(), pipe_obj.first);
+    pipe_caps.max_rects = 1;
+    DLOGI("%s Pipe : Id %d", name.c_str(), pipe_obj.first);
     hw_resource->hw_pipes.push_back(std::move(pipe_caps));
   }
-}
 
-void HWInfoDRM::PopulatePipeCaps(const sde_drm::DRMPlaneTypeInfo &info,
-                                    HWResourceInfo *hw_resource) {
-  hw_resource->max_pipe_width = info.max_linewidth;
-  hw_resource->max_scale_down = info.max_downscale;
-  hw_resource->max_scale_up = info.max_upscale;
-  hw_resource->has_decimation = info.max_horizontal_deci > 1 && info.max_vertical_deci > 1;
-  hw_resource->max_pipe_bw = info.max_pipe_bandwidth / kKiloUnit;
-}
-
-void HWInfoDRM::PopulateSupportedFmts(HWSubBlockType sub_blk_type,
-                                      const sde_drm::DRMPlaneTypeInfo  &info,
-                                      HWResourceInfo *hw_resource) {
-  vector<LayerBufferFormat> sdm_formats = {};
-  FormatsMap &fmts_map = hw_resource->supported_formats_map;
-
-  if (fmts_map.find(sub_blk_type) == fmts_map.end()) {
-    for (auto &fmts : info.formats_supported) {
-      GetSDMFormat(fmts.first, fmts.second, &sdm_formats);
+  for (auto &pipe_type : info.types) {
+    vector<LayerBufferFormat> supported_sdm_formats = {};
+    for (auto &fmts : pipe_type.second.formats_supported) {
+      GetSDMFormat(fmts.first, fmts.second, &supported_sdm_formats);
     }
 
-    fmts_map.insert(make_pair(sub_blk_type, sdm_formats));
+    HWSubBlockType sub_blk_type = kHWSubBlockMax;
+    switch (pipe_type.first) {
+      case DRMPlaneType::RGB:
+        sub_blk_type = kHWRGBPipe;
+        // These properties are per plane but modeled in SDM as system-wide.
+        hw_resource->max_pipe_width = pipe_type.second.max_linewidth;
+        hw_resource->max_scale_down = pipe_type.second.max_downscale;
+        hw_resource->max_scale_up = pipe_type.second.max_upscale;
+        hw_resource->has_decimation =
+            pipe_type.second.max_horizontal_deci > 1 && pipe_type.second.max_vertical_deci > 1;
+        break;
+      case DRMPlaneType::VIG:
+        sub_blk_type = kHWVIGPipe;
+        // These properties are per plane but modeled in SDM as system-wide.
+        hw_resource->max_pipe_width = pipe_type.second.max_linewidth;
+        hw_resource->max_scale_down = pipe_type.second.max_downscale;
+        hw_resource->max_scale_up = pipe_type.second.max_upscale;
+        hw_resource->has_decimation =
+            pipe_type.second.max_horizontal_deci > 1 && pipe_type.second.max_vertical_deci > 1;
+        break;
+      case DRMPlaneType::DMA:
+        sub_blk_type = kHWDMAPipe;
+        break;
+      case DRMPlaneType::CURSOR:
+        sub_blk_type = kHWCursorPipe;
+        hw_resource->max_cursor_size = pipe_type.second.max_linewidth;
+        break;
+      default:
+        break;
+    }
+
+    if (sub_blk_type != kHWSubBlockMax) {
+      hw_resource->supported_formats_map.erase(sub_blk_type);
+      hw_resource->supported_formats_map.insert(make_pair(sub_blk_type, supported_sdm_formats));
+    }
   }
 }
 

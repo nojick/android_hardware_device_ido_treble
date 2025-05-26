@@ -35,10 +35,6 @@
 #include <gralloc_priv.h>
 #include "qdMetaData.h"
 
-unsigned long getMetaDataSize() {
-    return static_cast<unsigned long>(ROUND_UP_PAGESIZE(sizeof(MetaData_t)));
-}
-
 static int validateAndMap(private_handle_t* handle) {
     if (private_handle_t::validate(handle)) {
         ALOGE("%s: Private handle is invalid - handle:%p", __func__, handle);
@@ -51,7 +47,7 @@ static int validateAndMap(private_handle_t* handle) {
     }
 
     if (!handle->base_metadata) {
-        auto size = getMetaDataSize();
+        unsigned long size = ROUND_UP_PAGESIZE(sizeof(MetaData_t));
         void *base = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED,
                 handle->fd_metadata, 0);
         if (base == reinterpret_cast<void*>(MAP_FAILED)) {
@@ -66,18 +62,12 @@ static int validateAndMap(private_handle_t* handle) {
 }
 
 int setMetaData(private_handle_t *handle, DispParamType paramType,
-                void *param) {
+                                                    void *param) {
     auto err = validateAndMap(handle);
     if (err != 0)
         return err;
-    return setMetaDataVa(reinterpret_cast<MetaData_t*>(handle->base_metadata),
-                         paramType, param);
-}
 
-int setMetaDataVa(MetaData_t *data, DispParamType paramType,
-                  void *param) {
-    if (data == nullptr)
-        return -EINVAL;
+    MetaData_t *data = reinterpret_cast <MetaData_t *>(handle->base_metadata);
     // If parameter is NULL reset the specific MetaData Key
     if (!param) {
        data->operation &= ~paramType;
@@ -136,13 +126,8 @@ int clearMetaData(private_handle_t *handle, DispParamType paramType) {
     auto err = validateAndMap(handle);
     if (err != 0)
         return err;
-    return clearMetaDataVa(reinterpret_cast<MetaData_t *>(handle->base_metadata),
-            paramType);
-}
 
-int clearMetaDataVa(MetaData_t *data, DispParamType paramType) {
-    if (data == nullptr)
-        return -EINVAL;
+    MetaData_t *data = reinterpret_cast <MetaData_t *>(handle->base_metadata);
     data->operation &= ~paramType;
     switch (paramType) {
         case SET_S3D_COMP:
@@ -161,16 +146,9 @@ int getMetaData(private_handle_t *handle, DispFetchParamType paramType,
     int ret = validateAndMap(handle);
     if (ret != 0)
         return ret;
-    return getMetaDataVa(reinterpret_cast<MetaData_t *>(handle->base_metadata),
-                         paramType, param);
-}
-
-int getMetaDataVa(MetaData_t *data, DispFetchParamType paramType,
-                  void *param) {
+    MetaData_t *data = reinterpret_cast <MetaData_t *>(handle->base_metadata);
     // Make sure we send 0 only if the operation queried is present
-    int ret = -EINVAL;
-    if (data == nullptr)
-        return ret;
+    ret = -EINVAL;
 
     switch (paramType) {
         case GET_PP_PARAM_INTERLACED:
@@ -263,49 +241,9 @@ int copyMetaData(struct private_handle_t *src, struct private_handle_t *dst) {
     if (err != 0)
         return err;
 
+    unsigned long size = ROUND_UP_PAGESIZE(sizeof(MetaData_t));
     MetaData_t *src_data = reinterpret_cast <MetaData_t *>(src->base_metadata);
     MetaData_t *dst_data = reinterpret_cast <MetaData_t *>(dst->base_metadata);
-    memcpy(src_data, dst_data, getMetaDataSize());
+    memcpy(src_data, dst_data, size);
     return 0;
 }
-
-int copyMetaDataVaToHandle(MetaData_t *src_data, struct private_handle_t *dst) {
-    int err = -EINVAL;
-    if (src_data == nullptr)
-        return err;
-
-    err = validateAndMap(dst);
-    if (err != 0)
-        return err;
-
-    MetaData_t *dst_data = reinterpret_cast <MetaData_t *>(dst->base_metadata);
-    memcpy(src_data, dst_data, getMetaDataSize());
-    return 0;
-}
-
-int copyMetaDataHandleToVa(struct private_handle_t *src, MetaData_t *dst_data) {
-    int err = -EINVAL;
-    if (dst_data == nullptr)
-        return err;
-
-    err = validateAndMap(src);
-    if (err != 0)
-        return err;
-
-    MetaData_t *src_data = reinterpret_cast <MetaData_t *>(src->base_metadata);
-    memcpy(src_data, dst_data, getMetaDataSize());
-    return 0;
-}
-
-int copyMetaDataVaToVa(MetaData_t *src_data, MetaData_t *dst_data) {
-    int err = -EINVAL;
-    if (src_data == nullptr)
-        return err;
-
-    if (dst_data == nullptr)
-        return err;
-
-    memcpy(src_data, dst_data, getMetaDataSize());
-    return 0;
-}
-

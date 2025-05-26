@@ -57,10 +57,7 @@ class HWCBufferAllocator : public BufferAllocator {
                                 int *aligned_width, int *aligned_height);
   DisplayError GetAllocatedBufferInfo(const BufferConfig &buffer_config,
                                       AllocatedBufferInfo *allocated_buffer_info);
-  DisplayError GetBufferLayout(const AllocatedBufferInfo &buf_info,
-                               uint32_t stride[4], uint32_t offset[4],
-                               uint32_t *num_planes);
-  int SetBufferInfo(LayerBufferFormat format, int *target, uint64_t *flags);
+  int SetBufferInfo(LayerBufferFormat format, int *target, int *flags);
 
  private:
   gralloc1_device_t *gralloc_device_ = nullptr;

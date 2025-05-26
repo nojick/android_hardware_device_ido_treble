@@ -35,7 +35,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <utils/Errors.h>
-#include <log/log.h>
+#include <utils/Log.h>
 
 #include <linux/fb.h>
 #include <sys/ioctl.h>

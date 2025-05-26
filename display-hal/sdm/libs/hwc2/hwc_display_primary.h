@@ -57,7 +57,6 @@ class HWCDisplayPrimary : public HWCDisplay {
   virtual HWC2::Error Present(int32_t *out_retire_fence);
   virtual HWC2::Error GetColorModes(uint32_t *out_num_modes, android_color_mode_t *out_modes);
   virtual HWC2::Error SetColorMode(android_color_mode_t mode);
-  virtual HWC2::Error SetColorModeById(int32_t color_mode_id);
   virtual HWC2::Error SetColorTransform(const float *matrix, android_color_transform_t hint);
   virtual int Perform(uint32_t operation, ...);
   virtual void SetSecureDisplay(bool secure_display_active);
@@ -88,6 +87,7 @@ class HWCDisplayPrimary : public HWCDisplay {
 
   BufferAllocator *buffer_allocator_ = nullptr;
   CPUHint *cpu_hint_ = nullptr;
+  bool handle_idle_timeout_ = false;
 
   // Primary output buffer configuration
   LayerBuffer output_buffer_ = {};

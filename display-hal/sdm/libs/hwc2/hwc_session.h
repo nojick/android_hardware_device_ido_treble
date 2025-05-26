@@ -70,11 +70,15 @@ class HWCSession : hwc2_device_t, public qClient::BnQClient {
     }
 
     HWCSession *hwc_session = static_cast<HWCSession *>(device);
-    int32_t status = INT32(HWC2::Error::BadDisplay);
+    auto status = HWC2::Error::BadDisplay;
     if (hwc_session->hwc_display_[display]) {
-      status = hwc_session->hwc_display_[display]->CallLayerFunction(layer, member, args...);
+      status = HWC2::Error::BadLayer;
+      auto hwc_layer = hwc_session->hwc_display_[display]->GetHWCLayer(layer);
+      if (hwc_layer != nullptr) {
+        status = (hwc_layer->*member)(std::forward<Args>(args)...);
+      }
     }
-    return status;
+    return INT32(status);
   }
 
   // HWC2 Functions that require a concrete implementation in hwc session
@@ -165,8 +169,6 @@ class HWCSession : hwc2_device_t, public qClient::BnQClient {
   android::status_t SetMixerResolution(const android::Parcel *input_parcel);
 
   android::status_t SetColorModeOverride(const android::Parcel *input_parcel);
-
-  android::status_t SetColorModeById(const android::Parcel *input_parcel);
 
   static Locker locker_;
   CoreInterface *core_intf_ = NULL;

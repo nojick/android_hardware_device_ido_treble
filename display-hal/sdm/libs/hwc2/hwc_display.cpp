@@ -30,7 +30,6 @@
 #include <qd_utils.h>
 
 #include <algorithm>
-#include <iomanip>
 #include <map>
 #include <sstream>
 #include <string>
@@ -40,8 +39,6 @@
 #include "hwc_display.h"
 #include "hwc_debugger.h"
 #include "blit_engine_c2d.h"
-#include "hwc_tonemapper.h"
-
 #ifndef USE_GRALLOC1
 #include <gr.h>
 #endif
@@ -54,21 +51,12 @@
 
 namespace sdm {
 
-// This weight function is needed because the color primaries are not sorted by gamut size
-static ColorPrimaries WidestPrimaries(ColorPrimaries p1, ColorPrimaries p2) {
-  int weight = 10;
-  int lp1 = p1, lp2 = p2;
-  // TODO(user) add weight to other wide gamut primaries
-  if (lp1 == ColorPrimaries_BT2020) {
-    lp1 *= weight;
-  }
-  if (lp1 == ColorPrimaries_BT2020) {
-    lp2 *= weight;
-  }
-  if (lp1 >= lp2) {
-    return p1;
-  } else {
-    return p2;
+static void ApplyDeInterlaceAdjustment(Layer *layer) {
+  // De-interlacing adjustment
+  if (layer->input_buffer.flags.interlace) {
+    float height = (layer->src_rect.bottom - layer->src_rect.top) / 2.0f;
+    layer->src_rect.top = ROUND_UP_ALIGN_DOWN(layer->src_rect.top / 2.0f, 2);
+    layer->src_rect.bottom = layer->src_rect.top + floorf(height);
   }
 }
 
@@ -76,7 +64,7 @@ HWCColorMode::HWCColorMode(DisplayInterface *display_intf) : display_intf_(displ
 
 HWC2::Error HWCColorMode::Init() {
   PopulateColorModes();
-  return ApplyDefaultColorMode();
+  return SetColorMode(HAL_COLOR_MODE_NATIVE);
 }
 
 HWC2::Error HWCColorMode::DeInit() {
@@ -104,27 +92,12 @@ HWC2::Error HWCColorMode::GetColorModes(uint32_t *out_num_modes,
 
 HWC2::Error HWCColorMode::SetColorMode(android_color_mode_t mode) {
   // first mode in 2D matrix is the mode (identity)
-  if (color_mode_transform_map_.find(mode) == color_mode_transform_map_.end()) {
-    DLOGE("Could not find mode: %d", mode);
-    return HWC2::Error::BadParameter;
-  }
   auto status = HandleColorModeTransform(mode, current_color_transform_, color_matrix_);
   if (status != HWC2::Error::None) {
     DLOGE("failed for mode = %d", mode);
   }
 
-  DLOGV_IF(kTagClient, "Color mode %d successfully set.", mode);
   return status;
-}
-
-HWC2::Error HWCColorMode::SetColorModeById(int32_t color_mode_id) {
-  DLOGI("Applying mode: %d", color_mode_id);
-  DisplayError error = display_intf_->SetColorModeById(color_mode_id);
-  if (error != kErrorNone) {
-    DLOGI_IF(kTagClient,"Failed to set Color Transform");
-    return HWC2::Error::BadParameter;
-  }
-  return HWC2::Error::None;
 }
 
 HWC2::Error HWCColorMode::SetColorTransform(const float *matrix, android_color_transform_t hint) {
@@ -151,11 +124,10 @@ HWC2::Error HWCColorMode::HandleColorModeTransform(android_color_mode_t mode,
   bool use_matrix = false;
   if (hint != HAL_COLOR_TRANSFORM_ARBITRARY_MATRIX) {
     // if the mode + transfrom request from HWC matches one mode in SDM, set that
+    color_mode_transform = color_mode_transform_map_[mode][hint];
     if (color_mode_transform.empty()) {
       transform_hint = HAL_COLOR_TRANSFORM_IDENTITY;
       use_matrix = true;
-    } else {
-      color_mode_transform = color_mode_transform_map_[mode][hint];
     }
   } else {
     use_matrix = true;
@@ -197,137 +169,50 @@ void HWCColorMode::PopulateColorModes() {
   DisplayError error = display_intf_->GetColorModeCount(&color_mode_count);
   if (error != kErrorNone || (color_mode_count == 0)) {
     DLOGW("GetColorModeCount failed, use native color mode");
-    PopulateTransform(HAL_COLOR_MODE_NATIVE, "native", "identity");
+    PopulateTransform(HAL_COLOR_MODE_NATIVE, "native_identity");
     return;
   }
 
-  DLOGV_IF(kTagClient, "Color Modes supported count = %d", color_mode_count);
+  DLOGV_IF(kTagQDCM, "Color Modes supported count = %d", color_mode_count);
 
-  const std::string color_transform = "identity";
   std::vector<std::string> color_modes(color_mode_count);
   error = display_intf_->GetColorModes(&color_mode_count, &color_modes);
+
   for (uint32_t i = 0; i < color_mode_count; i++) {
     std::string &mode_string = color_modes.at(i);
-    DLOGV_IF(kTagClient, "Color Mode[%d] = %s", i, mode_string.c_str());
-    AttrVal attr;
-    error = display_intf_->GetColorModeAttr(mode_string, &attr);
-    if (!attr.empty()) {
-      std::string color_gamut, dynamic_range, pic_quality;
-      for (auto &it : attr) {
-        if (it.first.find(kColorGamutAttribute) != std::string::npos) {
-          color_gamut = it.second;
-        } else if (it.first.find(kDynamicRangeAttribute) != std::string::npos) {
-          dynamic_range = it.second;
-        } else if (it.first.find(kPictureQualityAttribute) != std::string::npos) {
-          pic_quality = it.second;
-        }
-      }
-
-      DLOGV_IF(kTagClient, "color_gamut : %s, dynamic_range : %s, pic_quality : %s",
-               color_gamut.c_str(), dynamic_range.c_str(), pic_quality.c_str());
-
-      if (dynamic_range == kHdr) {
-        continue;
-      }
-      if ((color_gamut == kNative) &&
-          (pic_quality.empty() || pic_quality == kStandard)) {
-        PopulateTransform(HAL_COLOR_MODE_NATIVE, mode_string, color_transform);
-      } else if ((color_gamut == kSrgb) &&
-                 (pic_quality.empty() || pic_quality == kStandard)) {
-        PopulateTransform(HAL_COLOR_MODE_SRGB, mode_string, color_transform);
-      } else if ((color_gamut == kDcip3) &&
-                 (pic_quality.empty() || pic_quality == kStandard)) {
-        PopulateTransform(HAL_COLOR_MODE_DCI_P3, mode_string, color_transform);
-      } else if ((color_gamut == kDisplayP3) &&
-                 (pic_quality.empty() || pic_quality == kStandard)) {
-        PopulateTransform(HAL_COLOR_MODE_DISPLAY_P3, mode_string, color_transform);
-      }
-    } else {
-      if (mode_string.find("hal_native") != std::string::npos) {
-        PopulateTransform(HAL_COLOR_MODE_NATIVE, mode_string, mode_string);
-      } else if (mode_string.find("hal_srgb") != std::string::npos) {
-        PopulateTransform(HAL_COLOR_MODE_SRGB, mode_string, mode_string);
-      } else if (mode_string.find("hal_adobe") != std::string::npos) {
-        PopulateTransform(HAL_COLOR_MODE_ADOBE_RGB, mode_string, mode_string);
-      } else if (mode_string.find("hal_dci_p3") != std::string::npos) {
-        PopulateTransform(HAL_COLOR_MODE_DCI_P3, mode_string, mode_string);
-      } else if (mode_string.find("hal_display_p3") != std::string::npos) {
-        PopulateTransform(HAL_COLOR_MODE_DISPLAY_P3, mode_string, mode_string);
-      }
+    DLOGV_IF(kTagQDCM, "Color Mode[%d] = %s", i, mode_string.c_str());
+    if (mode_string.find("hal_native") != std::string::npos) {
+      PopulateTransform(HAL_COLOR_MODE_NATIVE, mode_string);
+    } else if (mode_string.find("hal_srgb") != std::string::npos) {
+      PopulateTransform(HAL_COLOR_MODE_SRGB, mode_string);
+    } else if (mode_string.find("hal_adobe") != std::string::npos) {
+      PopulateTransform(HAL_COLOR_MODE_ADOBE_RGB, mode_string);
+    } else if (mode_string.find("hal_dci_p3") != std::string::npos) {
+      PopulateTransform(HAL_COLOR_MODE_DCI_P3, mode_string);
+    } else if (mode_string.find("hal_display_p3") != std::string::npos) {
+      PopulateTransform(HAL_COLOR_MODE_DISPLAY_P3, mode_string);
     }
   }
 }
 
 void HWCColorMode::PopulateTransform(const android_color_mode_t &mode,
-                                     const std::string &color_mode,
                                      const std::string &color_transform) {
   // TODO(user): Check the substring from QDCM
   if (color_transform.find("identity") != std::string::npos) {
-    color_mode_transform_map_[mode][HAL_COLOR_TRANSFORM_IDENTITY] = color_mode;
+    color_mode_transform_map_[mode][HAL_COLOR_TRANSFORM_IDENTITY] = color_transform;
   } else if (color_transform.find("arbitrary") != std::string::npos) {
     // no color mode for arbitrary
   } else if (color_transform.find("inverse") != std::string::npos) {
-    color_mode_transform_map_[mode][HAL_COLOR_TRANSFORM_VALUE_INVERSE] = color_mode;
+    color_mode_transform_map_[mode][HAL_COLOR_TRANSFORM_VALUE_INVERSE] = color_transform;
   } else if (color_transform.find("grayscale") != std::string::npos) {
-    color_mode_transform_map_[mode][HAL_COLOR_TRANSFORM_GRAYSCALE] = color_mode;
+    color_mode_transform_map_[mode][HAL_COLOR_TRANSFORM_GRAYSCALE] = color_transform;
   } else if (color_transform.find("correct_protonopia") != std::string::npos) {
-    color_mode_transform_map_[mode][HAL_COLOR_TRANSFORM_CORRECT_PROTANOPIA] = color_mode;
+    color_mode_transform_map_[mode][HAL_COLOR_TRANSFORM_CORRECT_PROTANOPIA] = color_transform;
   } else if (color_transform.find("correct_deuteranopia") != std::string::npos) {
-    color_mode_transform_map_[mode][HAL_COLOR_TRANSFORM_CORRECT_DEUTERANOPIA] = color_mode;
+    color_mode_transform_map_[mode][HAL_COLOR_TRANSFORM_CORRECT_DEUTERANOPIA] = color_transform;
   } else if (color_transform.find("correct_tritanopia") != std::string::npos) {
-    color_mode_transform_map_[mode][HAL_COLOR_TRANSFORM_CORRECT_TRITANOPIA] = color_mode;
-  } else {
-    color_mode_transform_map_[mode][HAL_COLOR_TRANSFORM_IDENTITY] = color_mode;
+    color_mode_transform_map_[mode][HAL_COLOR_TRANSFORM_CORRECT_TRITANOPIA] = color_transform;
   }
-}
-
-HWC2::Error HWCColorMode::ApplyDefaultColorMode() {
-  android_color_mode_t color_mode = HAL_COLOR_MODE_NATIVE;
-  if (color_mode_transform_map_.size() == 1U) {
-    color_mode = color_mode_transform_map_.begin()->first;
-  } else if (color_mode_transform_map_.size() > 1U) {
-    std::string default_color_mode;
-    bool found = false;
-    DisplayError error = display_intf_->GetDefaultColorMode(&default_color_mode);
-    if (error == kErrorNone) {
-      // get the default mode corresponding android_color_mode_t
-      for (auto &it_mode : color_mode_transform_map_) {
-        for (auto &it : it_mode.second) {
-          if (it.second == default_color_mode) {
-            found = true;
-            break;
-          }
-        }
-        if (found) {
-          color_mode = it_mode.first;
-          break;
-        }
-      }
-    }
-
-    // return the first andrid_color_mode_t when we encouter if not found
-    if (!found) {
-      color_mode = color_mode_transform_map_.begin()->first;
-    }
-  }
-  return SetColorMode(color_mode);
-}
-
-void HWCColorMode::Dump(std::ostringstream* os) {
-  *os << "color modes supported: ";
-  for (auto it : color_mode_transform_map_) {
-    *os << it.first <<" ";
-  }
-  *os << "current mode: " << current_color_mode_ << std::endl;
-  *os << "current transform: ";
-  for (uint32_t i = 0; i < kColorTransformMatrixCount; i++) {
-    if (i % 4 == 0) {
-     *os << std::endl;
-    }
-    *os << std::fixed << std::setprecision(2) << std::setw(6) << std::setfill(' ')
-        << color_matrix_[i] << " ";
-  }
-  *os << std::endl;
 }
 
 HWCDisplay::HWCDisplay(CoreInterface *core_intf, HWCCallbacks *callbacks, DisplayType type,
@@ -351,13 +236,8 @@ int HWCDisplay::Init() {
     return -EINVAL;
   }
 
-  HWCDebugHandler::Get()->GetProperty("sys.hwc_disable_hdr", &disable_hdr_handling_);
-  if (disable_hdr_handling_) {
-    DLOGI("HDR Handling disabled");
-  }
-
   int property_swap_interval = 1;
-  HWCDebugHandler::Get()->GetProperty(ZERO_SWAP_INTERVAL, &property_swap_interval);
+  HWCDebugHandler::Get()->GetProperty("debug.egl.swapinterval", &property_swap_interval);
   if (property_swap_interval == 0) {
     swap_interval_zero_ = true;
   }
@@ -365,12 +245,10 @@ int HWCDisplay::Init() {
   client_target_ = new HWCLayer(id_, buffer_allocator_);
 
   int blit_enabled = 0;
-  HWCDebugHandler::Get()->GetProperty(DISABLE_BLIT_COMPOSITION_PROP, &blit_enabled);
+  HWCDebugHandler::Get()->GetProperty("persist.hwc.blit.comp", &blit_enabled);
   if (needs_blit_ && blit_enabled) {
     // TODO(user): Add blit engine when needed
   }
-
-  tone_mapper_ = new HWCToneMapper(buffer_allocator_);
 
   display_intf_->GetRefreshRateRange(&min_refresh_rate_, &max_refresh_rate_);
   current_refresh_rate_ = max_refresh_rate_;
@@ -392,9 +270,6 @@ int HWCDisplay::Deinit() {
     delete color_mode_;
   }
 
-  delete tone_mapper_;
-  tone_mapper_ = nullptr;
-
   return 0;
 }
 
@@ -403,7 +278,6 @@ HWC2::Error HWCDisplay::CreateLayer(hwc2_layer_t *out_layer_id) {
   HWCLayer *layer = *layer_set_.emplace(new HWCLayer(id_, buffer_allocator_));
   layer_map_.emplace(std::make_pair(layer->GetId(), layer));
   *out_layer_id = layer->GetId();
-  validated_ = false;
   geometry_changes_ |= GeometryChanges::kAdded;
   return HWC2::Error::None;
 }
@@ -434,25 +308,19 @@ HWC2::Error HWCDisplay::DestroyLayer(hwc2_layer_t layer_id) {
       break;
     }
   }
-  validated_ = false;
 
   geometry_changes_ |= GeometryChanges::kRemoved;
   return HWC2::Error::None;
 }
 
-
 void HWCDisplay::BuildLayerStack() {
   layer_stack_ = LayerStack();
   display_rect_ = LayerRect();
   metadata_refresh_rate_ = 0;
-  auto working_primaries = ColorPrimaries_BT709_5;
 
   // Add one layer for fb target
   // TODO(user): Add blit target layers
   for (auto hwc_layer : layer_set_) {
-    // Reset layer data which SDM may change
-    hwc_layer->ResetPerFrameData();
-
     Layer *layer = hwc_layer->GetSDMLayer();
     layer->flags = {};   // Reset earlier flags
     if (hwc_layer->GetClientRequestedCompositionType() == HWC2::Composition::Client) {
@@ -460,16 +328,6 @@ void HWCDisplay::BuildLayerStack() {
     } else if (hwc_layer->GetClientRequestedCompositionType() == HWC2::Composition::SolidColor) {
       layer->flags.solid_fill = true;
     }
-
-#ifdef FEATURE_WIDE_COLOR
-    if (!hwc_layer->SupportedDataspace()) {
-        layer->flags.skip = true;
-        DLOGW_IF(kTagStrategy, "Unsupported dataspace: 0x%x", hwc_layer->GetLayerDataspace());
-    }
-#endif
-
-    working_primaries = WidestPrimaries(working_primaries,
-                                        layer->input_buffer.color_metadata.colorPrimaries);
 
     // set default composition as GPU for SDM
     layer->composition = kCompositionGPU;
@@ -513,20 +371,12 @@ void HWCDisplay::BuildLayerStack() {
       }
     }
 
-    bool hdr_layer = layer->input_buffer.color_metadata.colorPrimaries == ColorPrimaries_BT2020 &&
-                     (layer->input_buffer.color_metadata.transfer == Transfer_SMPTE_ST2084 ||
-                     layer->input_buffer.color_metadata.transfer == Transfer_HLG);
-    if (hdr_layer && !disable_hdr_handling_) {
-      // dont honor HDR when its handling is disabled
-      layer->input_buffer.flags.hdr = true;
-      layer_stack_.flags.hdr_present = true;
-    }
-
     // TODO(user): Move to a getter if this is needed at other places
     hwc_rect_t scaled_display_frame = {INT(layer->dst_rect.left), INT(layer->dst_rect.top),
                                        INT(layer->dst_rect.right), INT(layer->dst_rect.bottom)};
     ApplyScanAdjustment(&scaled_display_frame);
     hwc_layer->SetLayerDisplayFrame(scaled_display_frame);
+    ApplyDeInterlaceAdjustment(layer);
     // SDM requires these details even for solid fill
     if (layer->flags.solid_fill) {
       LayerBuffer *layer_buffer = &layer->input_buffer;
@@ -557,21 +407,6 @@ void HWCDisplay::BuildLayerStack() {
 
     layer_stack_.layers.push_back(layer);
   }
-
-
-#ifdef FEATURE_WIDE_COLOR
-  for (auto hwc_layer : layer_set_) {
-    auto layer = hwc_layer->GetSDMLayer();
-    if (layer->input_buffer.color_metadata.colorPrimaries != working_primaries &&
-        !hwc_layer->SupportLocalConversion(working_primaries)) {
-      layer->flags.skip = true;
-    }
-    if (layer->flags.skip) {
-      layer_stack_.flags.skip_present = true;
-    }
-  }
-#endif
-
   // TODO(user): Set correctly when SDM supports geometry_changes as bitmask
   layer_stack_.flags.geometry_changed = UINT32(geometry_changes_ > 0);
   // Append client target to the layer stack
@@ -594,7 +429,6 @@ HWC2::Error HWCDisplay::SetLayerZOrder(hwc2_layer_t layer_id, uint32_t z) {
     DLOGE("[%" PRIu64 "] updateLayerZ failed to find layer", id_);
     return HWC2::Error::BadLayer;
   }
-  validated_ = false;
 
   const auto layer = map_layer->second;
   const auto z_range = layer_set_.equal_range(layer);
@@ -625,7 +459,7 @@ HWC2::Error HWCDisplay::SetVsyncEnabled(HWC2::Vsync enabled) {
   DLOGV("Display ID: %d enabled: %s", id_, to_string(enabled).c_str());
   DisplayError error = kErrorNone;
 
-  if (shutdown_pending_ || !callbacks_->VsyncCallbackRegistered()) {
+  if (shutdown_pending_) {
     return HWC2::Error::None;
   }
 
@@ -666,9 +500,6 @@ HWC2::Error HWCDisplay::SetPowerMode(HWC2::PowerMode mode) {
       // Do not flush until a buffer is successfully submitted again.
       flush_on_error = false;
       state = kStateOff;
-      if (tone_mapper_) {
-        tone_mapper_->Terminate();
-      }
       break;
     case HWC2::PowerMode::On:
       state = kStateOn;
@@ -860,10 +691,6 @@ void HWCDisplay::SetFrameDumpConfig(uint32_t count, uint32_t bit_mask_layer_type
   dump_frame_index_ = 0;
   dump_input_layers_ = ((bit_mask_layer_type & (1 << INPUT_LAYER_DUMP)) != 0);
 
-  if (tone_mapper_) {
-    tone_mapper_->SetFrameDumpConfig(count);
-  }
-
   DLOGI("num_frame_dump %d, input_layer_dump_enable %d", dump_frame_count_, dump_input_layers_);
 }
 
@@ -1030,12 +857,6 @@ HWC2::Error HWCDisplay::GetDisplayRequests(int32_t *out_display_requests,
       i++;
     }
   }
-
-  auto client_target_layer = client_target_->GetSDMLayer();
-  if (client_target_layer->request.flags.flip_buffer) {
-    *out_display_requests = INT32(HWC2::DisplayRequest::FlipClientTarget);
-  }
-
   return HWC2::Error::None;
 }
 
@@ -1046,18 +867,15 @@ HWC2::Error HWCDisplay::GetHdrCapabilities(uint32_t *out_num_types, int32_t *out
   DisplayConfigFixedInfo fixed_info = {};
   display_intf_->GetConfig(&fixed_info);
 
-  if (!fixed_info.hdr_supported) {
-    *out_num_types = 0;
-    DLOGI("HDR is not supported");
-    return HWC2::Error::None;
-  }
-
   if (out_types == nullptr) {
-    // 1(now) - because we support only HDR10, change when HLG & DOLBY vision are supported
-    *out_num_types  = 1;
+    *out_num_types  = 0;
+    if (fixed_info.hdr_supported) {
+      // 1(now) - because we support only HDR10, change when HLG & DOLBY vision are supported
+      *out_num_types  = 1;
+    }
   } else {
     // Only HDR10 supported
-    *out_types = HAL_HDR_HDR10;
+    out_types[0] = HAL_HDR_HDR10;
     static const float kLuminanceFactor = 10000.0;
     // luminance is expressed in the unit of 0.0001 cd/m2, convert it to 1cd/m2.
     *out_max_luminance = FLOAT(fixed_info.max_luminance)/kLuminanceFactor;
@@ -1074,12 +892,8 @@ HWC2::Error HWCDisplay::CommitLayerStack(void) {
     return HWC2::Error::None;
   }
 
-  if (skip_validate_ && !CanSkipValidate()) {
-    validated_.reset(type_);
-  }
-
-  if (!validated_.test(type_)) {
-    DLOGV_IF(kTagClient, "Display %d is not validated", id_);
+  if (!validated_) {
+    DLOGW("Display is not validated");
     return HWC2::Error::NotValidated;
   }
 
@@ -1087,17 +901,6 @@ HWC2::Error HWCDisplay::CommitLayerStack(void) {
 
   if (!flush_) {
     DisplayError error = kErrorUndefined;
-    int status = 0;
-    if (tone_mapper_) {
-      if (layer_stack_.flags.hdr_present) {
-        status = tone_mapper_->HandleToneMap(&layer_stack_);
-        if (status != 0) {
-          DLOGE("Error handling HDR in ToneMapper");
-        }
-      } else {
-        tone_mapper_->Terminate();
-      }
-    }
     error = display_intf_->Commit(&layer_stack_);
     validated_ = false;
 
@@ -1126,10 +929,6 @@ HWC2::Error HWCDisplay::PostCommitLayerStack(int32_t *out_retire_fence) {
   // Do no call flush on errors, if a successful buffer is never submitted.
   if (flush_ && flush_on_error_) {
     display_intf_->Flush();
-  }
-
-  if (tone_mapper_ && tone_mapper_->IsActive()) {
-     tone_mapper_->PostCommit(&layer_stack_);
   }
 
   // TODO(user): No way to set the client target release fence on SF
@@ -1182,8 +981,6 @@ HWC2::Error HWCDisplay::PostCommitLayerStack(int32_t *out_retire_fence) {
 
   geometry_changes_ = GeometryChanges::kNone;
   flush_ = false;
-
-  ClearRequestFlags();
 
   return status;
 }
@@ -1267,9 +1064,6 @@ LayerBufferFormat HWCDisplay::GetSDMFormat(const int32_t &source, const int flag
     case HAL_PIXEL_FORMAT_BGR_565:
       format = kFormatBGR565;
       break;
-    case HAL_PIXEL_FORMAT_BGR_888:
-      format = kFormatBGR888;
-      break;
     case HAL_PIXEL_FORMAT_NV12_ENCODEABLE:
     case HAL_PIXEL_FORMAT_YCbCr_420_SP_VENUS:
       format = kFormatYCbCr420SemiPlanarVenus;
@@ -1294,9 +1088,6 @@ LayerBufferFormat HWCDisplay::GetSDMFormat(const int32_t &source, const int flag
       break;
     case HAL_PIXEL_FORMAT_YCbCr_422_I:
       format = kFormatYCbCr422H2V1Packed;
-      break;
-    case HAL_PIXEL_FORMAT_CbYCrY_422_I:
-      format = kFormatCbYCrY422H2V1Packed;
       break;
     case HAL_PIXEL_FORMAT_RGBA_1010102:
       format = kFormatRGBA1010102;
@@ -1346,8 +1137,7 @@ void HWCDisplay::DumpInputBuffers() {
     return;
   }
 
-  snprintf(dir_path, sizeof(dir_path), "%s/frame_dump_%s", HWCDebugHandler::DumpDir(),
-           GetDisplayString());
+  snprintf(dir_path, sizeof(dir_path), "/data/misc/display/frame_dump_%s", GetDisplayString());
 
   if (mkdir(dir_path, 0777) != 0 && errno != EEXIST) {
     DLOGW("Failed to create %s directory errno = %d, desc = %s", dir_path, errno, strerror(errno));
@@ -1396,8 +1186,7 @@ void HWCDisplay::DumpInputBuffers() {
 void HWCDisplay::DumpOutputBuffer(const BufferInfo &buffer_info, void *base, int fence) {
   char dir_path[PATH_MAX];
 
-  snprintf(dir_path, sizeof(dir_path), "%s/frame_dump_%s", HWCDebugHandler::DumpDir(),
-           GetDisplayString());
+  snprintf(dir_path, sizeof(dir_path), "/data/misc/display/frame_dump_%s", GetDisplayString());
 
   if (mkdir(dir_path, 777) != 0 && errno != EEXIST) {
     DLOGW("Failed to create %s directory errno = %d, desc = %s", dir_path, errno, strerror(errno));
@@ -1566,20 +1355,8 @@ HWC2::Error HWCDisplay::SetCursorPosition(hwc2_layer_t layer, int x, int y) {
     return HWC2::Error::None;
   }
 
-  if (GetHWCLayer(layer) == nullptr) {
-    return HWC2::Error::BadLayer;
-  }
-
-  DisplayState state;
-  if (display_intf_->GetDisplayState(&state) == kErrorNone) {
-    if (state != kStateOn) {
-      return HWC2::Error::None;
-    }
-  }
-
-  if (!validated_) {
-    return HWC2::Error::NotValidated;
-  }
+  // TODO(user): Validate layer
+  // TODO(user): Check if we're in a validate/present cycle
 
   auto error = display_intf_->SetCursorPosition(x, y);
   if (error != kErrorNone) {
@@ -1616,7 +1393,6 @@ void HWCDisplay::MarkLayersForClientComposition() {
   // ClientComposition - GPU comp, to acheive this, set skip flag so that
   // SDM does not handle this layer and hwc_layer composition will be
   // set correctly at the end of Prepare.
-  DLOGV_IF(kTagClient, "HWC Layers marked for GPU comp");
   for (auto hwc_layer : layer_set_) {
     Layer *layer = hwc_layer->GetSDMLayer();
     layer->flags.skip = true;
@@ -1824,67 +1600,27 @@ void HWCDisplay::CloseAcquireFds() {
   }
 }
 
-void HWCDisplay::ClearRequestFlags() {
-  for (Layer *layer : layer_stack_.layers) {
-    layer->request.flags = {};
-  }
-}
-
 std::string HWCDisplay::Dump() {
   std::ostringstream os;
   os << "-------------------------------" << std::endl;
-  os << "HWC2 display_id: " << id_ << std::endl;
+  os << "HWC2 LayerDump display_id: " << id_ << std::endl;
   for (auto layer : layer_set_) {
     auto sdm_layer = layer->GetSDMLayer();
     auto transform = sdm_layer->transform;
-    os << "layer: " << std::setw(4) << layer->GetId();
-    os << " z: " << layer->GetZ();
-    os << " compositon: " <<
-          to_string(layer->GetClientRequestedCompositionType()).c_str();
-    os << "/" <<
-          to_string(layer->GetDeviceSelectedCompositionType()).c_str();
-    os << " alpha: " << std::to_string(sdm_layer->plane_alpha).c_str();
-    os << " format: " << std::setw(22) << GetFormatString(sdm_layer->input_buffer.format);
-    os << " dataspace:" << std::hex << "0x" << std::setw(8) << std::setfill('0')
-       << layer->GetLayerDataspace() << std::dec << std::setfill(' ');
-    os << " transform: " << transform.rotation << "/" << transform.flip_horizontal <<
-          "/"<< transform.flip_vertical;
-    os << " buffer_id: " << std::hex << "0x" << sdm_layer->input_buffer.buffer_id << std::dec
+    os << "-------------------------------" << std::endl;
+    os << "layer_id: " << layer->GetId() << std::endl;
+    os << "\tz: " << layer->GetZ() << std::endl;
+    os << "\tclient(SF) composition: " <<
+          to_string(layer->GetClientRequestedCompositionType()).c_str() << std::endl;
+    os << "\tdevice(SDM) composition: " <<
+          to_string(layer->GetDeviceSelectedCompositionType()).c_str() << std::endl;
+    os << "\tplane_alpha: " << std::to_string(sdm_layer->plane_alpha).c_str() << std::endl;
+    os << "\tformat: " << GetFormatString(sdm_layer->input_buffer.format) << std::endl;
+    os << "\ttransform: rot: " << transform.rotation << " flip_h: " << transform.flip_horizontal <<
+          " flip_v: "<< transform.flip_vertical << std::endl;
+    os << "\tbuffer_id: " << std::hex << "0x" << sdm_layer->input_buffer.buffer_id << std::dec
        << std::endl;
   }
-  if (color_mode_) {
-    color_mode_->Dump(&os);
-  }
-  os << "-------------------------------" << std::endl;
   return os.str();
-}
-bool HWCDisplay::CanSkipValidate() {
-  // Layer Stack checks
-  if (layer_stack_.flags.hdr_present && (tone_mapper_ && tone_mapper_->IsActive())) {
-    DLOGV_IF(kTagClient, "HDR content present with tone mapping enabled. Returning false.");
-    return false;
-  }
-
-  if (client_target_->NeedsValidation()) {
-    DLOGV_IF(kTagClient, "Framebuffer target needs validation. Returning false.");
-    return false;
-  }
-
-  for (auto hwc_layer : layer_set_) {
-    if (hwc_layer->NeedsValidation()) {
-      DLOGV_IF(kTagClient, "hwc_layer[%d] needs validation. Returning false.",
-               hwc_layer->GetId());
-      return false;
-    }
-
-    // Do not allow Skip Validate, if any layer needs GPU Composition.
-    if (hwc_layer->GetDeviceSelectedCompositionType() == HWC2::Composition::Client) {
-      DLOGV_IF(kTagClient, "hwc_layer[%d] is GPU composed. Returning false.",
-               hwc_layer->GetId());
-      return false;
-    }
-  }
-
-  return true;
 }
 }  // namespace sdm

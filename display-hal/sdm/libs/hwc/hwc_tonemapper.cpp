@@ -133,7 +133,6 @@ int HWCToneMapper::HandleToneMap(hwc_display_contents_1_t *content_list, LayerSt
     }
 
     if (layer->request.flags.tone_map) {
-    DLOGV_IF(kTagClient, "Tonemapping for layer at index %d", i);
       switch (layer->composition) {
       case kCompositionGPUTarget:
         if (!gpu_count) {
@@ -214,7 +213,6 @@ void HWCToneMapper::PostCommit(LayerStack *layer_stack) {
       session->acquired_ = false;
       it++;
     } else {
-    DLOGI_IF(kTagClient, "Tone map session %d closed.", session_index);
       delete session;
       it = tone_map_sessions_.erase(it);
     }
@@ -254,9 +252,9 @@ void HWCToneMapper::DumpToneMapOutput(ToneMapSession *session, int *acquire_fd) 
 
   size_t result = 0;
   char dump_file_name[PATH_MAX];
-  snprintf(dump_file_name, sizeof(dump_file_name), "%s/frame_dump_primary"
-           "/tonemap_%dx%d_frame%d.raw", HWCDebugHandler::DumpDir(), target_buffer->width,
-           target_buffer->height, dump_frame_index_);
+  snprintf(dump_file_name, sizeof(dump_file_name), "/data/misc/display/frame_dump_primary"
+           "/tonemap_%dx%d_frame%d.raw", target_buffer->width, target_buffer->height,
+           dump_frame_index_);
 
   FILE* fp = fopen(dump_file_name, "w+");
   if (fp) {
@@ -305,8 +303,7 @@ DisplayError HWCToneMapper::AcquireToneMapSession(Layer *layer, uint32_t *sessio
   session->gpu_tone_mapper_ = TonemapperFactory_GetInstance(session->tone_map_config_.type,
                                                             layer->lut_3d.lutEntries,
                                                             layer->lut_3d.dim,
-                                                            grid_entries, grid_size,
-                                                            session->tone_map_config_.secure);
+                                                            grid_entries, grid_size);
 
   if (session->gpu_tone_mapper_ == NULL) {
     DLOGE("Get Tonemapper failed!");
