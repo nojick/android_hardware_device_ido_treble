@@ -147,19 +147,19 @@ int HWCDisplay::Init() {
     return -EINVAL;
   }
 
-  HWCDebugHandler::Get()->GetProperty("sys.hwc_disable_hdr", &disable_hdr_handling_);
+  HWCDebugHandler::Get()->GetProperty(DISABLE_HDR, &disable_hdr_handling_);
   if (disable_hdr_handling_) {
     DLOGI("HDR Handling disabled");
   }
 
   int property_swap_interval = 1;
-  HWCDebugHandler::Get()->GetProperty("debug.egl.swapinterval", &property_swap_interval);
+  HWCDebugHandler::Get()->GetProperty(ZERO_SWAP_INTERVAL, &property_swap_interval);
   if (property_swap_interval == 0) {
     swap_interval_zero_ = true;
   }
 
   int blit_enabled = 0;
-  HWCDebugHandler::Get()->GetProperty("persist.hwc.blit.comp", &blit_enabled);
+  HWCDebugHandler::Get()->GetProperty(DISABLE_BLIT_COMPOSITION_PROP, &blit_enabled);
   if (needs_blit_ && blit_enabled) {
     blit_engine_ = new BlitEngineC2d();
     if (!blit_engine_) {
@@ -482,7 +482,7 @@ int HWCDisplay::PrepareLayerParams(hwc_layer_1_t *hwc_layer, Layer* layer) {
       int format = HAL_PIXEL_FORMAT_RGBA_8888;
       int ubwc_enabled = 0;
       int flags = 0;
-      HWCDebugHandler::Get()->GetProperty("debug.gralloc.enable_fb_ubwc", &ubwc_enabled);
+      HWCDebugHandler::Get()->GetProperty(DISABLE_UBWC_PROP, &ubwc_disabled);
       bool linear = layer_stack_.output_buffer && !IsUBWCFormat(layer_stack_.output_buffer->format);
       if ((ubwc_enabled == 1) && !linear) {
         usage |= GRALLOC_USAGE_PRIVATE_ALLOC_UBWC;

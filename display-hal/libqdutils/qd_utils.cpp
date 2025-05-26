@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <gralloc_priv.h>
 #include "qd_utils.h"
+#include <utils/debug.h>
 
 namespace qdutils {
 
