@@ -1057,10 +1057,9 @@ void HWCDisplay::DumpInputBuffers(hwc_display_contents_1_t *content_list) {
     const private_handle_t *pvt_handle = static_cast<const private_handle_t *>(hwc_layer.handle);
 
     if (hwc_layer.acquireFenceFd >= 0) {
-      int error = sync_wait(hwc_layer.acquireFenceFd, 1000);
-      if (error < 0) {
-        DLOGW("sync_wait error errno = %d, desc = %s", errno, strerror(errno));
-        return;
+      DisplayError error = buffer_allocator_->MapBuffer(pvt_handle, hwc_layer.acquireFenceFd);
+      if (error != kErrorNone) {
+        continue;
       }
     }
 
