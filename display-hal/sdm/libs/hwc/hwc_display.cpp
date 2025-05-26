@@ -480,11 +480,11 @@ int HWCDisplay::PrepareLayerParams(hwc_layer_1_t *hwc_layer, Layer* layer) {
       int aligned_height;
       int usage = GRALLOC_USAGE_HW_FB;
       int format = HAL_PIXEL_FORMAT_RGBA_8888;
-      int ubwc_enabled = 0;
+      int ubwc_disabled = 0;
       int flags = 0;
       HWCDebugHandler::Get()->GetProperty(DISABLE_UBWC_PROP, &ubwc_disabled);
       bool linear = layer_stack_.output_buffer && !IsUBWCFormat(layer_stack_.output_buffer->format);
-      if ((ubwc_enabled == 1) && !linear) {
+      if ((ubwc_disabled == 1) && !linear) {
         usage |= GRALLOC_USAGE_PRIVATE_ALLOC_UBWC;
         flags |= private_handle_t::PRIV_FLAGS_UBWC_ALIGNED;
       }
