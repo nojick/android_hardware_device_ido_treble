@@ -202,9 +202,9 @@ PRODUCT_PACKAGES += \
     android.hardware.wifi@1.0-service
 
 # Fingerprint
-PRODUCT_PACKAGES += \
-    fingerprint.msm8916 \
-    android.hardware.biometrics.fingerprint@2.1-service
+#PRODUCT_PACKAGES += \
+#    fingerprint.msm8916 \
+#    android.hardware.biometrics.fingerprint@2.1-service
 
 # FM
 PRODUCT_PACKAGES += \
