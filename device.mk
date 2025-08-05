@@ -248,8 +248,8 @@ PRODUCT_PACKAGES += \
     keystore.msm8916
 
 # Lights
-PRODUCT_PACKAGES += \
-    android.hardware.light@2.0-service.aw2013
+#PRODUCT_PACKAGES += \
+#    android.hardware.light@2.0-service.aw2013
 
 # Gatekeeper
 PRODUCT_PACKAGES += \
