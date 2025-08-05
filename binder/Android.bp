@@ -132,3 +132,11 @@ cc_library_shared {
         misc_undefined: ["integer"],
     },
 }
+
+// AIDL interface between libbinder and framework.jar
+filegroup {
+    name: "libbinder_aidl1",
+    srcs: [
+        "aidl/android/content/pm/IPackageManagerNative.aidl",
+    ],
+}
