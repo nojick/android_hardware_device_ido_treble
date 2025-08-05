@@ -2,4 +2,5 @@ subdirs = [
 	"libs",
 	"ui",
 	"sensors",
+	"display-hal",
 ]
