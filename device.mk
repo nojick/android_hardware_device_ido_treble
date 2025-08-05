@@ -113,11 +113,11 @@ PRODUCT_PACKAGES += \
     android.hardware.ir@1.0-service
 
 # Sensor HAL
-PRODUCT_PACKAGES += \
-    android.hardware.sensors@1.0-impl.msm8916 \
-    android.hardware.sensors@1.0-service.msm8916 \
-    sensors.msm8916 \
-    libsensorndkbridge
+#PRODUCT_PACKAGES += \
+#    android.hardware.sensors@1.0-impl.msm8916 \
+#    android.hardware.sensors@1.0-service.msm8916 \
+#    sensors.msm8916 \
+#    libsensorndkbridge
 
 # Thermal
 PRODUCT_PACKAGES += \
