@@ -207,9 +207,9 @@ PRODUCT_PACKAGES += \
 #    android.hardware.biometrics.fingerprint@2.1-service
 
 # FM
-PRODUCT_PACKAGES += \
-    FMRadio \
-    libfmjni
+#PRODUCT_PACKAGES += \
+#    FMRadio \
+#    libfmjni
 
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/gps/flp.conf:$(TARGET_COPY_OUT_VENDOR)/etc/flp.conf \
@@ -268,26 +268,17 @@ PRODUCT_COPY_FILES += \
     frameworks/av/media/libstagefright/data/media_codecs_google_video_le.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_video_le.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_video.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_video.xml
 
-PRODUCT_PACKAGES += \
-    libOmxAacEnc \
-    libOmxAmrEnc \
-    libOmxCore \
-    libOmxEvrcEnc \
-    libOmxQcelp13Enc \
-    libOmxVdec \
-    libOmxVenc \
-    libOmxVdecHevc \
-    libstagefrighthw
+
 
 # Power
-PRODUCT_PACKAGES += \
-    android.hardware.power@1.0-impl \
-    android.hardware.power@1.0-service \
-    power.msm8916
+#PRODUCT_PACKAGES += \
+#    android.hardware.power@1.0-impl \
+#    android.hardware.power@1.0-service \
+#    power.msm8916
 
 # Power
-PRODUCT_PACKAGES += \
-    android.hardware.power@1.0-service-qti
+#PRODUCT_PACKAGES += \
+#    android.hardware.power@1.0-service-qti
 
 # QMI
 PRODUCT_PACKAGES += \
@@ -343,10 +334,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     msm_irqbalance
 
-# LiveDisplay
-PRODUCT_PACKAGES += \
-    vendor.lineage.livedisplay@2.0-service-sysfs
-
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/sensors/_hals.conf:$(TARGET_COPY_OUT_VENDOR)/etc/sensors/_hals.conf \
     $(LOCAL_PATH)/configs/calmodule.cfg:$(TARGET_COPY_OUT_VENDOR)/etc/calmodule.cfg
@@ -360,11 +347,10 @@ PRODUCT_COPY_FILES += \
 
 # Wifi
 PRODUCT_PACKAGES += \
-    libwcnss_qmi \
     wcnss_service \
-    libwpa_client \
     hostapd \
     wificond \
+    libwpa_client \
     wpa_supplicant \
     wpa_supplicant.conf \
 
