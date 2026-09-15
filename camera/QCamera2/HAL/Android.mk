@@ -56,7 +56,8 @@ endif
 #ifeq ($(TARGET_USE_VENDOR_CAMERA_EXT),true)
 #LOCAL_C_INCLUDES += hardware/qcom/display/msm8974/libgralloc
 #else
-#LOCAL_C_INCLUDES += hardware/qcom/display/libgralloc
+LOCAL_C_INCLUDES += device/xiaomi/ido/display-hal/libgralloc
+LOCAL_C_INCLUDES += device/xiaomi/ido/display-hal/libqdutils
 #endif
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/media
