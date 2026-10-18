@@ -1,2 +1,0 @@
-allow vold cache_block_device:blk_file getattr;
-allow vold mnt_vendor_file:dir { ioctl read open };

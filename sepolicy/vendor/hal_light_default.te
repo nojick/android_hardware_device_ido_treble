@@ -1,2 +1,0 @@
-allow hal_light_default sysfs:file { getattr open write };
-allow hal_light_default sysfs:file write;

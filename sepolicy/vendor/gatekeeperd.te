@@ -1,2 +1,0 @@
-allow gatekeeperd vendor_file:file { getattr open read };
-allow gatekeeperd vendor_file:file read;

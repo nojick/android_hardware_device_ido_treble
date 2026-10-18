@@ -139,7 +139,7 @@ TARGET_USERIMAGES_USE_F2FS := true
 TARGET_USES_MKE2FS := true
 
 # Root
-BOARD_ROOT_EXTRA_FOLDERS := firmware persist fsg
+BOARD_ROOT_EXTRA_FOLDERS := firmware persist
 
 # FM
 AUDIO_FEATURE_ENABLED_FM_POWER_OPT := true
@@ -202,11 +202,7 @@ TARGET_PROVIDES_QTI_TELEPHONY_JAR := true
 #TARGET_USES_OLD_MNC_FORMAT := true
 TARGET_RIL_VARIANT := caf
 # SELinux
-include device/qcom/sepolicy/sepolicy.mk
-#include device/qcom/sepolicy-legacy/sepolicy.mk
 BOARD_SEPOLICY_DIRS += device/xiaomi/ido/sepolicy/vendor
-BOARD_PLAT_PRIVATE_SEPOLICY_DIR += device/xiaomi/ido/sepolicy/private
-BOARD_PLAT_PUBLIC_SEPOLICY_DIR += device/xiaomi/ido/sepolicy/public
 BOARD_SEPOLICY_VERS := 29.0
 SELINUX_IGNORE_NEVERALLOWS := true
 
