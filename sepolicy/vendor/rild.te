@@ -1,0 +1,1 @@
+allow rild same_process_hal_file:file { ioctl lock };

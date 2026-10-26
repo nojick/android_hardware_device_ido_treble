@@ -1,4 +1,62 @@
-/firmware(/.*)?                                                     u:object_r:firmware_file:s0
-/persist(/.*)?                                                      u:object_r:persist_file:s0
+/firmware(/.*)?							u:object_r:firmware_file:s0
 # FSG
-/fsg(/.*)?                                                  u:object_r:fsg_file:s0
+/fsg(/.*)?							u:object_r:fsg_file:s0
+/data/fdAlbum							u:object_r:camera_data_file:s0
+
+/dev/stune(/.*)?						u:object_r:cgroup:s0
+/data/vendor/radio/modem_config(/.*)?				u:object_r:vendor_mbn_data_file:s0
+
+/(vendor|system/vendor)/bin/hw/android\.hardware\.sensors@1\.0-service\.msm8916				u:object_r:hal_sensors_default_exec:s0
+/(vendor|system/vendor)/bin/hw/android\.hardware\.drm@1\.1-service\.widevine				u:object_r:hal_drm_widevine_exec:s0
+/(vendor|system/vendor)/lib(64)?/hw/gralloc\.msm8916\.so						u:object_r:same_process_hal_file:s0
+/(vendor|system/vendor)/lib(64)?/hw/android\.hardware\.gatekeeper@1\.0-impl\.so				u:object_r:same_process_hal_file:s0
+
+/dev/block/platform/soc/7824900.sdhci/by-name/fsg                   u:object_r:modem_efs_partition_device:s0
+/dev/block/platform/soc/7824900.sdhci/by-name/fsc                   u:object_r:modem_efs_partition_device:s0
+/dev/block/platform/soc/7824900.sdhci/by-name/modemst1              u:object_r:modem_efs_partition_device:s0
+/dev/block/platform/soc/7824900.sdhci/by-name/modemst2              u:object_r:modem_efs_partition_device:s0
+/dev/block/platform/soc/7824900.sdhci/by-name/ssd                   u:object_r:ssd_device:s0
+/dev/block/platform/soc/7824900.sdhci/by-name/misc                  u:object_r:misc_block_device:s0
+/dev/block/platform/soc/7824900.sdhci/by-name/system                u:object_r:system_block_device:s0
+/dev/block/platform/soc/7824900.sdhci/by-name/userdata              u:object_r:userdata_block_device:s0
+/dev/block/platform/soc/7824900.sdhci/by-name/dip                   u:object_r:dip_device:s0
+/dev/block/platform/soc/7824900.sdhci/by-name/mdtp                  u:object_r:mdtp_device:s0
+/dev/block/platform/soc/7824900.sdhci/by-name/config                u:object_r:frp_block_device:s0
+/dev/block/platform/soc/7824900.sdhci/by-name/boot                  u:object_r:boot_block_device:s0
+/dev/block/platform/soc/7824900.sdhci/by-name/recovery              u:object_r:recovery_block_device:s0
+/dev/block/platform/soc/7824900.sdhci/by-name/cache                 u:object_r:cache_block_device:s0
+/dev/block/platform/soc/7824900.sdhci/by-name/logdump               u:object_r:logdump_partition:s0
+/dev/block/platform/soc/7824900.sdhci/by-name/super                 u:object_r:super_block_device:s0
+/dev/block/platform/soc/7824900.sdhci/by-name/persist               u:object_r:persist_block_device:s0
+
+/dev/block/mmcblk0                                                    u:object_r:root_block_device:s0
+/dev/block/mmcblk0rpmb                                                u:object_r:rpmb_device:s0
+
+/(vendor|system/vendor)/lib(64)?/libmemalloc\.so					u:object_r:same_process_hal_file:s0
+/(vendor|system/vendor)/lib(64)?/libbinder_vendor\.so					u:object_r:same_process_hal_file:s0
+/(vendor|system/vendor)/lib(64)?/libbinderthreadstate_vendor\.so			u:object_r:same_process_hal_file:s0
+/(vendor|system/vendor)/lib(64)?/libcalmodule_yamaha\.so				u:object_r:same_process_hal_file:s0
+/(vendor|system/vendor)/lib64/hw/android.hardware.graphics.allocator@2.0-impl.so	u:object_r:same_process_hal_file:s0
+/(vendor|system/vendor)/lib64/android.hardware.graphics.allocator@2.0.so		u:object_r:same_process_hal_file:s0
+/(vendor|system/vendor)/radio/qcril_database/qcril.db					u:object_r:same_process_hal_file:s0
+/(vendor|system/vendor)/lib64/hw/android.hardware.gatekeeper@1.0-impl.so				u:object_r:hal_gatekeeper_qti_exec:s0
+
+/data/vendor/qcam(/.*)?							u:object_r:vendor_camera_data_file:s0
+
+/sys/devices/soc/[a-z0-9]+.i2c/i2c-[0-9]/[0-9]-[a-z0-9]+/input/input[0-9]/bma2x2-accel(/.*)?             u:object_r:sysfs_sensors:s0
+
+# genfs_contexts
+# /sys/devices/soc/78b8000.i2c/i2c-4/4-0062/power_supply/rk-bat						u:object_r:sysfs_battery_supply:s0
+# /sys/devices/soc/78b8000.i2c/i2c-4/4-0057/power_supply/battery					u:object_r:sysfs_battery_supply:s0
+# /sys/devices/soc/qpnp-vm-bms-9/power_supply/bms/							u:object_r:sysfs_battery_supply:s0
+# /sys/devices/soc/78b6000.i2c/i2c-0/0-0023/sensors/liteon-light/enable					u:object_r:sysfs_leds:s0
+# /sys/devices/soc/7824900.sdhci/mmc_host/mmc[0-9]/mmc[0-9]:[0-9a-f]+/block/mmcblk[0-9]/stat 		u:object_r:sysfs_disk_stat:s0
+# /sys/devices/platform/soc/1de0000.qcom,venus/subsys1/name  						u:object_r:sysfs_ssr:s0
+/sys/devices/soc/78b6000.i2c/i2c-0/0-0023								u:object_r:sysfs_leds:s0
+/sys/devices/soc/1de0000.qcom,venus/subsys[0-9]/name  							u:object_r:sysfs_ssr:s0
+/sys/devices/soc/a21b000.qcom,pronto/subsys[0-9]/name							u:object_r:sysfs_ssr:s0
+/sys/devices/soc/4080000.qcom,mss/subsys2/name								u:object_r:sysfs_ssr:s0
+/sys/class/kgsl												u:object_r:sysfs_kgsl:s0
+/sys/devices/soc/[a-z0-9]+\.i2c/i2c-[0-9]/[0-9]-[a-z0-9]+/input/input[0-9]				u:object_r:sysfs_sensors:s0
+/sys/board_properties/virtualkeys.ft5x06_720p								u:object_r:keylayout_file_sysfs:s0
+/dev/socket/qmux_radio/*										u:object_r:qmuxd_socket:s0

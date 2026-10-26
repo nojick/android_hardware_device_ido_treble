@@ -1,0 +1,8 @@
+allow thermal-engine self:capability dac_override;
+allow thermal-engine socket_device:sock_file { create setattr };
+# allow thermal-engine sysfs:dir read;
+allow thermal-engine sysfs:file { open read write };
+allow thermal-engine sysfs_spmi_dev:dir { open read search };
+allow thermal-engine sysfs_spmi_dev:lnk_file read;
+allow thermal-engine sysfs_vadc_dev:file { open read };
+allow thermal-engine sysfs_vadc_dev:dir search;

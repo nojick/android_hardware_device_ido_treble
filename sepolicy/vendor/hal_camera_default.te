@@ -1,0 +1,2 @@
+# I'm not quite sure how to make the policy for /dev/socket/thermal-send-client u:object_r:thermal_socket:s0 have priority over the system one.
+allow hal_camera_default socket_device:sock_file write;

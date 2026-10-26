@@ -1,0 +1,2 @@
+allow cnd default_android_hwservice:hwservice_manager add;
+allow cnd sysfs:file { open read };

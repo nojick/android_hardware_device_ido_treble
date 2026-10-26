@@ -1,3 +1,8 @@
-type firmware_file, file_type, contextmount_type, vendor_file_type;
-type persist_file, file_type, vendor_persist_type;
+type fpc_sysfs, fs_type, sysfs_type;
+type fpc_data_file, file_type, data_file_type;
+type fpc_socket, file_type;
+# fsg
 type fsg_file, fs_type, contextmount_type;
+type sysfs_sensor_light, sysfs_type;
+type keylayout_file_sysfs, fs_type, sysfs_type;
+

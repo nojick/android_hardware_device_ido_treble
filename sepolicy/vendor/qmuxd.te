@@ -1,0 +1,2 @@
+allow qmuxd vendor_radio_prop:file { getattr open read };
+allow qmuxd diag_device:chr_file { ioctl open read write };

@@ -1,0 +1,4 @@
+#typeattribute vendor_init data_between_core_and_vendor_violators;
+#typeattribute dpmd_data_file file_type;
+#typeattribute vendor_init domain;
+#allow vendor_init dpmd_data_file:dir create_dir_perms;

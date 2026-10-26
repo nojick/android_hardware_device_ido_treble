@@ -202,7 +202,9 @@ TARGET_PROVIDES_QTI_TELEPHONY_JAR := true
 #TARGET_USES_OLD_MNC_FORMAT := true
 TARGET_RIL_VARIANT := caf
 # SELinux
+include device/qcom/sepolicy-legacy-um/sepolicy.mk
 BOARD_SEPOLICY_DIRS += device/xiaomi/ido/sepolicy/vendor
+BOARD_PLAT_PRIVATE_SEPOLICY_DIR += device/xiaomi/ido/sepolicy/private
 BOARD_SEPOLICY_VERS := 29.0
 SELINUX_IGNORE_NEVERALLOWS := true
 

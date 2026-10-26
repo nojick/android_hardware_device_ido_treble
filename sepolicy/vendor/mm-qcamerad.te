@@ -1,0 +1,8 @@
+# /data/fdAlbum
+type_transition mm-qcamerad system_data_file:file camera_data_file "fdAlbum";
+allow mm-qcamerad camera_data_file:file create_file_perms;
+
+type snap_app, domain;
+allow mm-qcamerad snap_app:fd use;
+
+allow mm-qcamerad camera_data_file:dir { getattr open read };
