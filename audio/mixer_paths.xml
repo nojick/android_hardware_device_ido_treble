@@ -78,6 +78,7 @@
     <ctl name="HPHR" value="ZERO" />
     <ctl name="HPH SPK" value="ZERO" />
     <ctl name="Lineout_1 amp" value="DISABLE" />
+    <ctl name="headset amp" value="DISABLE"/>
     <ctl name="SPK DAC Switch" value="0" />
     <ctl name="Speaker Boost" value="ENABLE" />
     <ctl name="EAR PA Gain" value="POS_1P5_DB" />
@@ -577,7 +578,7 @@
         <ctl name="RDAC2 MUX" value="RX2" />
         <ctl name="HPHL" value="Switch" />
         <ctl name="HPHR" value="Switch" />
-        <ctl name="Lineout_1 amp" value="DISABLE" />
+        <ctl name="headset amp" value="ENABLE"/>
     </path>
 
     <path name="headset-mic">
