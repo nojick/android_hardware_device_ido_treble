@@ -70,24 +70,6 @@ static ColorPrimaries WidestPrimaries(ColorPrimaries p1, ColorPrimaries p2) {
   }
 }
 
-// This weight function is needed because the color primaries are not sorted by gamut size
-static ColorPrimaries WidestPrimaries(ColorPrimaries p1, ColorPrimaries p2) {
-  int weight = 10;
-  int lp1 = p1, lp2 = p2;
-  // TODO(user) add weight to other wide gamut primaries
-  if (lp1 == ColorPrimaries_BT2020) {
-    lp1 *= weight;
-  }
-  if (lp1 == ColorPrimaries_BT2020) {
-    lp2 *= weight;
-  }
-  if (lp1 >= lp2) {
-    return p1;
-  } else {
-    return p2;
-  }
-}
-
 HWCColorMode::HWCColorMode(DisplayInterface *display_intf) : display_intf_(display_intf) {}
 
 HWC2::Error HWCColorMode::Init() {
