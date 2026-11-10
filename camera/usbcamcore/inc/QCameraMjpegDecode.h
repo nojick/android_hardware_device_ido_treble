@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -24,30 +24,26 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-#include "cam_intf.h"
+#ifndef __QCAMERA_MJPEG_DECODE_H
+#define __QCAMERA_MJPEG_DECODE_H
 
-void *POINTER_OF_PARAM(cam_intf_parm_type_t PARAM_ID,
-                 void *table_ptr)
-{
-  parm_buffer_new_t *TABLE_PTR = (parm_buffer_new_t *)table_ptr;
-  void *tmp_p;
-  size_t j = 0, i = TABLE_PTR->num_entry;
-  tmp_p = (void *) &TABLE_PTR->entry[0];
-  parm_entry_type_new_t *curr_param = (parm_entry_type_new_t *) tmp_p;
+typedef int MJPEGD_ERR;
+#define MJPEGD_NO_ERROR          0
+#define MJPEGD_ERROR            -1
+#define MJPEGD_INSUFFICIENT_MEM -2
 
-  for (j = 0; j < i; j++) {
-    if (PARAM_ID == curr_param->entry_type) {
-      return (void *)&curr_param->data[0];
-    }
-    curr_param = GET_NEXT_PARAM(curr_param, parm_entry_type_new_t);
-  }
-  tmp_p = (void *) &TABLE_PTR->entry[0];
-  curr_param = (parm_entry_type_new_t *) tmp_p;
-  return (void *)&curr_param->data[0]; //should not be coming here
-                                       //this is just to prevent a crash
-                                       //for the caller
-}
+MJPEGD_ERR mjpegDecoderInit(void**);
 
+MJPEGD_ERR mjpegDecoderDestroy(void* mjpegd);
+
+MJPEGD_ERR mjpegDecode(
+            void*   mjpegd,
+            char*   mjpegBuffer,
+            int     mjpegBufferSize,
+            char*   outputYptr,
+            char*   outputUVptr,
+            int     outputFormat);
+
+#endif /* __QCAMERA_MJPEG_DECODE_H */

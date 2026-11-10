@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2016, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,42 +27,19 @@
  *
  */
 
-#ifndef __QCAMERA2FACTORY_H__
-#define __QCAMERA2FACTORY_H__
+#ifndef MM_JPEG_MPO_H_
+#define MM_JPEG_MPO_H_
 
-#include <hardware/camera.h>
-#include <system/camera.h>
-#include <media/msmb_camera.h>
+// JPEG dependencies
+#include "mm_jpeg_interface.h"
+#include "qmpo.h"
 
-#include "QCamera2HWI.h"
+#define TRUE 1
+#define FALSE 0
 
-namespace qcamera {
+extern int mm_jpeg_mpo_compose(mm_jpeg_mpo_info_t *mpo_info);
 
-class QCamera2Factory
-{
-public:
-    QCamera2Factory();
-    virtual ~QCamera2Factory();
+extern int get_mpo_size(mm_jpeg_output_t jpeg_buffer[MM_JPEG_MAX_MPO_IMAGES],
+    int num_of_images);
 
-    static int get_number_of_cameras();
-    static int get_camera_info(int camera_id, struct camera_info *info);
-
-private:
-    int getNumberOfCameras();
-    int getCameraInfo(int camera_id, struct camera_info *info);
-    int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
-    static int camera_device_open(const struct hw_module_t *module, const char *id,
-                struct hw_device_t **hw_device);
-
-public:
-    static struct hw_module_methods_t mModuleMethods;
-
-private:
-    int mNumOfCameras;
-};
-
-}; /*namespace qcamera*/
-
-extern camera_module_t HAL_MODULE_INFO_SYM;
-
-#endif /* ANDROID_HARDWARE_QUALCOMM_CAMERA_H */
+#endif
