@@ -34,6 +34,9 @@
 #include <pthread.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
 #include <stdlib.h>
 #include <linux/media.h>
 #include <media/msm_cam_sensor.h>

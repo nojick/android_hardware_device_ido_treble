@@ -31,7 +31,6 @@
 #define __QCAMERADISPLAY_H__
 
 #include <gui/DisplayEventReceiver.h>
-#include <android/looper.h>
 #include <utils/Looper.h>
 
 namespace qcamera {
