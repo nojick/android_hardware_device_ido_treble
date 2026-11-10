@@ -29,6 +29,7 @@
 
 // System dependencies
 #include <stdlib.h>
+#include <unistd.h>
 #include <pthread.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -2595,7 +2596,7 @@ int32_t mm_stream_calc_offset_preview(cam_stream_info_t *stream_info,
     case CAM_FORMAT_YUV_420_NV12_UBWC:
 #ifdef UBWC_PRESENT
         {
-            int meta_stride = 0,meta_scanline = 0;
+            int meta_stride = 0;
             // using UBWC
             if (stream_info->stream_type != CAM_STREAM_TYPE_OFFLINE_PROC) {
                 stride = VENUS_Y_STRIDE(COLOR_FMT_NV12_UBWC, dim->width);
@@ -2888,7 +2889,7 @@ int32_t mm_stream_calc_offset_post_view(cam_format_t fmt,
     case CAM_FORMAT_YUV_420_NV12_UBWC:
 #ifdef UBWC_PRESENT
         {
-            int meta_stride = 0,meta_scanline = 0;
+            int meta_stride = 0;
             // using UBWC
             stride = VENUS_Y_STRIDE(COLOR_FMT_NV12_UBWC, dim->width);
             scanline = VENUS_Y_SCANLINES(COLOR_FMT_NV12_UBWC, dim->height);
@@ -3115,7 +3116,6 @@ int32_t mm_stream_calc_offset_snapshot(cam_format_t fmt,
     case CAM_FORMAT_YUV_420_NV12_UBWC:
 #ifdef UBWC_PRESENT
         {
-            int meta_stride = 0,meta_scanline = 0;
             // using UBWC
             stride = VENUS_Y_STRIDE(COLOR_FMT_NV12_UBWC, dim->width);
             scanline = VENUS_Y_SCANLINES(COLOR_FMT_NV12_UBWC, dim->height);
@@ -3606,8 +3606,6 @@ int32_t mm_stream_calc_offset_video(cam_format_t fmt,
 {
     int32_t rc = 0;
     int stride = 0, scanline = 0;
-    int meta_stride = 0,meta_scanline = 0;
-
 
     switch (fmt) {
         case CAM_FORMAT_YUV_420_NV12:
