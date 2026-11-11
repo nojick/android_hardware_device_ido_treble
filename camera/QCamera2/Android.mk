@@ -11,7 +11,6 @@ LOCAL_SRC_FILES := \
         util/QCameraFlash.cpp \
         util/QCameraPerf.cpp \
         util/QCameraQueue.cpp \
-        util/QCameraDisplay.cpp \
         QCamera2Hal.cpp \
         QCamera2Factory.cpp
 
@@ -59,6 +58,7 @@ LOCAL_CFLAGS += -DUSE_DISPLAY_SERVICE
 endif
 
 LOCAL_CFLAGS += -std=c++11 -std=gnu++1y
+LOCAL_CFLAGS += -Wno-implicit-fallthrough
 
 #HAL 1.0 Flags
 LOCAL_CFLAGS += -DDEFAULT_DENOISE_MODE_ON -DHAL3 -DQCAMERA_REDEFINE_LOG
