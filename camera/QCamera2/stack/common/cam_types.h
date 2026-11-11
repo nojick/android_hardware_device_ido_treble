@@ -106,7 +106,7 @@
 #define MAX_INFLIGHT_REQUESTS  6
 #define MIN_INFLIGHT_REQUESTS  3
 
-#define QCAMERA_DUMP_FRM_LOCATION "/data/misc/camera/"
+#define QCAMERA_DUMP_FRM_LOCATION "/data/vendor/qcam/"
 #define QCAMERA_MAX_FILEPATH_LENGTH 64
 
 typedef enum {

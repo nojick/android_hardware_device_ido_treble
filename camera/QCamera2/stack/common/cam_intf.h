@@ -34,7 +34,7 @@
 #include <media/msmb_isp.h>
 #include "cam_types.h"
 
-#define CAM_PRIV_IOCTL_BASE (V4L2_CID_PRIVATE_BASE + MSM_CAMERA_PRIV_CMD_MAX)
+#define CAM_PRIV_IOCTL_BASE (V4L2_CID_PRIVATE_BASE + 14)
 typedef enum {
     /* session based parameters */
     CAM_PRIV_PARM = CAM_PRIV_IOCTL_BASE,
