@@ -1382,10 +1382,19 @@ int QCamera2HardwareInterface::openCamera()
         memset(&args, 0, sizeof(args));
         memset(&metadataAllocArgs, 0, sizeof(metadataAllocArgs));
 
-        uint32_t padding =
-                gCamCapability[mCameraId]->padding_info.plane_padding;
+	uint32_t padding =
+		gCamCapability[mCameraId]->padding_info.plane_padding;
+	LOGE("META_ALLOC_DEBUG: plane_padding=%u sizeof(metadata_buffer_t)=%u",
+		(unsigned)padding, (unsigned)sizeof(metadata_buffer_t));
         metadataAllocArgs.size = PAD_TO_SIZE(sizeof(metadata_buffer_t),
                 padding);
+        if (metadataAllocArgs.size == 0) {
+            LOGE("META_ALLOC_DEBUG: size got 0 (padding=%u), using raw sizeof",
+                    (unsigned)padding);
+            metadataAllocArgs.size = sizeof(metadata_buffer_t);
+        }
+        metadataAllocArgs.bufferCnt = CAMERA_MIN_METADATA_BUFFERS;
+        args.metadataAllocArgs = metadataAllocArgs;
         metadataAllocArgs.bufferCnt = CAMERA_MIN_METADATA_BUFFERS;
         args.metadataAllocArgs = metadataAllocArgs;
 
