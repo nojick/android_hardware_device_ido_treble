@@ -66,7 +66,13 @@ QCamera2Factory::QCamera2Factory()
     camera_info info;
     mHalDescriptors = NULL;
     mCallbacks = NULL;
-    mNumOfCameras = get_num_of_cameras();
+        for (int attempts = 0; attempts < 30; attempts++) {
+        mNumOfCameras = get_num_of_cameras();
+        if (mNumOfCameras > 0) break;
+        LOGE("get_num_of_cameras returned %d (attempt %d), daemon not ready, waiting 1s",
+                mNumOfCameras, attempts);
+        sleep(1);
+    }
     int bDualCamera = 0;
     char prop[PROPERTY_VALUE_MAX];
     property_get("persist.camera.HAL3.enabled", prop, "1");
