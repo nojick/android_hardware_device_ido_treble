@@ -7,7 +7,6 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
         util/QCameraBufferMaps.cpp \
         util/QCameraCmdThread.cpp \
-        util/QCameraDisplay.cpp \
         util/QCameraFlash.cpp \
         util/QCameraPerf.cpp \
         util/QCameraQueue.cpp \
