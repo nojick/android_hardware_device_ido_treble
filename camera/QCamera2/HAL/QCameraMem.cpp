@@ -389,7 +389,11 @@ int QCameraMemory::alloc(int count, size_t size, unsigned int heap_id,
         ATRACE_END();
         return BAD_INDEX;
     }
-
+    LOGE("ALLOC_DEBUG: count=%d size=%d heap_id=0x%x secure=%u", count, (int)size, heap_id, secure_mode);
+    if (size == 0) {
+        LOGE("ALLOC_ZERO_TRAP: нулевой запрос пойман, count=%d", count);
+        abort();
+    }
     for (int i = mBufferCount; i < new_bufCnt; i ++) {
         if ( NULL == mMemoryPool ) {
             LOGH("No memory pool available, allocating now");
@@ -481,6 +485,11 @@ int QCameraMemory::allocOneBuffer(QCameraMemInfo &memInfo,
         alloc.flags = ION_FLAG_CACHED;
     }
     alloc.heap_id_mask = heap_id;
+    // ДОБАВЛЕНО: печать параметров запроса, чтобы увидеть, что отвергает ядро
+    LOGE("ION_ALLOC_DEBUG: heap_id_mask=0x%x flags=0x%x len=%d align=%d secure=%u cached=%d",
+         alloc.heap_id_mask, (unsigned int)alloc.flags,
+         (int)alloc.len, (int)alloc.align, secure_mode, (int)cached);
+
     if (secure_mode == SECURE) {
         LOGD("Allocate secure buffer\n");
         alloc.flags = ION_SECURE;
