@@ -1,9 +1,3 @@
-
-# Art
-PRODUCT_PROPERTY_OVERRIDES += \
-dalvik.vm.dex2oat-flags=--no-watch-dog
-
-
 # ACDB vendor
 PRODUCT_PROPERTY_OVERRIDES += \
 persist.audio.calfile0=/vendor/etc/acdbdata/QRD/QRD_Bluetooth_cal.acdb \
@@ -62,24 +56,11 @@ persist.cne.feature=1 \
 
 # Display
 PRODUCT_PROPERTY_OVERRIDES += \
-debug.sf.hw=0 \
-debug.egl.hw=0 \
-persist.hwc.mdpcomp.enable=true \
-debug.mdpcomp.logs=0 \
-debug.composition.type=c2d \
-dev.pm.dyn_samplingrate=1 \
-persist.demo.hdmirotationlock=false \
-debug.mdpcomp.idletime=600 \
-debug.enable.sglscale=1 \
-debug.cpurend.vsync=false \
-debug.sf.latch_unsignaled=1 \
-sys.hwc.gpu_perf_mode=1 \
-ro.opengles.version=196610 \
+debug.sf.hw=1 \
+debug.egl.hw=1 \
+debug.sf.latch_unsignaled=0 \
 ro.sf.lcd_density=320 \
 debug.sf.enable_gl_backpressure=1 \
-debug.sf.disable_backpressure=1 \
-debug.sf.recomputecrop=0 \
-ro.qualcomm.cabl=2 \
 
 # DRM
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -92,15 +73,7 @@ ro.frp.pst=/dev/block/bootdevice/by-name/config
 
 # Media
 PRODUCT_PROPERTY_OVERRIDES += \
-media.msm8939hw=1 \
-mm.enable.smoothstreaming=true \
-mmp.enable.3g2=true \
-media.aac_51_output_enabled=true \
-mm.enable.qcom_parser=3407871 \
-vendor.mediacodec.binder.size=6 \
 debug.stagefright.ccodec=0 \
-debug.stagefright.omx_default_rank.sw-audio=1 \
-debug.stagefright.omx_default_rank=0 \
 
 # Netmgrd
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -176,8 +149,5 @@ PRODUCT_PROPERTY_OVERRIDES += \
 #Configstore
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     ro.surface_flinger.max_frame_buffer_acquired_buffers=3 \
-    ro.surface_flinger.force_hwc_copy_for_virtual_displays=true \
     ro.surface_flinger.has_HDR_display=false \
     ro.surface_flinger.has_wide_color_display=false \
-    ro.surface_flinger.start_graphics_allocator_service=true \
-    ro.surface_flinger.use_context_priority=true \
