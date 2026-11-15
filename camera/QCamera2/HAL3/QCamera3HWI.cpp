@@ -7469,7 +7469,7 @@ int32_t QCamera3HardwareInterface::extractSceneMode(
         uint8_t fwk_sceneMode = entry.data.u8[0];
 
         if (fwk_sceneMode != ANDROID_CONTROL_SCENE_MODE_HIGH_SPEED_VIDEO) {
-            uint8_t sceneMode = lookupHalName(SCENE_MODES_MAP,
+            sceneMode = lookupHalName(SCENE_MODES_MAP,
                     sizeof(SCENE_MODES_MAP)/sizeof(SCENE_MODES_MAP[0]),
                     fwk_sceneMode);
             hfrMode = CAM_HFR_MODE_OFF;
