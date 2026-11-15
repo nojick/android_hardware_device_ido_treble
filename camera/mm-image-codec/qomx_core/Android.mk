@@ -13,9 +13,6 @@ LOCAL_CFLAGS := -Werror \
 LOCAL_C_INCLUDES := frameworks/native/include/media/openmax \
                     $(LOCAL_PATH)/../qexif
 
-LOCAL_INC_FILES := qomx_core.h \
-                   QOMX_JpegExtensions.h
-
 LOCAL_SRC_FILES := qomx_core.c
 
 LOCAL_MODULE           := libqomx_core

@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2015, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -29,11 +29,6 @@
 
 #ifndef MM_JPEG_INTERFACE_H_
 #define MM_JPEG_INTERFACE_H_
-
-// System dependencies
-#include <stdbool.h>
-
-// Camera dependencies
 #include "QOMX_JpegExtensions.h"
 #include "cam_intf.h"
 
@@ -54,6 +49,9 @@ typedef enum {
 } mm_jpeg_image_type_t;
 
 typedef struct {
+  cam_3a_params_t cam_3a_params;
+  uint8_t cam_3a_params_valid;
+  cam_sensor_params_t sensor_params;
   cam_ae_exif_debug_t ae_debug_params;
   cam_awb_exif_debug_t awb_debug_params;
   cam_af_exif_debug_t af_debug_params;
@@ -64,13 +62,6 @@ typedef struct {
   uint8_t af_debug_params_valid;
   uint8_t asd_debug_params_valid;
   uint8_t stats_debug_params_valid;
-} mm_jpeg_debug_exif_params_t;
-
-typedef struct {
-  cam_3a_params_t cam_3a_params;
-  uint8_t cam_3a_params_valid;
-  cam_sensor_params_t sensor_params;
-  mm_jpeg_debug_exif_params_t *debug_params;
 } mm_jpeg_exif_params_t;
 
 typedef struct {
@@ -204,9 +195,6 @@ typedef struct {
 
   /* release memory function ptr */
   int (*put_memory)( omx_jpeg_ouput_buf_t *p_out_buf);
-
-  /* Flag to indicate whether to generate thumbnail from postview */
-  bool thumb_from_postview;
 } mm_jpeg_encode_params_t;
 
 typedef struct {
@@ -385,10 +373,10 @@ typedef struct {
  * returns client_handle.
  * failed if client_handle=0
  * jpeg ops tbl and mpo ops tbl will be filled in if open succeeds
- * and jpeg meta data will be cached */
+ * and calibration data will be cached */
 uint32_t jpeg_open(mm_jpeg_ops_t *ops, mm_jpeg_mpo_ops_t *mpo_ops,
   mm_dimension picture_size,
-  cam_jpeg_metadata_t *jpeg_metadata);
+  cam_related_system_calibration_data_t *calibration_data);
 
 /* open a jpeg client -- sync call
  * returns client_handle.

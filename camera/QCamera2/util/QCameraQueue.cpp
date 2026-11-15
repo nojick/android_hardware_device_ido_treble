@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -27,16 +27,11 @@
 *
 */
 
-// System dependencies
 #include <string.h>
+#include <stdint.h>
 #include <utils/Errors.h>
-
-// Camera dependencies
+#include <log/log.h>
 #include "QCameraQueue.h"
-
-extern "C" {
-#include "mm_camera_dbg.h"
-}
 
 namespace qcamera {
 
@@ -147,7 +142,7 @@ bool QCameraQueue::enqueue(void *data)
     camera_q_node *node =
         (camera_q_node *)malloc(sizeof(camera_q_node));
     if (NULL == node) {
-        LOGE("No memory for camera_q_node");
+        ALOGE("%s: No memory for camera_q_node", __func__);
         return false;
     }
 
@@ -184,7 +179,7 @@ bool QCameraQueue::enqueueWithPriority(void *data)
     camera_q_node *node =
         (camera_q_node *)malloc(sizeof(camera_q_node));
     if (NULL == node) {
-        LOGE("No memory for camera_q_node");
+        ALOGE("%s: No memory for camera_q_node", __func__);
         return false;
     }
 
@@ -208,39 +203,6 @@ bool QCameraQueue::enqueueWithPriority(void *data)
     }
     pthread_mutex_unlock(&m_lock);
     return rc;
-}
-
-/*===========================================================================
- * FUNCTION   : peek
- *
- * DESCRIPTION: return the head element without removing it
- *
- * PARAMETERS : None
- *
- * RETURN     : data ptr. NULL if not any data in the queue.
- *==========================================================================*/
-void* QCameraQueue::peek()
-{
-    camera_q_node* node = NULL;
-    void* data = NULL;
-    struct cam_list *head = NULL;
-    struct cam_list *pos = NULL;
-
-    pthread_mutex_lock(&m_lock);
-    if (m_active) {
-        head = &m_head.list;
-        pos = head->next;
-        if (pos != head) {
-            node = member_of(pos, camera_q_node, list);
-        }
-    }
-    pthread_mutex_unlock(&m_lock);
-
-    if (NULL != node) {
-        data = node->data;
-    }
-
-    return data;
 }
 
 /*===========================================================================
@@ -283,51 +245,6 @@ void* QCameraQueue::dequeue(bool bFromHead)
     }
 
     return data;
-}
-
-/*===========================================================================
- * FUNCTION   : dequeue
- *
- * DESCRIPTION: dequeue data from the queue
- *
- * PARAMETERS :
- *   @match : matching function callback
- *   @match_data : the actual data to be matched
- *
- * RETURN     : data ptr. NULL if not any data in the queue.
- *==========================================================================*/
-void* QCameraQueue::dequeue(match_fn_data match, void *match_data){
-    camera_q_node* node = NULL;
-    struct cam_list *head = NULL;
-    struct cam_list *pos = NULL;
-    void* data = NULL;
-
-    if ( NULL == match || NULL == match_data ) {
-        return NULL;
-    }
-
-    pthread_mutex_lock(&m_lock);
-    if (m_active) {
-        head = &m_head.list;
-        pos = head->next;
-
-        while(pos != head) {
-            node = member_of(pos, camera_q_node, list);
-            pos = pos->next;
-            if (NULL != node) {
-                if ( match(node->data, m_userData, match_data) ) {
-                    cam_list_del_node(&node->list);
-                    m_size--;
-                    data = node->data;
-                    free(node);
-                    pthread_mutex_unlock(&m_lock);
-                    return data;
-                }
-            }
-        }
-    }
-    pthread_mutex_unlock(&m_lock);
-    return NULL;
 }
 
 /*===========================================================================

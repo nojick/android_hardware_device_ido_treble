@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2016, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2014-2015, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -28,18 +28,19 @@
 */
 
 #define LOG_TAG "QCamera3VendorTags"
+//#define LOG_NDEBUG 0
 
-// Camera dependencies
+#include <hardware/camera3.h>
+#include <utils/Log.h>
+#include <utils/Errors.h>
 #include "QCamera3HWI.h"
 #include "QCamera3VendorTags.h"
-
-extern "C" {
-#include "mm_camera_dbg.h"
-}
 
 using namespace android;
 
 namespace qcamera {
+
+//const int QCAMERA3_SECTION_COUNT = QCAMERA3_SECTIONS_END - VENDOR_SECTION;
 
 enum qcamera3_ext_tags qcamera3_ext3_section_bounds[QCAMERA3_SECTIONS_END -
     VENDOR_SECTION] = {
@@ -47,11 +48,7 @@ enum qcamera3_ext_tags qcamera3_ext3_section_bounds[QCAMERA3_SECTIONS_END -
         QCAMERA3_CDS_END,
         QCAMERA3_OPAQUE_RAW_END,
         QCAMERA3_CROP_END,
-        QCAMERA3_TUNING_META_DATA_END,
-        QCAMERA3_TEMPORAL_DENOISE_END,
-        QCAMERA3_AV_TIMER_END,
-        QCAMERA3_SENSOR_META_DATA_END,
-        NEXUS_EXPERIMENTAL_2015_END,
+        QCAMERA3_TUNING_META_DATA_END
 } ;
 
 typedef struct vendor_tag_info {
@@ -65,11 +62,7 @@ const char *qcamera3_ext_section_names[QCAMERA3_SECTIONS_END -
     "org.codeaurora.qcamera3.CDS",
     "org.codeaurora.qcamera3.opaque_raw",
     "org.codeaurora.qcamera3.crop",
-    "org.codeaurora.qcamera3.tuning_meta_data",
-    "org.codeaurora.qcamera3.temporal_denoise",
-    "org.codeaurora.qcamera3.av_timer",
-    "org.codeaurora.qcamera3.sensor_meta_data",
-    "com.google.nexus.experimental2015"
+    "org.codeaurora.qcamera3.tuning_meta_data"
 };
 
 vendor_tag_info_t qcamera3_privatedata[QCAMERA3_PRIVATEDATA_END - QCAMERA3_PRIVATEDATA_START] = {
@@ -77,8 +70,7 @@ vendor_tag_info_t qcamera3_privatedata[QCAMERA3_PRIVATEDATA_END - QCAMERA3_PRIVA
 };
 
 vendor_tag_info_t qcamera3_cds[QCAMERA3_CDS_END - QCAMERA3_CDS_START] = {
-    { "cds_mode", TYPE_INT32 },
-    { "cds_info", TYPE_BYTE }
+    { "cds_mode", TYPE_INT32 }
 };
 
 vendor_tag_info_t qcamera3_opaque_raw[QCAMERA3_OPAQUE_RAW_END -
@@ -90,6 +82,7 @@ vendor_tag_info_t qcamera3_opaque_raw[QCAMERA3_OPAQUE_RAW_END -
 vendor_tag_info_t qcamera3_crop[QCAMERA3_CROP_END- QCAMERA3_CROP_START] = {
     { "count", TYPE_INT32 },
     { "data", TYPE_INT32},
+    { "streamids", TYPE_INT32},
     { "roimap", TYPE_INT32 }
 };
 
@@ -98,73 +91,31 @@ vendor_tag_info_t qcamera3_tuning_meta_data[QCAMERA3_TUNING_META_DATA_END -
     { "tuning_meta_data_blob", TYPE_INT32 }
 };
 
-vendor_tag_info_t qcamera3_temporal_denoise[QCAMERA3_TEMPORAL_DENOISE_END -
-        QCAMERA3_TEMPORAL_DENOISE_START] = {
-    { "enable", TYPE_BYTE },
-    { "process_type", TYPE_INT32 }
-};
-
-vendor_tag_info qcamera3_av_timer[QCAMERA3_AV_TIMER_END -
-                                  QCAMERA3_AV_TIMER_START] = {
-   {"use_av_timer", TYPE_BYTE }
-};
-
-vendor_tag_info qcamera3_sensor_meta_data[QCAMERA3_SENSOR_META_DATA_END -
-                                  QCAMERA3_SENSOR_META_DATA_START] = {
-   {"dynamic_black_level_pattern", TYPE_FLOAT }
-};
-
-vendor_tag_info_t nexus_experimental_2015[NEXUS_EXPERIMENTAL_2015_END -
-        NEXUS_EXPERIMENTAL_2015_START] = {
-    {"sensor.dynamicBlackLevel", TYPE_FLOAT },
-    {"sensor.info.opticallyShieldedRegions", TYPE_INT32 }
-};
-
 vendor_tag_info_t *qcamera3_tag_info[QCAMERA3_SECTIONS_END -
         VENDOR_SECTION] = {
     qcamera3_privatedata,
     qcamera3_cds,
     qcamera3_opaque_raw,
     qcamera3_crop,
-    qcamera3_tuning_meta_data,
-    qcamera3_temporal_denoise,
-    qcamera3_av_timer,
-    qcamera3_sensor_meta_data,
-    nexus_experimental_2015,
+    qcamera3_tuning_meta_data
 };
 
 uint32_t qcamera3_all_tags[] = {
     // QCAMERA3_PRIVATEDATA
     (uint32_t)QCAMERA3_PRIVATEDATA_REPROCESS,
-
-    // QCAMERA3_CDS
     (uint32_t)QCAMERA3_CDS_MODE,
-    (uint32_t)QCAMERA3_CDS_INFO,
 
     // QCAMERA3_OPAQUE_RAW
     (uint32_t)QCAMERA3_OPAQUE_RAW_STRIDES,
     (uint32_t)QCAMERA3_OPAQUE_RAW_FORMAT,
 
-    // QCAMERA3_CROP
     (uint32_t)QCAMERA3_CROP_COUNT_REPROCESS,
     (uint32_t)QCAMERA3_CROP_REPROCESS,
+    (uint32_t)QCAMERA3_CROP_STREAM_ID_REPROCESS,
     (uint32_t)QCAMERA3_CROP_ROI_MAP_REPROCESS,
 
     // QCAMERA3_TUNING_META_DATA
-    (uint32_t)QCAMERA3_TUNING_META_DATA_BLOB,
-
-    // QCAMERA3_TEMPORAL_DENOISE
-    (uint32_t)QCAMERA3_TEMPORAL_DENOISE_ENABLE,
-    (uint32_t)QCAMERA3_TEMPORAL_DENOISE_PROCESS_TYPE,
-    //QCAMERA3_AVTIMER
-    (uint32_t)QCAMERA3_USE_AV_TIMER,
-
-    //QCAMERA3_SENSOR_META_DATA
-    (uint32_t)QCAMERA3_SENSOR_DYNAMIC_BLACK_LEVEL_PATTERN,
-
-    //NEXUS_EXPERIMENTAL_2015
-    (uint32_t)NEXUS_EXPERIMENTAL_2015_SENSOR_DYNAMIC_BLACK_LEVEL,
-    (uint32_t)NEXUS_EXPERIMENTAL_2015_SENSOR_INFO_OPTICALLY_SHIELDED_REGIONS,
+    (uint32_t)QCAMERA3_TUNING_META_DATA_BLOB
 };
 
 const vendor_tag_ops_t* QCamera3VendorTags::Ops = NULL;
@@ -183,7 +134,7 @@ const vendor_tag_ops_t* QCamera3VendorTags::Ops = NULL;
 void QCamera3VendorTags::get_vendor_tag_ops(
                                 vendor_tag_ops_t* ops)
 {
-    LOGL("E");
+    ALOGV("%s: E", __func__);
 
     Ops = ops;
 
@@ -194,7 +145,7 @@ void QCamera3VendorTags::get_vendor_tag_ops(
     ops->get_tag_type = get_tag_type;
     ops->reserved[0] = NULL;
 
-    LOGL("X");
+    ALOGV("%s: X", __func__);
     return;
 }
 
@@ -217,7 +168,7 @@ int QCamera3VendorTags::get_tag_count(
     if (ops == Ops)
         count = sizeof(qcamera3_all_tags)/sizeof(qcamera3_all_tags[0]);
 
-    LOGL("count is %d", count);
+    ALOGV("%s: count is %d", __func__, count);
     return (int)count;
 }
 
@@ -244,7 +195,7 @@ void QCamera3VendorTags::get_all_tags(
             i < sizeof(qcamera3_all_tags)/sizeof(qcamera3_all_tags[0]);
             i++) {
         g_array[i] = qcamera3_all_tags[i];
-        LOGD("g_array[%d] is %d", i, g_array[i]);
+        CDBG("%s: g_array[%d] is %d", __func__, i, g_array[i]);
     }
 }
 
@@ -266,7 +217,7 @@ const char* QCamera3VendorTags::get_section_name(
                 const vendor_tag_ops_t * ops,
                 uint32_t tag)
 {
-    LOGL("E");
+    ALOGV("%s: E", __func__);
     if (ops != Ops)
         return NULL;
 
@@ -279,8 +230,8 @@ const char* QCamera3VendorTags::get_section_name(
         ret = qcamera3_ext_section_names[section - VENDOR_SECTION];
 
     if (ret)
-        LOGL("section_name[%d] is %s", tag, ret);
-    LOGL("X");
+        ALOGV("%s: section_name[%d] is %s", __func__, tag, ret);
+    ALOGV("%s: X", __func__);
     return ret;
 }
 
@@ -300,7 +251,7 @@ const char* QCamera3VendorTags::get_tag_name(
                 const vendor_tag_ops_t * ops,
                 uint32_t tag)
 {
-    LOGL("E");
+    ALOGV("%s: E", __func__);
     const char *ret;
     uint32_t section = tag >> 16;
     uint32_t section_index = section - VENDOR_SECTION;
@@ -319,8 +270,8 @@ const char* QCamera3VendorTags::get_tag_name(
         ret = qcamera3_tag_info[section_index][tag_index].tag_name;
 
     if (ret)
-        LOGL("tag name for tag %d is %s", tag, ret);
-    LOGL("X");
+        ALOGV("%s: tag name for tag %d is %s", __func__, tag, ret);
+    ALOGV("%s: X", __func__);
 
 done:
     return ret;
@@ -342,7 +293,7 @@ int QCamera3VendorTags::get_tag_type(
                 const vendor_tag_ops_t *ops,
                 uint32_t tag)
 {
-    LOGL("E");
+    ALOGV("%s: E", __func__);
     int ret;
     uint32_t section = tag >> 16;
     uint32_t section_index = section - VENDOR_SECTION;
@@ -359,8 +310,8 @@ int QCamera3VendorTags::get_tag_type(
     else
         ret = qcamera3_tag_info[section_index][tag_index].tag_type;
 
-    LOGL("tag type for tag %d is %d", tag, ret);
-    LOGL("X");
+    ALOGV("%s: tag type for tag %d is %d", __func__, tag, ret);
+    ALOGV("%s: X", __func__);
 done:
     return ret;
 }
