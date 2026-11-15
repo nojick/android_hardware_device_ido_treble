@@ -8237,7 +8237,7 @@ int32_t QCamera2HardwareInterface::getJpegHandleInfo(mm_jpeg_ops_t *ops,
         memcpy(ops, &mJpegHandle, sizeof(mm_jpeg_ops_t));
         memcpy(mpo_ops, &mJpegMpoHandle, sizeof(mm_jpeg_mpo_ops_t));
         *pJpegClientHandle = mJpegClientHandle;
-        CDBG_HIGH("%s: Getting JPEG client handle %d", __func__,
+        CDBG_HIGH("%s: Getting JPEG client handle %p", __func__,
                 pJpegClientHandle);
         return NO_ERROR;
     } else {
