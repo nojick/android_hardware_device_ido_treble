@@ -69,7 +69,7 @@ QCamera2Factory::QCamera2Factory()
         for (int attempts = 0; attempts < 30; attempts++) {
         mNumOfCameras = get_num_of_cameras();
         if (mNumOfCameras > 0) break;
-        LOGE("get_num_of_cameras returned %d (attempt %d), daemon not ready, waiting 1s",
+        ALOGE("get_num_of_cameras returned %d (attempt %d), daemon not ready, waiting 1s",
                 mNumOfCameras, attempts);
         sleep(1);
     }
