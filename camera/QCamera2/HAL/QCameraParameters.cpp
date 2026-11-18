@@ -39,6 +39,7 @@
 #include <sys/sysinfo.h>
 #include "QCamera2HWI.h"
 #include "QCameraParameters.h"
+#include "cam_capability_legacy.h"
 
 #define ASPECT_TOLERANCE 0.001
 #define CAMERA_DEFAULT_LONGSHOT_STAGES 4
@@ -859,6 +860,7 @@ QCameraParameters::QCameraParameters()
     memset(&m_stillmore_config, 0, sizeof(cam_still_more_t));
     memset(&m_captureFrameConfig, 0, sizeof(cam_capture_frame_config_t));
     memset(&m_relCamSyncInfo, 0, sizeof(cam_sync_related_sensors_event_info_t));
+    m_relCamSyncInfo.sync_control = CAM_SYNC_RELATED_SENSORS_OFF;
     mTotalPPCount = 0;
     mZoomLevel = 0;
     mParmZoomLevel = 0;
@@ -948,6 +950,7 @@ QCameraParameters::QCameraParameters(const String8 &params)
     memset(&m_hfrFpsRange, 0, sizeof(m_hfrFpsRange));
     memset(&m_stillmore_config, 0, sizeof(cam_still_more_t));
     memset(&m_relCamSyncInfo, 0, sizeof(cam_sync_related_sensors_event_info_t));
+    m_relCamSyncInfo.sync_control = CAM_SYNC_RELATED_SENSORS_OFF;
     m_pTorch = NULL;
     m_bReleaseTorchCamera = false;
     mTotalPPCount = 0;
@@ -4637,6 +4640,125 @@ int32_t QCameraParameters::commitParameters()
     return commitSetBatch();
 }
 
+static void remapLegacyCapability(cam_capability_t *cap)
+{
+    if (cap == NULL) return;
+    if (cap->version != 0) return; // буфер уже перемаплен — не remap'ить повторно
+
+    static uint8_t raw[65536];
+    memcpy(raw, cap, sizeof(raw));
+    cam_capability_legacy_t *o = (cam_capability_legacy_t *)raw;
+    memset(cap, 0, sizeof(*cap));
+    cap->version = CAM_HAL_V1;
+
+#define COPY_CNT_SRC(dst, ocnt, oarr, darr, max) \
+    do { (dst) = (ocnt) > (max) ? (max) : (ocnt); \
+         memcpy((darr), (oarr), (dst) * sizeof((darr)[0])); } while(0)
+
+    cap->position = (cam_position_t)o->position;
+    cap->auto_hdr_supported = o->auto_hdr_supported;
+
+    COPY_CNT_SRC(cap->supported_iso_modes_cnt, o->supported_iso_modes_cnt,
+                 o->supported_iso_modes, cap->supported_iso_modes, CAM_ISO_MODE_MAX);
+   // cap->min_iso = o->min_iso;  cap->max_iso = o->max_iso;
+
+    COPY_CNT_SRC(cap->supported_flash_modes_cnt, o->supported_flash_modes_cnt,
+                 o->supported_flash_modes, cap->supported_flash_modes, CAM_FLASH_MODE_MAX);
+
+    COPY_CNT_SRC(cap->zoom_ratio_tbl_cnt, o->zoom_ratio_tbl_cnt,
+                 o->zoom_ratio_tbl, cap->zoom_ratio_tbl, MAX_ZOOMS_CNT);
+
+    COPY_CNT_SRC(cap->supported_effects_cnt, o->supported_effects_cnt,
+                 o->supported_effects, cap->supported_effects, CAM_EFFECT_MODE_MAX);
+    COPY_CNT_SRC(cap->supported_scene_modes_cnt, o->supported_scene_modes_cnt,
+                 o->supported_scene_modes, cap->supported_scene_modes, CAM_SCENE_MODE_MAX);
+    COPY_CNT_SRC(cap->supported_aec_modes_cnt, o->supported_aec_modes_cnt,
+                 o->supported_aec_modes, cap->supported_aec_modes, CAM_AEC_MODE_MAX);
+
+    COPY_CNT_SRC(cap->fps_ranges_tbl_cnt, o->fps_ranges_tbl_cnt,
+                 o->fps_ranges_tbl, cap->fps_ranges_tbl, MAX_SIZES_CNT);
+
+    COPY_CNT_SRC(cap->supported_antibandings_cnt, o->supported_antibandings_cnt,
+                 o->supported_antibandings, cap->supported_antibandings, CAM_ANTIBANDING_MODE_MAX);
+    COPY_CNT_SRC(cap->supported_white_balances_cnt, o->supported_white_balances_cnt,
+                 o->supported_white_balances, cap->supported_white_balances, CAM_WB_MODE_MAX);
+    cap->min_wb_cct = o->min_wb_cct;  cap->max_wb_cct = o->max_wb_cct;
+    cap->min_wb_gain = o->min_wb_gain;  cap->max_wb_gain = o->max_wb_gain;
+
+    /* focus modes: в новом enum добавлен CAM_FOCUS_MODE_OFF, сдвиг +1 */
+    cap->supported_focus_modes_cnt =
+        (o->supported_focus_modes_cnt > LEGACY_CAM_FOCUS_MODE_MAX) ?
+        LEGACY_CAM_FOCUS_MODE_MAX : o->supported_focus_modes_cnt;
+    for (uint32_t i = 0; i < cap->supported_focus_modes_cnt; i++)
+        cap->supported_focus_modes[i] =
+            (cam_focus_mode_type)(o->supported_focus_modes[i] + 1);
+
+    cap->exposure_compensation_min = o->exposure_compensation_min;
+    cap->exposure_compensation_max = o->exposure_compensation_max;
+    cap->exposure_compensation_default = o->exposure_compensation_default;
+    cap->exposure_compensation_step = o->exposure_compensation_step;
+    cap->exp_compensation_step.numerator = o->exp_comp_step_num;
+    cap->exp_compensation_step.denominator = o->exp_comp_step_den;
+    cap->video_stablization_supported = o->video_stablization_supported;
+
+    COPY_CNT_SRC(cap->picture_sizes_tbl_cnt, o->picture_sizes_tbl_cnt,
+                 o->picture_sizes_tbl, cap->picture_sizes_tbl, MAX_SIZES_CNT);
+    COPY_CNT_SRC(cap->preview_sizes_tbl_cnt, o->preview_sizes_tbl_cnt,
+                 o->preview_sizes_tbl, cap->preview_sizes_tbl, MAX_SIZES_CNT);
+    COPY_CNT_SRC(cap->video_sizes_tbl_cnt, o->video_sizes_tbl_cnt,
+                 o->video_sizes_tbl, cap->video_sizes_tbl, MAX_SIZES_CNT);
+    COPY_CNT_SRC(cap->livesnapshot_sizes_tbl_cnt, o->livesnapshot_sizes_tbl_cnt,
+                 o->livesnapshot_sizes_tbl, cap->livesnapshot_sizes_tbl, MAX_SIZES_CNT);
+    COPY_CNT_SRC(cap->vhdr_livesnapshot_sizes_tbl_cnt, o->vhdr_livesnapshot_sizes_tbl_cnt,
+                 o->vhdr_livesnapshot_sizes_tbl, cap->vhdr_livesnapshot_sizes_tbl, MAX_SIZES_CNT);
+
+    cap->modes_supported = o->modes_supported;
+    cap->sensor_mount_angle = o->sensor_mount_angle;
+    cap->focal_length = o->focal_length;
+    cap->hor_view_angle = o->hor_view_angle;
+    cap->ver_view_angle = o->ver_view_angle;
+
+    cap->hfr_tbl_cnt = (o->hfr_tbl_cnt > CAM_HFR_MODE_MAX) ? CAM_HFR_MODE_MAX : o->hfr_tbl_cnt;
+    for (uint32_t i = 0; i < cap->hfr_tbl_cnt; i++) {
+        cap->hfr_tbl[i].mode = (cam_hfr_mode_t)o->hfr_tbl[i].mode;
+        cap->hfr_tbl[i].dim.width  = (int32_t)o->hfr_tbl[i].dim.width;
+        cap->hfr_tbl[i].dim.height = (int32_t)o->hfr_tbl[i].dim.height;
+        cap->hfr_tbl[i].frame_skip = o->hfr_tbl[i].frame_skip;
+        cap->hfr_tbl[i].livesnapshot_sizes_tbl_cnt = o->hfr_tbl[i].ls_cnt;
+        memcpy(cap->hfr_tbl[i].livesnapshot_sizes_tbl, o->hfr_tbl[i].livesnapshot_sizes_tbl,
+               MAX_SIZES_CNT * sizeof(cam_dimension_t));
+    }
+
+    /* форматы: в новом enum после CAM_FORMAT_YUV_420_NV12_VENUS вставлен UBWC, сдвиг +1 */
+    cap->supported_preview_fmt_cnt =
+        (o->supported_preview_fmt_cnt > CAM_FORMAT_MAX) ? CAM_FORMAT_MAX : o->supported_preview_fmt_cnt;
+    for (uint32_t i = 0; i < cap->supported_preview_fmt_cnt; i++) {
+        int32_t v = o->supported_preview_fmts[i];
+        cap->supported_preview_fmts[i] = (cam_format_t)(v >= 8 ? v + 1 : v);
+    }
+    cap->supported_picture_fmt_cnt =
+        (o->supported_picture_fmt_cnt > CAM_FORMAT_MAX) ? CAM_FORMAT_MAX : o->supported_picture_fmt_cnt;
+    for (uint32_t i = 0; i < cap->supported_picture_fmt_cnt; i++) {
+        int32_t v = o->supported_picture_fmts[i];
+        cap->supported_picture_fmts[i] = (cam_format_t)(v >= 8 ? v + 1 : v);
+    }
+
+    cap->supported_raw_dim_cnt = 1;
+    cap->raw_dim[0].width  = (int32_t)o->raw_dim.width;
+    cap->raw_dim[0].height = (int32_t)o->raw_dim.height;
+    cap->supported_raw_fmt_cnt =
+        (o->supported_raw_fmt_cnt > CAM_FORMAT_MAX) ? CAM_FORMAT_MAX : o->supported_raw_fmt_cnt;
+    for (uint32_t i = 0; i < cap->supported_raw_fmt_cnt; i++) {
+        int32_t v = o->supported_raw_fmts[i];
+        cap->supported_raw_fmts[i] = (cam_format_t)(v >= 8 ? v + 1 : v);
+    }
+
+    COPY_CNT_SRC(cap->supported_focus_algos_cnt, o->supported_focus_algos_cnt,
+                 o->supported_focus_algos, cap->supported_focus_algos, CAM_FOCUS_ALGO_MAX);
+
+#undef COPY_CNT_SRC
+}
+
 /*===========================================================================
  * FUNCTION   : initDefaultParameters
  *
@@ -4650,6 +4772,33 @@ int32_t QCameraParameters::commitParameters()
  *==========================================================================*/
 int32_t QCameraParameters::initDefaultParameters()
 {
+ 
+ 
+    {
+        uint32_t *p = (uint32_t *)m_pCapability;
+        size_t n = sizeof(cam_capability_t) / sizeof(uint32_t);
+        static const uint32_t keys[] = {1920, 1280, 1064, 960, 800, 720,
+                                        640, 480, 400, 352, 320, 240, 176, 144};
+        for (size_t i = 0; i < n; i++) {
+            for (size_t k = 0; k < sizeof(keys)/sizeof(keys[0]); k++) {
+                if (p[i] == keys[k]) {
+                    ALOGE("CAPSCAN[%zu] = %u", i, p[i]);
+                    break;
+                }
+            }
+        }
+        for (int i = 0; i < 640; i++) {
+            ALOGE("CAPDUMP[%03d] = 0x%08x", i, p[i]);
+        }
+    }
+
+
+    remapLegacyCapability(m_pCapability);
+    ALOGE("REMAP: preview=%u video=%u pic=%u fps_ranges=%u flash=%u",
+          m_pCapability->preview_sizes_tbl_cnt, m_pCapability->video_sizes_tbl_cnt,
+          m_pCapability->picture_sizes_tbl_cnt, m_pCapability->fps_ranges_tbl_cnt,
+          m_pCapability->supported_flash_modes_cnt);
+
     if(initBatchUpdate(m_pParamBuf) < 0 ) {
         ALOGE("%s:Failed to initialize group update table", __func__);
         return BAD_TYPE;
