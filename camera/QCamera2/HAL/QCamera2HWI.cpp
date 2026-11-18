@@ -1384,12 +1384,12 @@ int QCamera2HardwareInterface::openCamera()
 
 	uint32_t padding =
 		gCamCapability[mCameraId]->padding_info.plane_padding;
-	LOGE("META_ALLOC_DEBUG: plane_padding=%u sizeof(metadata_buffer_t)=%u",
+	ALOGE("META_ALLOC_DEBUG: plane_padding=%u sizeof(metadata_buffer_t)=%u",
 		(unsigned)padding, (unsigned)sizeof(metadata_buffer_t));
         metadataAllocArgs.size = PAD_TO_SIZE(sizeof(metadata_buffer_t),
                 padding);
         if (metadataAllocArgs.size == 0) {
-            LOGE("META_ALLOC_DEBUG: size got 0 (padding=%u), using raw sizeof",
+            ALOGE("META_ALLOC_DEBUG: size got 0 (padding=%u), using raw sizeof",
                     (unsigned)padding);
             metadataAllocArgs.size = sizeof(metadata_buffer_t);
         }
@@ -1453,6 +1453,7 @@ int QCamera2HardwareInterface::openCamera()
         return UNKNOWN_ERROR;
     }
 
+#if 0
     rc = mParameters.getRelatedCamCalibration(&mRelCamCalibData);
     CDBG("%s: Dumping Calibration Data Version Id %f rc %d", __func__,
             mRelCamCalibData.calibration_format_version, rc);
@@ -1462,6 +1463,9 @@ int QCamera2HardwareInterface::openCamera()
         mCameraHandle = NULL;
         return UNKNOWN_ERROR;
     }
+#endif
+    memset(&mRelCamCalibData, 0, sizeof(mRelCamCalibData));
+    rc = NO_ERROR;
 
     if(!mJpegClientHandle) {
         rc = initJpegHandle();
@@ -1515,7 +1519,7 @@ int QCamera2HardwareInterface::openCamera()
     //Notify display HAL that a camera session is active
     pthread_mutex_lock(&gCamLock);
     if (gNumCameraSessions++ == 0) {
-        setCameraLaunchStatus(true);
+        //setCameraLaunchStatus(true);
     }
     pthread_mutex_unlock(&gCamLock);
 
@@ -1696,7 +1700,7 @@ int QCamera2HardwareInterface::closeCamera()
     //Notify display HAL that there is no active camera session
     pthread_mutex_lock(&gCamLock);
     if (--gNumCameraSessions == 0) {
-        setCameraLaunchStatus(false);
+      //  setCameraLaunchStatus(false);
     }
     pthread_mutex_unlock(&gCamLock);
 
