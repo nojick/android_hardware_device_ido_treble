@@ -33,6 +33,8 @@
 #ifndef __CAMLIST_H
 #define __CAMLIST_H
 
+#include <stddef.h>
+#include <string.h>
 #include <stdlib.h>
 
 #define member_of(ptr, type, member) ({ \

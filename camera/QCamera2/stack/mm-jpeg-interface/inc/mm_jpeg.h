@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2015, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -334,7 +334,6 @@ typedef struct mm_jpeg_job_session {
   mm_jpeg_queue_t *session_handle_q;
   mm_jpeg_queue_t *out_buf_q;
 
-  int thumb_from_main;
   uint32_t job_index;
 } mm_jpeg_job_session_t;
 
@@ -387,14 +386,18 @@ typedef struct mm_jpeg_obj_t {
   /* Max pic dimension for work buf calc*/
   uint32_t max_pic_w;
   uint32_t max_pic_h;
+
+  /* previous work buffer dimensions */
+  uint32_t prev_w;
+  uint32_t prev_h;
+
+  uint32_t work_buf_cnt;
+
 #ifdef LOAD_ADSP_RPC_LIB
   void *adsprpc_lib_handle;
 #endif
 
-  uint32_t work_buf_cnt;
-
   uint32_t num_sessions;
-  uint32_t reuse_reproc_buffer;
 
 } mm_jpeg_obj;
 
@@ -462,9 +465,8 @@ extern mm_jpeg_q_data_t mm_jpeg_queue_peek(mm_jpeg_queue_t* queue);
 extern int32_t addExifEntry(QOMX_EXIF_INFO *p_exif_info, exif_tag_id_t tagid,
   exif_tag_type_t type, uint32_t count, void *data);
 extern int32_t releaseExifEntry(QEXIF_INFO_DATA *p_exif_data);
-extern int process_meta_data(metadata_buffer_t *p_meta,
-  QOMX_EXIF_INFO *exif_info, mm_jpeg_exif_params_t *p_cam3a_params,
-  cam_hal_version_t hal_version);
+extern int process_meta_data(cam_metadata_info_t *p_meta,
+  QOMX_EXIF_INFO *exif_info, mm_jpeg_exif_params_t *p_cam3a_params);
 
 OMX_ERRORTYPE mm_jpeg_session_change_state(mm_jpeg_job_session_t* p_session,
   OMX_STATETYPE new_state,
@@ -493,16 +495,6 @@ mm_jpeg_job_q_node_t* mm_jpeg_queue_remove_job_unlk(
  **/
 typedef void (*mm_jpeg_queue_func_t)(void *);
 
-/** mm_jpeg_exif_flash_mode:
- *
- * Exif flash mode values
- **/
-typedef enum {
-  MM_JPEG_EXIF_FLASH_MODE_ON   = 0x1,
-  MM_JPEG_EXIF_FLASH_MODE_OFF  = 0x2,
-  MM_JPEG_EXIF_FLASH_MODE_AUTO = 0x3,
-  MM_JPEG_EXIF_FLASH_MODE_MAX
-} mm_jpeg_exif_flash_mode;
 
 #endif /* MM_JPEG_H_ */
 

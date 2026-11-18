@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2015, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2013, The Linux Foundataion. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -88,8 +88,6 @@ int QCameraThermalAdapter::init(QCameraThermalCallback *thermalCb)
         goto error2;
     }
 
-    mCallback = thermalCb;
-
     // Register camera and camcorder callbacks
     mCameraHandle = mRegister(mStrCamera, thermalCallback, NULL);
     if (mCameraHandle < 0) {
@@ -106,6 +104,7 @@ int QCameraThermalAdapter::init(QCameraThermalCallback *thermalCb)
         goto error3;
     }
 
+    mCallback = thermalCb;
     CDBG("%s X", __func__);
     return rc;
 
@@ -152,21 +151,12 @@ int QCameraThermalAdapter::thermalCallback(int level,
 {
     int rc = 0;
     CDBG("%s E", __func__);
-    QCameraThermalCallback *mcb = getInstance().mCallback;
-
-    if (mcb) {
-        mcb->setThermalLevel((qcamera_thermal_level_enum_t) level);
-        rc = mcb->thermalEvtHandle(mcb->getThermalLevel(), userdata, data);
-    }
+    QCameraThermalAdapter& instance = getInstance();
+    qcamera_thermal_level_enum_t lvl = (qcamera_thermal_level_enum_t) level;
+    if (instance.mCallback)
+        rc = instance.mCallback->thermalEvtHandle(lvl, userdata, data);
     CDBG("%s X", __func__);
     return rc;
 }
 
-qcamera_thermal_level_enum_t *QCameraThermalCallback::getThermalLevel() {
-    return &mLevel;
-}
-
-void QCameraThermalCallback::setThermalLevel(qcamera_thermal_level_enum_t level) {
-    mLevel = level;
-}
 }; //namespace qcamera
