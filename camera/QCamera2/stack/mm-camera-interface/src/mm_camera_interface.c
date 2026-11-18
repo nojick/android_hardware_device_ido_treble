@@ -45,6 +45,7 @@
 #include "mm_camera_interface.h"
 #include "mm_camera_sock.h"
 #include "mm_camera.h"
+#include "parm_shim.h"
 
 static pthread_mutex_t g_intf_lock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -203,7 +204,15 @@ static int32_t mm_camera_intf_set_parms(uint32_t camera_handle,
     if(my_obj) {
         pthread_mutex_lock(&my_obj->cam_lock);
         pthread_mutex_unlock(&g_intf_lock);
-        rc = mm_camera_set_parms(my_obj, parms);
+        /* SHIM: new ABI -> old daemon ABI (daemon reads mapped PARM_BUF) */
+        if (shim_ensure_mapped(my_obj) == 0) {
+            void *pbuf = shim_parmbuf(my_obj);
+            shim_parms_hal_to_daemon((const metadata_buffer_t *)parms,
+                                     pbuf, SHIM_SETBUF_SIZE, 0);
+            rc = mm_camera_set_parms(my_obj, (parm_buffer_t *)pbuf);
+        } else {
+            CDBG_ERROR("%s: shim mapping failed\n", __func__);
+        }
     } else {
         pthread_mutex_unlock(&g_intf_lock);
     }
@@ -240,7 +249,14 @@ static int32_t mm_camera_intf_get_parms(uint32_t camera_handle,
     if(my_obj) {
         pthread_mutex_lock(&my_obj->cam_lock);
         pthread_mutex_unlock(&g_intf_lock);
-        rc = mm_camera_get_parms(my_obj, parms);
+        if (shim_ensure_mapped(my_obj) == 0) {
+            void *pbuf = shim_parmbuf(my_obj);
+            shim_parms_hal_to_daemon((const metadata_buffer_t *)parms,
+                                     pbuf, SHIM_SETBUF_SIZE, 1);
+            rc = mm_camera_get_parms(my_obj, (parm_buffer_t *)pbuf);
+            if (rc == 0)
+                shim_parms_daemon_to_hal(pbuf, (metadata_buffer_t *)parms);
+        }
     } else {
         pthread_mutex_unlock(&g_intf_lock);
     }
