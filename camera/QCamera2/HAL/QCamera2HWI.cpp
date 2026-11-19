@@ -1850,6 +1850,8 @@ QCameraMemory *QCamera2HardwareInterface::allocateStreamBuf(
     }
 
     if (bufferCnt > 0) {
+    ALOGE("DBG alloc: type=%d size=%zu stride=%d scanline=%d cnt=%d",
+              stream_type, size, stride, scanline, bufferCnt);
         if (mParameters.isSecureMode() &&
             (stream_type == CAM_STREAM_TYPE_RAW) &&
             (mParameters.isRdiMode())) {
