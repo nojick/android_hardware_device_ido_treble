@@ -391,6 +391,8 @@ static int32_t mm_camera_intf_close(uint32_t camera_handle)
 
             pthread_mutex_lock(&my_obj->cam_lock);
             pthread_mutex_unlock(&g_intf_lock);
+	    /* SHIM: освободить parm-буфер этой сессии */
+	    shim_release(my_obj);
 
             rc = mm_camera_close(my_obj);
 

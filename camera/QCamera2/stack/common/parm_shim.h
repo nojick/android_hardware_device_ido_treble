@@ -13,6 +13,9 @@ int32_t shim_parms_daemon_to_hal(const void *in, metadata_buffer_t *out);
 int32_t shim_capability_daemon_to_hal(void *in, size_t size);
 
 int32_t shim_ensure_mapped(void *my_obj);
+
+/* при закрытии камеры: освободить слот шима */
+void shim_release(void *my_obj);
 void *shim_parmbuf(void *my_obj);
 
 #endif /* PARM_SHIM_H */

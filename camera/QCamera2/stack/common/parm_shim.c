@@ -9,6 +9,8 @@
 #include <pthread.h>
 #include <sys/mman.h>
 #include <cutils/ashmem.h>
+#include <unistd.h>
+#include <log/log.h>
 
 #include "cam_intf.h"
 #include "meta_remap.h"
@@ -42,7 +44,11 @@ typedef struct {
 static int add_entry(old_buf_t *b, uint32_t old_id, const void *val, uint32_t sz)
 {
     uint32_t stride = OLD_ALIGN(OLD_HDR + sz);
-    if (b->curr_size + stride > b->tot_rem_size) return -1;
+    if (b->curr_size + stride > b->tot_rem_size) {
+        ALOGE("SHIM pack FAIL: id=%u need=%u left=%u",
+              old_id, stride, b->tot_rem_size - b->curr_size);
+        return -1;
+    }
     old_entry_t *e = (old_entry_t *)(b->entry + b->curr_size);
     e->entry_type = old_id;
     e->size = sz;
@@ -50,6 +56,8 @@ static int add_entry(old_buf_t *b, uint32_t old_id, const void *val, uint32_t sz
     if (sz && val) memcpy(e->data, val, sz);
     b->curr_size += stride;
     b->num_entry++;
+    ALOGE("SHIM pack: id=%u size=%u stride=%u total=%u",
+          old_id, sz, stride, b->curr_size);
     return 0;
 }
 
@@ -87,7 +95,11 @@ int32_t shim_parms_hal_to_daemon(const metadata_buffer_t *in, void *out,
 
     for (uint32_t i = 0; i < CAM_INTF_PARM_MAX; i++) {
         const remap_t *r = &g_remap[i];
-        if (r->old_idx == OLD_IDX_NONE || r->old_size == 0) continue;
+        if (r->old_idx == OLD_IDX_NONE || r->old_size == 0) {
+            if (in->is_valid[i])
+                ALOGE("SHIM drop: new_id=%u (no old mapping)", i);
+            continue;
+        }
         if (r->old_idx == OLD_IDX_HAL_VERSION) continue;  /* already sent */
         if (!in->is_valid[i]) continue;
 
@@ -133,6 +145,8 @@ int32_t shim_parms_hal_to_daemon(const metadata_buffer_t *in, void *out,
             break;
         }
     }
+    ALOGE("SHIM hal->daemon: %u entries, is_get=%u, used=%u of %u",
+          b->num_entry, is_get, OLD_HDR + b->curr_size, out_size);
     return 0;
 }
 
@@ -149,6 +163,7 @@ int32_t shim_parms_daemon_to_hal(const void *in, metadata_buffer_t *out)
         if (e->entry_type >= OLD_PARM_MAX) return -1;
         if (e->aligned_size < OLD_HDR) return -1;
         off += e->aligned_size;
+	ALOGE("SHIM unpack: id=%u size=%u", e->entry_type, e->size);
 
         /* empty entry = get request, not a response */
         if (e->size == 0 || e->entry_type == OLD_IDX_HAL_VERSION) continue;
@@ -212,13 +227,21 @@ typedef struct {
 static shim_cam_t g_shim[SHIM_MAX_CAMS];
 static pthread_mutex_t g_shim_lock = PTHREAD_MUTEX_INITIALIZER;
 
+
 static shim_cam_t *shim_state(uint32_t cam)
 {
+    /* reuse exact match first */
     for (int i = 0; i < SHIM_MAX_CAMS; i++)
-        if (g_shim[i].cam == cam) return &g_shim[i];
+        if (g_shim[i].cam == cam && g_shim[i].mapped) return &g_shim[i];
+    /* else take any free/reclaimable slot */
     for (int i = 0; i < SHIM_MAX_CAMS; i++)
-        if (!g_shim[i].cam) { g_shim[i].cam = cam; return &g_shim[i]; }
-    return NULL;
+        if (!g_shim[i].mapped) {
+            if (g_shim[i].cam != cam) { g_shim[i].cam = cam; }
+            return &g_shim[i];
+        }
+    /* table full of mapped slots: reclaim oldest (slot 0) */
+    g_shim[0].cam = cam;
+    return &g_shim[0];
 }
 
 int32_t shim_ensure_mapped(void *my_obj)
@@ -227,7 +250,17 @@ int32_t shim_ensure_mapped(void *my_obj)
     pthread_mutex_lock(&g_shim_lock);
     shim_cam_t *s = shim_state((uint32_t)(uintptr_t)my_obj);
     if (!s) goto unlock;
+
+    /* уже замаплено В ЭТОЙ сессии - ничего не делаем */
     if (s->mapped) { rc = 0; goto unlock; }
+
+    /* остатки прошлой сессии (close не дошёл до нас) - снести */
+    if (s->addr) {
+        munmap(s->addr, SHIM_SETBUF_SIZE);
+        close(s->fd);
+        s->addr = NULL;
+        s->fd = -1;
+    }
 
     s->fd = ashmem_create_region("cam_shim_parm", SHIM_SETBUF_SIZE);
     if (s->fd < 0) goto unlock;
@@ -238,11 +271,29 @@ int32_t shim_ensure_mapped(void *my_obj)
     /* PARM_BUF == 1 в enum'ах обеих эр - демону достаточно номера */
     rc = mm_camera_map_buf(my_obj, CAM_MAPPING_BUF_TYPE_PARM_BUF,
                            s->fd, SHIM_SETBUF_SIZE);
-    if (rc == 0) s->mapped = 1;
+    if (rc == 0) {
+        s->mapped = 1;
+        ALOGE("%s: SHIM parm buf mapped fd=%d\n", __func__, s->fd);
+    }
 
 unlock:
     pthread_mutex_unlock(&g_shim_lock);
     return rc;
+}
+
+
+void shim_release(void *my_obj)
+{
+    pthread_mutex_lock(&g_shim_lock);
+    shim_cam_t *s = shim_state((uint32_t)(uintptr_t)my_obj);
+    if (s && s->mapped) {
+        munmap(s->addr, SHIM_SETBUF_SIZE);
+        close(s->fd);
+        s->addr = NULL;
+        s->fd = -1;
+        s->mapped = 0;
+    }
+    pthread_mutex_unlock(&g_shim_lock);
 }
 
 void *shim_parmbuf(void *my_obj)
@@ -250,4 +301,3 @@ void *shim_parmbuf(void *my_obj)
     shim_cam_t *s = shim_state((uint32_t)(uintptr_t)my_obj);
     return (s && s->mapped) ? s->addr : NULL;
 }
-
