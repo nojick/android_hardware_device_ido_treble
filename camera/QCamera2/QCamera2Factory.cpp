@@ -153,6 +153,7 @@ QCamera2Factory::~QCamera2Factory()
 int QCamera2Factory::get_number_of_cameras()
 {
     int numCameras = 0;
+    int rc = NO_ERROR;
 
     if (!gQCamera2Factory) {
         gQCamera2Factory = new QCamera2Factory();

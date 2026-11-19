@@ -202,7 +202,7 @@ int QCameraMuxer::get_camera_info(int camera_id, struct camera_info *info)
  *              NO_ERROR  : success
  *              other: non-zero failure code
  *==========================================================================*/
-int QCameraMuxer::set_callbacks(__unused const camera_module_callbacks_t *callbacks)
+int QCameraMuxer::set_callbacks(const camera_module_callbacks_t *callbacks)
 {
     // Not implemented
     return NO_ERROR;
@@ -224,7 +224,7 @@ int QCameraMuxer::set_callbacks(__unused const camera_module_callbacks_t *callba
  *              other: non-zero failure code
  *==========================================================================*/
 int QCameraMuxer::camera_device_open(
-        __unused const struct hw_module_t *module, const char *id,
+        const struct hw_module_t *module, const char *id,
         struct hw_device_t **hw_device)
 {
     int rc = NO_ERROR;
@@ -255,8 +255,8 @@ int QCameraMuxer::camera_device_open(
  *              BAD_VALUE : Invalid Camera ID
  *              other: non-zero failure code
  *==========================================================================*/
-int QCameraMuxer::open_legacy(__unused const struct hw_module_t* module,
-        const char* id, __unused uint32_t halVersion, struct hw_device_t** hw_device)
+int QCameraMuxer::open_legacy(const struct hw_module_t* module,
+        const char* id, uint32_t halVersion, struct hw_device_t** hw_device)
 {
     int rc = NO_ERROR;
     CDBG_HIGH("%s[%d]: id= %d", __func__, __LINE__, atoi(id));
@@ -1010,6 +1010,7 @@ char* QCameraMuxer::get_parameters(struct camera_device * device)
         return NULL;
 
     char* ret = NULL;
+    int rc = NO_ERROR;
     qcamera_physical_descriptor_t *pCam = NULL;
     qcamera_logical_descriptor_t *cam = gMuxer->getLogicalCamera(device);
     if (!cam) {
@@ -1237,7 +1238,7 @@ int QCameraMuxer::close_camera_device(hw_device_t *hw_dev)
         CHECK_CAMERA_ERROR(pCam);
 
         hw_device_t *dev = (hw_device_t*)(pCam->dev);
-        CDBG_HIGH("%s: hw device %p, hw %p", __func__, dev, pCam->hwi);
+        CDBG_HIGH("%s: hw device %x, hw %x", __func__, dev, pCam->hwi);
 
         rc = QCamera2HardwareInterface::close_camera_device(dev);
         if (rc != NO_ERROR) {
@@ -1267,6 +1268,7 @@ int QCameraMuxer::setupLogicalCameras()
     int rc = NO_ERROR;
     char prop[PROPERTY_VALUE_MAX];
     int i = 0;
+    camera_info info;
 
     CDBG_HIGH("%s[%d] E: rc = %d", __func__, __LINE__, rc);
     // Signifies whether AUX camera has to be exposed as physical camera
@@ -1358,8 +1360,8 @@ int QCameraMuxer::setupLogicalCameras()
                     mLogicalCamera[j].mode[n] = CAM_MODE_SECONDARY;
                     mLogicalCamera[j].numCameras++;
                     CDBG_HIGH("%s[%d]: Logical Aux Camera ID: %d,"
-                        "index: %d, aux phy id:%d,"
-                        " type: %d mode: %d",
+                        "index: %d, aux phy id:%d, facing: %d, "
+                        "Phy Id: %d type: %d mode: %d",
                         __func__, __LINE__, j, n, mLogicalCamera[j].pId[n],
                         mLogicalCamera[j].type[n], mLogicalCamera[j].mode[n]);
                 }
@@ -1406,7 +1408,7 @@ int QCameraMuxer::getNumberOfCameras()
  *              none-zero failure code
  *==========================================================================*/
 int QCameraMuxer::getCameraInfo(int camera_id,
-        struct camera_info *info, __unused cam_sync_type_t *p_cam_type)
+        struct camera_info *info, cam_sync_type_t *p_cam_type)
 {
     int rc = NO_ERROR;
     CDBG_HIGH("%s: E, camera_id = %d", __func__, camera_id);
@@ -1539,7 +1541,7 @@ int QCameraMuxer::cameraDeviceOpen(int camera_id,
             mPhyCamera[phyId].dev = reinterpret_cast<camera_device_t*>(hw_dev[i]);
             mPhyCamera[phyId].hwi = hw;
             cam->sId[i] = mPhyCamera[phyId].camera_server_id;
-            CDBG_HIGH("%s: camera id %d server id : %d hw device %p, hw %p",
+            CDBG_HIGH("%s: camera id %d server id : %d hw device %x, hw %x",
                     __func__, phyId, cam->sId[i], hw_dev[i], hw);
         }
     } else {
@@ -1619,44 +1621,44 @@ void QCameraMuxer::jpeg1_data_callback(int32_t msg_type,
  *
  * DESCRIPTION: JPEG data callback for snapshot
  *==========================================================================*/
-void QCameraMuxer::jpeg2_data_callback(__unused int32_t msg_type,
-           __unused const camera_memory_t *data,__unused unsigned int index,
-           __unused camera_frame_metadata_t *metadata,__unused void *user)
+void QCameraMuxer::jpeg2_data_callback(int32_t msg_type,
+           const camera_memory_t *data, unsigned int index,
+           camera_frame_metadata_t *metadata, void *user)
 {
     CDBG_HIGH("%s: jpeg2 recieved", __func__);
 }
 
 // Muxer Ops
 camera_device_ops_t QCameraMuxer::mCameraMuxerOps = {
-    .set_preview_window        = QCameraMuxer::set_preview_window,
-    .set_callbacks             = QCameraMuxer::set_callBacks,
-    .enable_msg_type           = QCameraMuxer::enable_msg_type,
-    .disable_msg_type          = QCameraMuxer::disable_msg_type,
-    .msg_type_enabled          = QCameraMuxer::msg_type_enabled,
+    set_preview_window:         QCameraMuxer::set_preview_window,
+    set_callbacks:              QCameraMuxer::set_callBacks,
+    enable_msg_type:            QCameraMuxer::enable_msg_type,
+    disable_msg_type:           QCameraMuxer::disable_msg_type,
+    msg_type_enabled:           QCameraMuxer::msg_type_enabled,
 
-    .start_preview             = QCameraMuxer::start_preview,
-    .stop_preview              = QCameraMuxer::stop_preview,
-    .preview_enabled           = QCameraMuxer::preview_enabled,
-    .store_meta_data_in_buffers = QCameraMuxer::store_meta_data_in_buffers,
+    start_preview:              QCameraMuxer::start_preview,
+    stop_preview:               QCameraMuxer::stop_preview,
+    preview_enabled:            QCameraMuxer::preview_enabled,
+    store_meta_data_in_buffers: QCameraMuxer::store_meta_data_in_buffers,
 
-    .start_recording           = QCameraMuxer::start_recording,
-    .stop_recording            = QCameraMuxer::stop_recording,
-    .recording_enabled         = QCameraMuxer::recording_enabled,
-    .release_recording_frame   = QCameraMuxer::release_recording_frame,
+    start_recording:            QCameraMuxer::start_recording,
+    stop_recording:             QCameraMuxer::stop_recording,
+    recording_enabled:          QCameraMuxer::recording_enabled,
+    release_recording_frame:    QCameraMuxer::release_recording_frame,
 
-    .auto_focus                = QCameraMuxer::auto_focus,
-    .cancel_auto_focus         = QCameraMuxer::cancel_auto_focus,
+    auto_focus:                 QCameraMuxer::auto_focus,
+    cancel_auto_focus:          QCameraMuxer::cancel_auto_focus,
 
-    .take_picture              = QCameraMuxer::take_picture,
-    .cancel_picture            = QCameraMuxer::cancel_picture,
+    take_picture:               QCameraMuxer::take_picture,
+    cancel_picture:             QCameraMuxer::cancel_picture,
 
-    .set_parameters           = QCameraMuxer::set_parameters,
-    .get_parameters            = QCameraMuxer::get_parameters,
-    .put_parameters            = QCameraMuxer::put_parameters,
-    .send_command              = QCameraMuxer::send_command,
+    set_parameters:             QCameraMuxer::set_parameters,
+    get_parameters:             QCameraMuxer::get_parameters,
+    put_parameters:             QCameraMuxer::put_parameters,
+    send_command:               QCameraMuxer::send_command,
 
-    .release                   = QCameraMuxer::release,
-    .dump                      = QCameraMuxer::dump,
+    release:                    QCameraMuxer::release,
+    dump:                       QCameraMuxer::dump,
 };
 
 
