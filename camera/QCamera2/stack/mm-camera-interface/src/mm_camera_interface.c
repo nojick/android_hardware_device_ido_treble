@@ -49,15 +49,11 @@
 
 static pthread_mutex_t g_intf_lock = PTHREAD_MUTEX_INITIALIZER;
 
-static mm_camera_ctrl_t g_cam_ctrl = {0, {{0}}, {0}, {{0}}, {0}, {0}, {0}};
+static mm_camera_ctrl_t g_cam_ctrl = {0, {{0}}, {0}, {{0}}, {0}, {0}};
 
 static pthread_mutex_t g_handler_lock = PTHREAD_MUTEX_INITIALIZER;
 static uint16_t g_handler_history_count = 0; /* history count for handler */
 volatile uint32_t gMmCameraIntfLogLevel = 1;
-
-#define CAM_SENSOR_TYPE_MASK (1U<<23) // 24th bit tells whether its a MAIN or AUX camera
-#define CAM_SENSOR_FORMAT_MASK (1U<<24) // 25th bit tells whether its YUV sensor or not
-
 
 /*===========================================================================
  * FUNCTION   : mm_camera_util_generate_handler
@@ -1504,7 +1500,6 @@ void get_sensor_info()
             uint32_t mount_angle;
             uint32_t facing;
             int32_t type = 0;
-            uint8_t is_yuv;
 
             memset(&entity, 0, sizeof(entity));
             entity.id = num_entities++;
@@ -1519,19 +1514,15 @@ void get_sensor_info()
                 temp = entity.flags >> 8;
                 mount_angle = (temp & 0xFF) * 90;
                 facing = (temp & 0xFF00) >> 8;
-                type = ((entity.flags & CAM_SENSOR_TYPE_MASK) ?
-                        CAM_TYPE_AUX:CAM_TYPE_MAIN);
-                is_yuv = ((entity.flags & CAM_SENSOR_FORMAT_MASK) ?
-                        CAM_SENSOR_YUV:CAM_SENSOR_RAW);
+                type = (temp & 0xFF0000) >> 16;
                 ALOGI("index = %u flag = %x mount_angle = %u "
-                        "facing = %u type: %u is_yuv = %u\n",
+                        "facing = %u type: %u\n",
                         (unsigned int)num_cameras, (unsigned int)temp,
                         (unsigned int)mount_angle, (unsigned int)facing,
-                        (unsigned int)type, (uint8_t)is_yuv);
+                        (unsigned int)type);
                 g_cam_ctrl.info[num_cameras].facing = (int)facing;
                 g_cam_ctrl.info[num_cameras].orientation = (int)mount_angle;
                 g_cam_ctrl.cam_type[num_cameras] = type;
-                g_cam_ctrl.is_yuv[num_cameras] = is_yuv;
                 num_cameras++;
                 continue;
             }
@@ -1563,13 +1554,11 @@ void sort_camera_info(int num_cam)
     struct camera_info temp_info[MM_CAMERA_MAX_NUM_SENSORS];
     cam_sync_type_t temp_type[MM_CAMERA_MAX_NUM_SENSORS];
     cam_sync_mode_t temp_mode[MM_CAMERA_MAX_NUM_SENSORS];
-    uint8_t temp_is_yuv[MM_CAMERA_MAX_NUM_SENSORS];
     char temp_dev_name[MM_CAMERA_MAX_NUM_SENSORS][MM_CAMERA_DEV_NAME_LEN];
     memset(temp_info, 0, sizeof(temp_info));
     memset(temp_dev_name, 0, sizeof(temp_dev_name));
     memset(temp_type, 0, sizeof(temp_type));
     memset(temp_mode, 0, sizeof(temp_mode));
-    memset(temp_is_yuv, 0, sizeof(temp_is_yuv));
 
     /* firstly save the main back cameras info*/
     for (i = 0; i < num_cam; i++) {
@@ -1578,7 +1567,6 @@ void sort_camera_info(int num_cam)
             temp_info[idx] = g_cam_ctrl.info[i];
             temp_type[idx] = g_cam_ctrl.cam_type[i];
             temp_mode[idx] = g_cam_ctrl.cam_mode[i];
-            temp_is_yuv[idx] = g_cam_ctrl.is_yuv[i];
             CDBG("%s: Found Back Main Camera: i: %d idx: %d", __func__, i, idx);
             memcpy(temp_dev_name[idx++],g_cam_ctrl.video_dev_name[i],
                 MM_CAMERA_DEV_NAME_LEN);
@@ -1592,7 +1580,6 @@ void sort_camera_info(int num_cam)
             temp_info[idx] = g_cam_ctrl.info[i];
             temp_type[idx] = g_cam_ctrl.cam_type[i];
             temp_mode[idx] = g_cam_ctrl.cam_mode[i];
-            temp_is_yuv[idx] = g_cam_ctrl.is_yuv[i];
             CDBG("%s: Found Back Aux Camera: i: %d idx: %d", __func__, i, idx);
             memcpy(temp_dev_name[idx++],g_cam_ctrl.video_dev_name[i],
                 MM_CAMERA_DEV_NAME_LEN);
@@ -1606,7 +1593,6 @@ void sort_camera_info(int num_cam)
             temp_info[idx] = g_cam_ctrl.info[i];
             temp_type[idx] = g_cam_ctrl.cam_type[i];
             temp_mode[idx] = g_cam_ctrl.cam_mode[i];
-            temp_is_yuv[idx] = g_cam_ctrl.is_yuv[i];
             CDBG("%s: Found Front Main Camera: i: %d idx: %d", __func__, i, idx);
             memcpy(temp_dev_name[idx++],g_cam_ctrl.video_dev_name[i],
                 MM_CAMERA_DEV_NAME_LEN);
@@ -1620,7 +1606,6 @@ void sort_camera_info(int num_cam)
             temp_info[idx] = g_cam_ctrl.info[i];
             temp_type[idx] = g_cam_ctrl.cam_type[i];
             temp_mode[idx] = g_cam_ctrl.cam_mode[i];
-            temp_is_yuv[idx] = g_cam_ctrl.is_yuv[i];
             CDBG("%s: Found Front Aux Camera: i: %d idx: %d", __func__, i, idx);
             memcpy(temp_dev_name[idx++],g_cam_ctrl.video_dev_name[i],
                 MM_CAMERA_DEV_NAME_LEN);
@@ -1631,11 +1616,10 @@ void sort_camera_info(int num_cam)
         memcpy(g_cam_ctrl.info, temp_info, sizeof(temp_info));
         memcpy(g_cam_ctrl.cam_type, temp_type, sizeof(temp_type));
         memcpy(g_cam_ctrl.cam_mode, temp_mode, sizeof(temp_mode));
-        memcpy(g_cam_ctrl.is_yuv, temp_is_yuv, sizeof(temp_is_yuv));
         memcpy(g_cam_ctrl.video_dev_name, temp_dev_name, sizeof(temp_dev_name));
         for (i = 0; i < num_cam; i++) {
-            CDBG_HIGH("%s: Camera id: %d facing: %d, type: %d is_yuv: %d", __func__,
-                i, g_cam_ctrl.info[i].facing, g_cam_ctrl.cam_type[i], g_cam_ctrl.is_yuv[i]);
+            CDBG_HIGH("%s: Camera id: %d facing: %d, type: %d", __func__,
+                i, g_cam_ctrl.info[i].facing, g_cam_ctrl.cam_type[i]);
         }
     } else {
         ALOGE("%s: Failed to sort all cameras!", __func__);
@@ -1871,11 +1855,6 @@ struct camera_info *get_cam_info(uint32_t camera_id, cam_sync_type_t *pCamType)
 {
     *pCamType = g_cam_ctrl.cam_type[camera_id];
     return &g_cam_ctrl.info[camera_id];
-}
-
-uint8_t is_yuv_sensor(uint32_t camera_id)
-{
-    return g_cam_ctrl.is_yuv[camera_id];
 }
 
 /* camera ops v-table */

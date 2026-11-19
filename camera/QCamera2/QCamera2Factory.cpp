@@ -103,8 +103,7 @@ QCamera2Factory::QCamera2Factory()
 
             for (int i = 0; i < mNumOfCameras ; i++, cameraId++) {
                 mHalDescriptors[i].cameraId = cameraId;
-                // Set Device version to 3.x when both HAL3 is enabled & its BAYER sensor
-                if (isHAL3Enabled && !(is_yuv_sensor(cameraId))) {
+                if (isHAL3Enabled) {
                     mHalDescriptors[i].device_version =
                             CAMERA_DEVICE_API_VERSION_3_0;
                 } else {
