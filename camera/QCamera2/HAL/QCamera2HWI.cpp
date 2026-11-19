@@ -38,10 +38,6 @@
 #include <utils/Errors.h>
 #include <utils/Trace.h>
 #include <gralloc_priv.h>
-#include <binder/Parcel.h>
-#include <binder/IServiceManager.h>
-#include <utils/RefBase.h>
-#include <QServiceUtils.h>
 
 #include "QCamera2HWI.h"
 #include "QCameraMem.h"
@@ -67,9 +63,8 @@
 namespace qcamera {
 
 cam_capability_t *gCamCaps[MM_CAMERA_MAX_NUM_SENSORS];
-extern pthread_mutex_t gCamLock;
+static pthread_mutex_t g_camlock = PTHREAD_MUTEX_INITIALIZER;
 volatile uint32_t gCamHalLogLevel = 1;
-extern uint8_t gNumCameraSessions;
 
 camera_device_ops_t QCamera2HardwareInterface::mCameraOps = {
     .set_preview_window        = QCamera2HardwareInterface::set_preview_window,
@@ -1453,13 +1448,6 @@ int QCamera2HardwareInterface::openCamera()
     mParameters.setMinPpMask(gCamCaps[mCameraId]->qcom_supported_feature_mask);
     mCameraOpened = true;
 
-    //Notify display HAL that a camera session is active
-    pthread_mutex_lock(&gCamLock);
-    if (gNumCameraSessions++ == 0) {
-        //setCameraLaunchStatus(true);
-    }
-    pthread_mutex_unlock(&gCamLock);
-
     return NO_ERROR;
 error_exit:
     if(mJpegClientHandle) {
@@ -1633,14 +1621,6 @@ int QCamera2HardwareInterface::closeCamera()
 
     rc = mCameraHandle->ops->close_camera(mCameraHandle->camera_handle);
     mCameraHandle = NULL;
-
-    //Notify display HAL that there is no active camera session
-    pthread_mutex_lock(&gCamLock);
-    if (--gNumCameraSessions == 0) {
-      //  setCameraLaunchStatus(false);
-    }
-    pthread_mutex_unlock(&gCamLock);
-
     ALOGI("[KPI Perf] %s: X PROFILE_CLOSE_CAMERA camera id %d, rc: %d",
         __func__, mCameraId, rc);
 
@@ -1732,12 +1712,12 @@ int QCamera2HardwareInterface::getCapabilities(uint32_t cameraId,
     ATRACE_CALL();
     int rc = NO_ERROR;
     struct  camera_info *p_info = NULL;
-    pthread_mutex_lock(&gCamLock);
+    pthread_mutex_lock(&g_camlock);
     p_info = get_cam_info(cameraId, p_cam_type);
     p_info->device_version = CAMERA_DEVICE_API_VERSION_1_0;
     p_info->static_camera_characteristics = NULL;
     memcpy(info, p_info, sizeof (struct camera_info));
-    pthread_mutex_unlock(&gCamLock);
+    pthread_mutex_unlock(&g_camlock);
     return rc;
 }
 
