@@ -87,7 +87,6 @@ QCameraPostProcessor::QCameraPostProcessor(QCamera2HardwareInterface *cam_ctrl)
       m_PPindex(0)
 {
     memset(&mJpegHandle, 0, sizeof(mJpegHandle));
-    memset(&mJpegMpoHandle, 0, sizeof(mJpegMpoHandle));
     memset(&m_pJpegOutputMem, 0, sizeof(m_pJpegOutputMem));
     memset(mPPChannels, 0, sizeof(mPPChannels));
     m_DataMem = NULL;
@@ -129,7 +128,6 @@ QCameraPostProcessor::~QCameraPostProcessor()
  *
  * PARAMETERS :
  *   @pJpegHandle    : JPEG ops handle
- *   @pJpegMpoHandle    : MPO JPEG ops handle
  *   @clientHandle    : JPEG client handle
  *
  * RETURN     : int32_t type of status
@@ -137,17 +135,13 @@ QCameraPostProcessor::~QCameraPostProcessor()
  *              none-zero failure code
  *==========================================================================*/
 int32_t QCameraPostProcessor::setJpegHandle(mm_jpeg_ops_t *pJpegHandle,
-    mm_jpeg_mpo_ops_t *pJpegMpoHandle, uint32_t clientHandle)
+        uint32_t clientHandle)
 {
     CDBG_HIGH("%s: E mJpegClientHandle: %d, clientHandle: %d",
             __func__, mJpegClientHandle, clientHandle);
 
     if(pJpegHandle) {
         memcpy(&mJpegHandle, pJpegHandle, sizeof(mm_jpeg_ops_t));
-    }
-
-    if(pJpegMpoHandle) {
-        memcpy(&mJpegMpoHandle, pJpegMpoHandle, sizeof(mm_jpeg_mpo_ops_t));
     }
     mJpegClientHandle = clientHandle;
     CDBG_HIGH("%s: X mJpegClientHandle: %d, clientHandle: %d",
@@ -2183,25 +2177,6 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     /* Init the QTable */
     for (int i = 0; i < QTABLE_MAX; i++) {
         jpg_job.encode_job.qtable_set[i] = 0;
-    }
-
-    const cam_sync_related_sensors_event_info_t* related_cam_info =
-            m_parent->getRelatedCamSyncInfo();
-    if (related_cam_info != NULL) {
-        jpg_job.encode_job.multi_image_info.type = MM_JPEG_TYPE_MPO;
-        if (related_cam_info->type == CAM_TYPE_MAIN ) {
-            jpg_job.encode_job.multi_image_info.is_primary = TRUE;
-            CDBG("%s: Encoding MPO Primary JPEG", __func__);
-        } else {
-            jpg_job.encode_job.multi_image_info.is_primary = FALSE;
-            CDBG("%s: Encoding MPO Aux JPEG", __func__);
-        }
-        jpg_job.encode_job.multi_image_info.num_of_images = 2;
-    } else {
-        CDBG("%s: Encoding Single JPEG", __func__);
-        jpg_job.encode_job.multi_image_info.type = MM_JPEG_TYPE_JPEG;
-        jpg_job.encode_job.multi_image_info.is_primary = FALSE;
-        jpg_job.encode_job.multi_image_info.num_of_images = 1;
     }
 
     CDBG_HIGH("[KPI Perf] %s : PROFILE_JPEG_JOB_START", __func__);

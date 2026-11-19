@@ -267,7 +267,7 @@ public:
     int getCameraSessionId(uint32_t* session_id);
     const cam_sync_related_sensors_event_info_t* getRelatedCamSyncInfo(
             void);
-    int32_t setRelatedCamSyncInfo(
+    void setRelatedCamSyncInfo(
             cam_sync_related_sensors_event_info_t* info);
 
     static int getCapabilities(uint32_t cameraId,
@@ -298,16 +298,12 @@ public:
     friend class QCameraStateMachine;
     friend class QCameraPostProcessor;
     friend class QCameraCbNotifier;
-    friend class QCameraMuxer;
-
     void setJpegCallBacks(jpeg_data_callback jpegCb,
-            void *callbackCookie);
+                            void *callbackCookie);
     int32_t initJpegHandle();
     int32_t deinitJpegHandle();
-    int32_t setJpegHandleInfo(mm_jpeg_ops_t *ops,
-            mm_jpeg_mpo_ops_t *mpo_ops, uint32_t pJpegClientHandle);
-    int32_t getJpegHandleInfo(mm_jpeg_ops_t *ops,
-            mm_jpeg_mpo_ops_t *mpo_ops, uint32_t *pJpegClientHandle);
+    int32_t setJpegHandleInfo(mm_jpeg_ops_t *ops, uint32_t pJpegClientHandle);
+    void getJpegHandleInfo(mm_jpeg_ops_t *ops, uint32_t *pJpegClientHandle);
     uint32_t getCameraId() { return mCameraId; };
     void getParams(QCameraParameters **pParm) {*pParm = &mParameters;};
 private:
@@ -686,14 +682,9 @@ private:
     bool mAdvancedCaptureConfigured;
     bool mHDRBracketingEnabled;
     int32_t mNumPreviewFaces;
-    // Jpeg Handle shared between HWI instances
-    mm_jpeg_ops_t         mJpegHandle;
-    // MPO handle shared between HWI instances
-    // this is needed for MPO composition of related
-    // cam images
-    mm_jpeg_mpo_ops_t     mJpegMpoHandle;
-    uint32_t              mJpegClientHandle;
-    bool                  mJpegHandleOwner;
+    mm_jpeg_ops_t              mJpegHandle;
+    uint32_t                   mJpegClientHandle;
+    bool                       mJpegHandleOwner;
 };
 
 }; // namespace qcamera
