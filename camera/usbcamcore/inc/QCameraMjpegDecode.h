@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -24,38 +24,26 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-#include "QCamera2Factory.h"
+#ifndef __QCAMERA_MJPEG_DECODE_H
+#define __QCAMERA_MJPEG_DECODE_H
 
-static hw_module_t camera_common = {
-    .tag = HARDWARE_MODULE_TAG,
-    .module_api_version = CAMERA_MODULE_API_VERSION_1_0,
-    .hal_api_version = HARDWARE_HAL_API_VERSION,
-    .id = CAMERA_HARDWARE_MODULE_ID,
-    .name = "QCamera Module",
-    .author = "Qualcomm Innovation Center Inc",
-    .methods = &qcamera::QCamera2Factory::mModuleMethods,
-    .dso = NULL,
-    .reserved =  {0},
-};
+typedef int MJPEGD_ERR;
+#define MJPEGD_NO_ERROR          0
+#define MJPEGD_ERROR            -1
+#define MJPEGD_INSUFFICIENT_MEM -2
 
-camera_module_t HAL_MODULE_INFO_SYM = {
-    .common = camera_common,
-    .get_number_of_cameras = qcamera::QCamera2Factory::get_number_of_cameras,
-    .get_camera_info = qcamera::QCamera2Factory::get_camera_info,
-#ifndef USE_JB_MR1
-    .set_callbacks = NULL,
-#endif
-//#ifdef USE_VENDOR_CAMERA_EXT
-    .get_vendor_tag_ops = NULL,
-#ifndef USE_KK_CODE
-    .open_legacy = NULL,
-#endif
-    .set_torch_mode = NULL,
-    .init = NULL,
-    .reserved = {0}
+MJPEGD_ERR mjpegDecoderInit(void**);
 
-//#endif
-};
+MJPEGD_ERR mjpegDecoderDestroy(void* mjpegd);
+
+MJPEGD_ERR mjpegDecode(
+            void*   mjpegd,
+            char*   mjpegBuffer,
+            int     mjpegBufferSize,
+            char*   outputYptr,
+            char*   outputUVptr,
+            int     outputFormat);
+
+#endif /* __QCAMERA_MJPEG_DECODE_H */

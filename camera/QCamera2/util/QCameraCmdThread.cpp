@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2015, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -27,8 +27,9 @@
 *
 */
 
+#include <string.h>
 #include <utils/Errors.h>
-#include <utils/Log.h>
+#include <log/log.h>
 #include <sys/prctl.h>
 #include "QCameraCmdThread.h"
 
@@ -138,9 +139,15 @@ int32_t QCameraCmdThread::sendCmd(camera_cmd_type_t cmd, uint8_t sync_cmd, uint8
     node->cmd = cmd;
 
     if (priority) {
-        cmd_queue.enqueueWithPriority((void *)node);
+        if (!cmd_queue.enqueueWithPriority((void *)node)) {
+            free(node);
+            node = NULL;
+        }
     } else {
-        cmd_queue.enqueue((void *)node);
+        if (!cmd_queue.enqueue((void *)node)) {
+            free(node);
+            node = NULL;
+        }
     }
     cam_sem_post(&cmd_sem);
 
