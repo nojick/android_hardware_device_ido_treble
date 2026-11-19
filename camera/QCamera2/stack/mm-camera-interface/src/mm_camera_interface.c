@@ -1954,22 +1954,20 @@ static mm_camera_ops_t mm_camera_ops = {
  * DESCRIPTION: open a camera by camera index
  *
  * PARAMETERS :
- *   @camera_idx  : camera index. should within range of 0 to num_of_cameras
- *   @camera_vtbl : ptr to a virtual table containing camera handle and operation table.
+ *   @camera_idx : camera index. should within range of 0 to num_of_cameras
  *
- * RETURN     : int32_t type of status
- *              0  -- success
- *              non-zero error code -- failure
+ * RETURN     : ptr to a virtual table containing camera handle and operation table.
+ *              NULL if failed.
  *==========================================================================*/
-int32_t camera_open(uint8_t camera_idx, mm_camera_vtbl_t **camera_vtbl)
+mm_camera_vtbl_t * camera_open(uint8_t camera_idx)
 {
     int32_t rc = 0;
-    mm_camera_obj_t *cam_obj = NULL;
+    mm_camera_obj_t* cam_obj = NULL;
 
     CDBG("%s: E camera_idx = %d\n", __func__, camera_idx);
     if (camera_idx >= g_cam_ctrl.num_cam) {
         CDBG_ERROR("%s: Invalid camera_idx (%d)", __func__, camera_idx);
-        return -EINVAL;
+        return NULL;
     }
 
     pthread_mutex_lock(&g_intf_lock);
@@ -1979,15 +1977,14 @@ int32_t camera_open(uint8_t camera_idx, mm_camera_vtbl_t **camera_vtbl)
         g_cam_ctrl.cam_obj[camera_idx]->ref_count++;
         pthread_mutex_unlock(&g_intf_lock);
         CDBG("%s:  opened alreadyn", __func__);
-        *camera_vtbl = &g_cam_ctrl.cam_obj[camera_idx]->vtbl;
-        return rc;
+        return &g_cam_ctrl.cam_obj[camera_idx]->vtbl;
     }
 
     cam_obj = (mm_camera_obj_t *)malloc(sizeof(mm_camera_obj_t));
     if(NULL == cam_obj) {
         pthread_mutex_unlock(&g_intf_lock);
-        CDBG_ERROR("%s:  no mem", __func__);
-        return -EINVAL;
+        CDBG("%s:  no mem", __func__);
+        return NULL;
     }
 
     /* initialize camera obj */
@@ -2007,20 +2004,18 @@ int32_t camera_open(uint8_t camera_idx, mm_camera_vtbl_t **camera_vtbl)
     rc = mm_camera_open(cam_obj);
 
     pthread_mutex_lock(&g_intf_lock);
-    if (rc != 0) {
+    if(rc != 0) {
         CDBG_ERROR("%s: mm_camera_open err = %d", __func__, rc);
         pthread_mutex_destroy(&cam_obj->cam_lock);
         g_cam_ctrl.cam_obj[camera_idx] = NULL;
         free(cam_obj);
         cam_obj = NULL;
         pthread_mutex_unlock(&g_intf_lock);
-        *camera_vtbl = NULL;
-        return rc;
-    } else {
+        return NULL;
+    }else{
         CDBG("%s: Open succeded\n", __func__);
         g_cam_ctrl.cam_obj[camera_idx] = cam_obj;
         pthread_mutex_unlock(&g_intf_lock);
-        *camera_vtbl = &cam_obj->vtbl;
-        return 0;
+        return &cam_obj->vtbl;
     }
 }

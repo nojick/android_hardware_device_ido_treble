@@ -568,14 +568,10 @@ int QCamera3HardwareInterface::openCamera()
         ALOGE("Failure: Camera already opened");
         return ALREADY_EXISTS;
     }
-    rc = camera_open((uint8_t)mCameraId, &mCameraHandle);
-    if (rc) {
-        ALOGE("camera_open failed. rc = %d, mCameraHandle = %p", rc, mCameraHandle);
-        return rc;
-    }
+    mCameraHandle = camera_open((uint8_t)mCameraId);
     if (!mCameraHandle) {
-        ALOGE("camera_open failed. mCameraHandle = %p", mCameraHandle);
-        return -ENODEV;
+        ALOGE("camera_open failed.");
+        return UNKNOWN_ERROR;
     }
 
     mCameraOpened = true;
@@ -4805,13 +4801,10 @@ int QCamera3HardwareInterface::initCapabilities(uint32_t cameraId)
     mm_camera_vtbl_t *cameraHandle = NULL;
     QCamera3HeapMemory *capabilityHeap = NULL;
 
-    rc = camera_open((uint8_t)cameraId, &cameraHandle);
-    if (rc) {
-        ALOGE("%s: camera_open failed. rc = %d", __func__, rc);
-        goto open_failed;
-    }
+    cameraHandle = camera_open((uint8_t)cameraId);
     if (!cameraHandle) {
-        ALOGE("%s: camera_open failed. cameraHandle = %p", __func__, cameraHandle);
+        ALOGE("%s: camera_open failed", __func__);
+        rc = -1;
         goto open_failed;
     }
 

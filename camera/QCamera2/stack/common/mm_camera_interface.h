@@ -797,7 +797,7 @@ typedef struct {
 uint8_t get_num_of_cameras();
 
 /* return reference pointer of camera vtbl */
-int32_t camera_open(uint8_t camera_idx, mm_camera_vtbl_t **camera_obj);
+mm_camera_vtbl_t * camera_open(uint8_t camera_idx);
 
 /* helper functions */
 int32_t mm_stream_calc_offset_preview(cam_stream_info_t *stream_info,
