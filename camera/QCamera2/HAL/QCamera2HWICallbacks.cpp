@@ -1795,42 +1795,32 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
 
     IF_META_AVAILABLE(cam_ae_exif_debug_t, ae_exif_debug_params,
             CAM_INTF_META_EXIF_DEBUG_AE, pMetaData) {
-        if (pme->mExifParams.debug_params) {
-            pme->mExifParams.debug_params->ae_debug_params = *ae_exif_debug_params;
-            pme->mExifParams.debug_params->ae_debug_params_valid = TRUE;
-        }
+        pme->mExifParams.ae_debug_params = *ae_exif_debug_params;
+        pme->mExifParams.ae_debug_params_valid = TRUE;
     }
 
     IF_META_AVAILABLE(cam_awb_exif_debug_t, awb_exif_debug_params,
             CAM_INTF_META_EXIF_DEBUG_AWB, pMetaData) {
-        if (pme->mExifParams.debug_params) {
-            pme->mExifParams.debug_params->awb_debug_params = *awb_exif_debug_params;
-            pme->mExifParams.debug_params->awb_debug_params_valid = TRUE;
-        }
+        pme->mExifParams.awb_debug_params = *awb_exif_debug_params;
+        pme->mExifParams.awb_debug_params_valid = TRUE;
     }
 
     IF_META_AVAILABLE(cam_af_exif_debug_t, af_exif_debug_params,
             CAM_INTF_META_EXIF_DEBUG_AF, pMetaData) {
-        if (pme->mExifParams.debug_params) {
-            pme->mExifParams.debug_params->af_debug_params = *af_exif_debug_params;
-            pme->mExifParams.debug_params->af_debug_params_valid = TRUE;
-        }
+        pme->mExifParams.af_debug_params = *af_exif_debug_params;
+        pme->mExifParams.af_debug_params_valid = TRUE;
     }
 
     IF_META_AVAILABLE(cam_asd_exif_debug_t, asd_exif_debug_params,
             CAM_INTF_META_EXIF_DEBUG_ASD, pMetaData) {
-        if (pme->mExifParams.debug_params) {
-            pme->mExifParams.debug_params->asd_debug_params = *asd_exif_debug_params;
-            pme->mExifParams.debug_params->asd_debug_params_valid = TRUE;
-        }
+        pme->mExifParams.asd_debug_params = *asd_exif_debug_params;
+        pme->mExifParams.asd_debug_params_valid = TRUE;
     }
 
     IF_META_AVAILABLE(cam_stats_buffer_exif_debug_t, stats_exif_debug_params,
             CAM_INTF_META_EXIF_DEBUG_STATS, pMetaData) {
-        if (pme->mExifParams.debug_params) {
-            pme->mExifParams.debug_params->stats_debug_params = *stats_exif_debug_params;
-            pme->mExifParams.debug_params->stats_debug_params_valid = TRUE;
-        }
+        pme->mExifParams.stats_debug_params = *stats_exif_debug_params;
+        pme->mExifParams.stats_debug_params_valid = TRUE;
     }
 
     IF_META_AVAILABLE(uint32_t, led_mode, CAM_INTF_META_LED_MODE_OVERRIDE, pMetaData) {

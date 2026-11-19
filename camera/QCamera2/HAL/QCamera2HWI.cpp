@@ -1251,10 +1251,10 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(uint32_t cameraId)
     pthread_cond_init(&m_int_cond, NULL);
 
     memset(m_channels, 0, sizeof(m_channels));
-
     memset(&mExifParams, 0, sizeof(mm_jpeg_exif_params_t));
 
     memset(m_BackendFileName, 0, QCAMERA_MAX_FILEPATH_LENGTH);
+
 #ifdef HAS_MULTIMEDIA_HINTS
     if (hw_get_module(POWER_HARDWARE_MODULE_ID, (const hw_module_t **)&m_pPowerModule)) {
         ALOGE("%s: %s module not found", __func__, POWER_HARDWARE_MODULE_ID);
@@ -1451,19 +1451,6 @@ int QCamera2HardwareInterface::openCamera()
     }
 
     mParameters.setMinPpMask(gCamCaps[mCameraId]->qcom_supported_feature_mask);
-
-    mExifParams.debug_params =
-            (mm_jpeg_debug_exif_params_t *) malloc (sizeof(mm_jpeg_debug_exif_params_t));
-    if (mExifParams.debug_params) {
-        memset(mExifParams.debug_params, 0, sizeof(mm_jpeg_debug_exif_params_t));
-    } else {
-        ALOGE("%s: Out of Memory. Allocation failed for 3A debug exif params", __func__);
-        mCameraHandle->ops->close_camera(mCameraHandle->camera_handle);
-        mCameraHandle = NULL;
-        m_postprocessor.deinit();
-        return NO_MEMORY;
-    }
-
     mCameraOpened = true;
 
     //Notify display HAL that a camera session is active
@@ -1654,10 +1641,6 @@ int QCamera2HardwareInterface::closeCamera()
     }
     pthread_mutex_unlock(&gCamLock);
 
-    if (mExifParams.debug_params) {
-        free(mExifParams.debug_params);
-        mExifParams.debug_params = NULL;
-    }
     ALOGI("[KPI Perf] %s: X PROFILE_CLOSE_CAMERA camera id %d, rc: %d",
         __func__, mCameraId, rc);
 
