@@ -144,7 +144,6 @@ typedef enum {
     CAM_FORMAT_YUV_422_NV16,
     CAM_FORMAT_YUV_422_NV61,
     CAM_FORMAT_YUV_420_NV12_VENUS,
-    CAM_FORMAT_YUV_420_NV12_UBWC,
 
     /* Note: For all raw formats, each scanline needs to be 16 bytes aligned */
 
@@ -243,6 +242,7 @@ typedef enum {
     /* generic 8-bit raw */
     CAM_FORMAT_JPEG_RAW_8BIT,
     CAM_FORMAT_META_RAW_8BIT,
+    CAM_FORMAT_META_RAW_10BIT,
 
     /* QCOM RAW formats where data is packed into 64bit word.
      * 14BPP: 1 64-bit word contains 4 pixels p0 - p3, where most
@@ -289,6 +289,7 @@ typedef enum {
 
     /* Y plane only, used for FD */
     CAM_FORMAT_Y_ONLY,
+    CAM_FORMAT_YUV_420_NV12_UBWC,
 
     CAM_FORMAT_MAX
 } cam_format_t;
@@ -303,6 +304,7 @@ typedef enum {
 
     /* applies to HAL 3 */
     CAM_STREAM_TYPE_IMPL_DEFINED, /* opaque format: could be display, video enc, ZSL YUV */
+    CAM_STREAM_TYPE_YUV,	/* нужен для порядка в старых заголовках блобов */
 
     /* applies to both HAL 1 and HAL 3 */
     CAM_STREAM_TYPE_METADATA,      /* meta data */
@@ -333,7 +335,6 @@ typedef enum {
     /* followings are per camera */
     CAM_MAPPING_BUF_TYPE_CAPABILITY,  /* mapping camera capability buffer */
     CAM_MAPPING_BUF_TYPE_PARM_BUF,    /* mapping parameters buffer */
-    CAM_MAPPING_BUF_TYPE_SYNC_RELATED_SENSORS_BUF, /* mapping sync buffer */
 
     /* followings are per stream */
     CAM_MAPPING_BUF_TYPE_STREAM_BUF,        /* mapping stream buffers */
