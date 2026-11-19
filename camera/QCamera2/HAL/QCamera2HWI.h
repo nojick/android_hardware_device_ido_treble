@@ -167,8 +167,6 @@ public:
                           mDataCb (NULL),
                           mDataCbTimestamp (NULL),
                           mCallbackCookie (NULL),
-                          mJpegCb(NULL),
-                          mJpegCallbackCookie(NULL),
                           mParent (parent),
                           mDataQ(releaseNotifications, this),
                           mActive(false){}
