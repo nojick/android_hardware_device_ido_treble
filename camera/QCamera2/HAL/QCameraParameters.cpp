@@ -857,7 +857,6 @@ QCameraParameters::QCameraParameters()
     memset(&m_hfrFpsRange, 0, sizeof(m_hfrFpsRange));
     memset(&m_stillmore_config, 0, sizeof(cam_still_more_t));
     memset(&m_captureFrameConfig, 0, sizeof(cam_capture_frame_config_t));
-    m_relCamSyncInfo.sync_control = CAM_SYNC_RELATED_SENSORS_OFF;
     mTotalPPCount = 0;
     mZoomLevel = 0;
     mParmZoomLevel = 0;
@@ -944,7 +943,6 @@ QCameraParameters::QCameraParameters(const String8 &params)
     memset(&m_default_fps_range, 0, sizeof(m_default_fps_range));
     memset(&m_hfrFpsRange, 0, sizeof(m_hfrFpsRange));
     memset(&m_stillmore_config, 0, sizeof(cam_still_more_t));
-    m_relCamSyncInfo.sync_control = CAM_SYNC_RELATED_SENSORS_OFF;
     m_pTorch = NULL;
     m_bReleaseTorchCamera = false;
     mTotalPPCount = 0;
