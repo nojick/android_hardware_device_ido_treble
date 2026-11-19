@@ -5278,7 +5278,7 @@ int32_t QCamera2HardwareInterface::addPreviewChannel()
         ALOGE("%s: add metadata stream failed, ret = %d", __func__, rc);
         return rc;
     }
-
+/*
     if (mParameters.getRecordingHintValue() != true && !mParameters.isSecureMode()) {
         rc = addStreamToChannel(pChannel, CAM_STREAM_TYPE_ANALYSIS,
                 NULL, this);
@@ -5287,7 +5287,7 @@ int32_t QCamera2HardwareInterface::addPreviewChannel()
             return rc;
         }
     }
-
+*/
     if (isRdiMode()) {
         CDBG_HIGH("RDI_DEBUG %s[%d]: Add stream to channel", __func__, __LINE__);
         rc = addStreamToChannel(pChannel, CAM_STREAM_TYPE_RAW,
@@ -5564,7 +5564,7 @@ int32_t QCamera2HardwareInterface::addZSLChannel()
         delete pChannel;
         return rc;
     }
-
+/*
     if (!mParameters.isSecureMode()) {
         rc = addStreamToChannel(pChannel, CAM_STREAM_TYPE_ANALYSIS,
                 NULL, this);
@@ -5574,7 +5574,7 @@ int32_t QCamera2HardwareInterface::addZSLChannel()
             return rc;
         }
     }
-
+*/
     property_get("persist.camera.raw_yuv", value, "0");
     raw_yuv = atoi(value) > 0 ? true : false;
     if ( raw_yuv ) {
