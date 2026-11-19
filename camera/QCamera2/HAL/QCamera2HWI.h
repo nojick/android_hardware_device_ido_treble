@@ -352,6 +352,7 @@ private:
     bool isPreviewRestartEnabled();
     bool needReprocess();
     bool needRotationReprocess();
+    bool needScaleReprocess();
     void debugShowVideoFPS();
     void debugShowPreviewFPS();
     void dumpJpegToFile(const void *data, size_t size, uint32_t index);
