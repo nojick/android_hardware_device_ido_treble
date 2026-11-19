@@ -37,7 +37,6 @@ extern "C" {
 #include "QCamera2HWI.h"
 
 #define MAX_JPEG_BURST 2
-#define CAM_PP_CHANNEL_MAX 8
 
 namespace qcamera {
 
@@ -195,7 +194,7 @@ private:
     uint32_t                   m_bThumbnailNeeded;
 
     int8_t                     mTotalNumReproc;
-    QCameraReprocessChannel    *mPPChannels[CAM_PP_CHANNEL_MAX];
+    QCameraReprocessChannel    *mPPChannels[CAM_QCOM_FEATURE_MAX];
 
     camera_memory_t *          m_DataMem; // save frame mem pointer
 
