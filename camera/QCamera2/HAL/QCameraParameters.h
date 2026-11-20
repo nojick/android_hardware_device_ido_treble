@@ -637,7 +637,6 @@ public:
                                               // no change in parameters value
     uint32_t getJpegQuality();
     uint32_t getJpegRotation();
-    uint32_t getDeviceRotation();
     uint32_t getJpegExifRotation();
     bool useJpegExifRotation();
     int32_t getEffectValue();
@@ -710,7 +709,7 @@ public:
     void setMinPpMask(uint32_t min_pp_mask) { m_nMinRequiredPpMask = min_pp_mask; };
     bool sendStreamConfigInfo(cam_stream_size_info_t &stream_config_info);
     bool setStreamConfigure(bool isCapture, bool previewAsPostview, bool resetConfig);
-    int32_t addOnlineRotation(uint32_t rotation, uint32_t streamId, int32_t device_rotation);
+    int32_t addOnlineRotation(uint32_t rotation, uint32_t streamId);
     uint8_t getNumOfExtraBuffersForImageProc();
     uint8_t getNumOfExtraBuffersForVideo();
     uint8_t getNumOfExtraBuffersForPreview();

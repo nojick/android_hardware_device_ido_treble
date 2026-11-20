@@ -357,7 +357,6 @@ private:
     void getThumbnailSize(cam_dimension_t &dim);
     uint32_t getJpegQuality();
     uint32_t getJpegRotation();
-    uint32_t getDeviceRotation();
     void getOrientation();
     inline bool getCancelAutoFocus(){ return mCancelAutoFocus; }
     inline void setCancelAutoFocus(bool flag){ mCancelAutoFocus = flag; }
@@ -574,7 +573,6 @@ private:
     pthread_t mLiveSnapshotThread;
     pthread_t mIntPicThread;
     bool mFlashNeeded;
-    uint32_t mDeviceRotation;
     uint32_t mCaptureRotation;
     uint32_t mJpegExifRotation;
     bool mUseJpegExifRotation;
