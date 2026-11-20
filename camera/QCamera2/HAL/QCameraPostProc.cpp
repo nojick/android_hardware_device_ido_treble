@@ -2748,7 +2748,9 @@ int32_t QCameraPostProcessor::doReprocess()
                 pp_job->reproc_frame_release = true;
                 if (m_ongoingPPQ.enqueue((void *)pp_job)) {
                     ret = mPPChannels[mCurReprocCount]->doReprocessOffline(pp_job->src_frame,
-                            meta_buf);
+                            m_parent->mParameters, meta_buf,
+                            m_parent->mParameters.getJpegRotation(),
+                            m_parent->mParameters.getDeviceRotation());
                 } else {
                     CDBG_HIGH("%s : m_ongoingJpegQ is not active!!!", __func__);
                     releaseOngoingPPData(pp_job, this);
@@ -2794,7 +2796,9 @@ int32_t QCameraPostProcessor::doReprocess()
                 }
 
                 ret = mPPChannels[mCurReprocCount]->doReprocess(pp_job->src_frame,
-                        m_parent->mParameters, pMetaStream, meta_buf_index);
+                        m_parent->mParameters, pMetaStream, meta_buf_index,
+                        m_parent->mParameters.getJpegRotation(),
+                        m_parent->mParameters.getDeviceRotation());
             }
         } else {
             ALOGE("%s: Reprocess channel is NULL", __func__);
