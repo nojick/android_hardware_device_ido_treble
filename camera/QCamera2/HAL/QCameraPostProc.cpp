@@ -450,7 +450,7 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
 
     // set rotation only when no online rotation or offline pp rotation is done before
     if (!m_parent->needRotationReprocess()) {
-        encode_parm.rotation = m_parent->mParameters.getJpegRotation();
+        encode_parm.rotation = m_parent->getJpegRotation();
     }
 
     encode_parm.main_dim.src_dim = src_dim;
@@ -517,13 +517,14 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
     }
 
     if (m_bThumbnailNeeded == TRUE) {
+        uint32_t jpeg_rotation = m_parent->getJpegRotation();
         m_parent->getThumbnailSize(encode_parm.thumb_dim.dst_dim);
 
         if (thumb_stream == NULL) {
             thumb_stream = main_stream;
         }
-        if (((90 == m_parent->mParameters.getJpegRotation())
-                || (270 == m_parent->mParameters.getJpegRotation()))
+        if (((90 == m_parent->getJpegRotation())
+                || (270 == m_parent->getJpegRotation()))
                 && (m_parent->needRotationReprocess())) {
             // swap thumbnail dimensions
             cam_dimension_t tmp_dim = encode_parm.thumb_dim.dst_dim;
@@ -566,7 +567,7 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
         encode_parm.thumb_dim.src_dim = src_dim;
 
         if (!m_parent->needRotationReprocess()) {
-            encode_parm.thumb_rotation = m_parent->mParameters.getJpegRotation();
+            encode_parm.thumb_rotation = m_parent->getJpegRotation();
         }
         encode_parm.thumb_dim.crop = crop;
     }
@@ -1834,7 +1835,7 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         return BAD_VALUE;
     }
 
-    const uint32_t jpeg_rotation = m_parent->mParameters.getJpegRotation();
+    const uint32_t jpeg_rotation = m_parent->getJpegRotation();
 
     ret = queryStreams(&main_stream,
             &thumb_stream,
@@ -2749,8 +2750,7 @@ int32_t QCameraPostProcessor::doReprocess()
                 if (m_ongoingPPQ.enqueue((void *)pp_job)) {
                     ret = mPPChannels[mCurReprocCount]->doReprocessOffline(pp_job->src_frame,
                             m_parent->mParameters, meta_buf,
-                            m_parent->mParameters.getJpegRotation(),
-                            m_parent->mParameters.getDeviceRotation());
+                            m_parent->getJpegRotation(), m_parent->getDeviceRotation());
                 } else {
                     CDBG_HIGH("%s : m_ongoingJpegQ is not active!!!", __func__);
                     releaseOngoingPPData(pp_job, this);
@@ -2797,8 +2797,7 @@ int32_t QCameraPostProcessor::doReprocess()
 
                 ret = mPPChannels[mCurReprocCount]->doReprocess(pp_job->src_frame,
                         m_parent->mParameters, pMetaStream, meta_buf_index,
-                        m_parent->mParameters.getJpegRotation(),
-                        m_parent->mParameters.getDeviceRotation());
+                        m_parent->getJpegRotation(), m_parent->getDeviceRotation());
             }
         } else {
             ALOGE("%s: Reprocess channel is NULL", __func__);
