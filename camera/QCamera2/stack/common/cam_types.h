@@ -1780,8 +1780,8 @@ typedef enum {
     CAM_INTF_PARM_DCRF,
     /* metadata tag for DCRF info*/
     CAM_INTF_META_DCRF,
-    /* FLIP mode parameter */
-    CAM_INTF_PARM_FLIP, /* 190 */
+    /* FLIP mode parameter*/
+    CAM_INTF_PARM_FLIP,
     CAM_INTF_PARM_MAX
 } cam_intf_parm_type_t;
 
