@@ -4576,14 +4576,13 @@ int32_t QCameraParameters::commitParameters()
     return commitSetBatch();
 }
 
-static void remapLegacyCapability(cam_capability_t *cap)
+void remapLegacyCapability(cam_capability_t *cap)
 {
     if (cap == NULL) return;
-    if (cap->version != 0) return; // буфер уже перемаплен — не remap'ить повторно
 
-    static uint8_t raw[65536];
-    memcpy(raw, cap, sizeof(raw));
-    cam_capability_legacy_t *o = (cam_capability_legacy_t *)raw;
+    cam_capability_legacy_t raw;   /* точный размер legacy-блоба, на стеке */
+    cam_capability_legacy_t *o = &raw;
+    memcpy(o, cap, sizeof(*o));
     memset(cap, 0, sizeof(*cap));
     cap->version = CAM_HAL_V1;
 
@@ -4596,14 +4595,19 @@ static void remapLegacyCapability(cam_capability_t *cap)
 
     COPY_CNT_SRC(cap->supported_iso_modes_cnt, o->supported_iso_modes_cnt,
                  o->supported_iso_modes, cap->supported_iso_modes, CAM_ISO_MODE_MAX);
-   // cap->min_iso = o->min_iso;  cap->max_iso = o->max_iso;
+    /* min_iso/max_iso: в новом блобе поля есть, но демон их не заполняет —
+       остаётся 0 из memset. Раскомментируй при необходимости ручного ISO:
+       cap->min_iso = o->min_iso;  cap->max_iso = o->max_iso; */
 
     COPY_CNT_SRC(cap->supported_flash_modes_cnt, o->supported_flash_modes_cnt,
-                 o->supported_flash_modes, cap->supported_flash_modes, CAM_FLASH_MODE_MAX);
+                 o->supported_flash_modes, cap->supported_flash_modes, LEGACY_CAM_FLASH_MODE_MAX);
 
     COPY_CNT_SRC(cap->zoom_ratio_tbl_cnt, o->zoom_ratio_tbl_cnt,
                  o->zoom_ratio_tbl, cap->zoom_ratio_tbl, MAX_ZOOMS_CNT);
 
+    /* legacy-блоб не несёт флага zoom_supported — синтезируем из таблицы */
+    cap->zoom_supported = (o->zoom_ratio_tbl_cnt > 0) ? 1 : 0;
+    cap->smooth_zoom_supported = (o->zoom_ratio_tbl_cnt > 1) ? 1 : 0;
     COPY_CNT_SRC(cap->supported_effects_cnt, o->supported_effects_cnt,
                  o->supported_effects, cap->supported_effects, CAM_EFFECT_MODE_MAX);
     COPY_CNT_SRC(cap->supported_scene_modes_cnt, o->supported_scene_modes_cnt,
@@ -4618,8 +4622,10 @@ static void remapLegacyCapability(cam_capability_t *cap)
                  o->supported_antibandings, cap->supported_antibandings, CAM_ANTIBANDING_MODE_MAX);
     COPY_CNT_SRC(cap->supported_white_balances_cnt, o->supported_white_balances_cnt,
                  o->supported_white_balances, cap->supported_white_balances, CAM_WB_MODE_MAX);
-    cap->min_wb_cct = o->min_wb_cct;  cap->max_wb_cct = o->max_wb_cct;
-    cap->min_wb_gain = o->min_wb_gain;  cap->max_wb_gain = o->max_wb_gain;
+    cap->min_wb_cct = o->min_wb_cct;
+    cap->max_wb_cct = o->max_wb_cct;
+    cap->min_wb_gain = o->min_wb_gain;
+    cap->max_wb_gain = o->max_wb_gain;
 
     /* focus modes: в новом enum добавлен CAM_FOCUS_MODE_OFF, сдвиг +1 */
     cap->supported_focus_modes_cnt =
@@ -4628,6 +4634,9 @@ static void remapLegacyCapability(cam_capability_t *cap)
     for (uint32_t i = 0; i < cap->supported_focus_modes_cnt; i++)
         cap->supported_focus_modes[i] =
             (cam_focus_mode_type)(o->supported_focus_modes[i] + 1);
+
+    memcpy(cap->min_focus_pos, o->min_focus_pos, sizeof(cap->min_focus_pos));
+    memcpy(cap->max_focus_pos, o->max_focus_pos, sizeof(cap->max_focus_pos));
 
     cap->exposure_compensation_min = o->exposure_compensation_min;
     cap->exposure_compensation_max = o->exposure_compensation_max;
@@ -4709,32 +4718,11 @@ static void remapLegacyCapability(cam_capability_t *cap)
 int32_t QCameraParameters::initDefaultParameters()
 {
  
- 
-    {
-        uint32_t *p = (uint32_t *)m_pCapability;
-        size_t n = sizeof(cam_capability_t) / sizeof(uint32_t);
-        static const uint32_t keys[] = {1920, 1280, 1064, 960, 800, 720,
-                                        640, 480, 400, 352, 320, 240, 176, 144};
-        for (size_t i = 0; i < n; i++) {
-            for (size_t k = 0; k < sizeof(keys)/sizeof(keys[0]); k++) {
-                if (p[i] == keys[k]) {
-                    ALOGE("CAPSCAN[%zu] = %u", i, p[i]);
-                    break;
-                }
-            }
-        }
-        for (int i = 0; i < 640; i++) {
-            ALOGE("CAPDUMP[%03d] = 0x%08x", i, p[i]);
-        }
-    }
-
-
-    remapLegacyCapability(m_pCapability);
     ALOGE("REMAP: preview=%u video=%u pic=%u fps_ranges=%u flash=%u",
           m_pCapability->preview_sizes_tbl_cnt, m_pCapability->video_sizes_tbl_cnt,
           m_pCapability->picture_sizes_tbl_cnt, m_pCapability->fps_ranges_tbl_cnt,
-          m_pCapability->supported_flash_modes_cnt);
-
+          m_pCapability->supported_flash_modes_cnt); 
+ 
     if(initBatchUpdate(m_pParamBuf) < 0 ) {
         ALOGE("%s:Failed to initialize group update table", __func__);
         return BAD_TYPE;

@@ -1417,7 +1417,15 @@ int QCamera2HardwareInterface::initCapabilities(uint32_t cameraId,
     }
     memcpy(gCamCaps[cameraId], DATA_PTR(capabilityHeap,0),
                                         sizeof(cam_capability_t));
-
+/* ВРЕМЕННО: сырой блоб до ремапа — для расчёта раскладки */
+{
+    uint32_t *p = (uint32_t *)gCamCaps[cameraId];
+    for (int i = 0; i < 640; i++) {
+        ALOGE("PROBE[%03d] int=%d float=%.4f hex=0x%08x",
+              i, (int)p[i], *(float *)&p[i], p[i]);
+    }
+}
+    remapLegacyCapability(gCamCaps[cameraId]);
     rc = NO_ERROR;
 
 query_failed:

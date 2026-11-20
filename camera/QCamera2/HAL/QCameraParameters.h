@@ -65,6 +65,7 @@ public:
 };
 
 class QCameraParameters;
+void remapLegacyCapability(cam_capability_t *cap);
 class QCameraReprocScaleParam{
 public:
     QCameraReprocScaleParam();
