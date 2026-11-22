@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2015, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2013, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -38,46 +38,45 @@ using namespace android;
 
 namespace qcamera {
 
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-
 class QCamera3Channel;
 
     typedef enum {
         INVALID,
         VALID,
+        RECONFIGURE,
     } stream_status_t;
 
     typedef struct {
-        uint32_t out_buf_index;
         int32_t jpeg_orientation;
         uint8_t jpeg_quality;
-        uint8_t jpeg_thumb_quality;
         cam_dimension_t thumbnail_size;
-        uint8_t gps_timestamp_valid;
-        int64_t gps_timestamp;
-        uint8_t gps_coordinates_valid;
-        double gps_coordinates[3];
-        char gps_processing_method[GPS_PROCESSING_METHOD_SIZE];
+        int32_t sensor_sensitivity;
+        int64_t sensor_exposure_time;
+        float lens_focal_length;
+        int32_t max_jpeg_size;
+        int exposure_compensation;
+        cam_rational_type_t exposure_comp_step;
+        int64_t* gps_timestamp;
+        double* gps_coordinates[3];
+        char gps_processing_method[35];
+        bool is_jpeg_format;
+        uint32_t min_required_pp_mask;
+        int32_t sharpness;
     } jpeg_settings_t;
+
+    typedef struct {
+        camera3_stream_t *stream;
+        camera3_stream_buffer_set_t buffer_set;
+        stream_status_t status;
+        int registered;
+        QCamera3Channel *channel;
+    } stream_info_t;
 
     typedef struct {
         int32_t iso_speed;
         int64_t exposure_time;
     } metadata_response_t;
 
-    typedef struct {
-        cam_stream_type_t stream_type;
-        cam_format_t stream_format;
-        cam_dimension_t input_stream_dim;
-        cam_stream_buf_plane_info_t input_stream_plane_info;
-        cam_dimension_t output_stream_dim;
-        cam_padding_info_t *padding;
-        QCamera3Channel *src_channel;
-        cam_rect_t output_crop;
-        cam_rotation_t rotation;
-        cam_rect_t roi_map;
-    } reprocess_config_t;
 };//namespace qcamera
 
 #endif

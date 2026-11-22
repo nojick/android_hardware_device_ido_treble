@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2015, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012,2014 The Linux Foundataion. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -50,19 +50,20 @@ class QCameraStream
 {
 public:
     QCameraStream(QCameraAllocator &allocator,
-            uint32_t camHandle, uint32_t chId,
-            mm_camera_ops_t *camOps, cam_padding_info_t *paddingInfo,
-            bool deffered = false, cam_rotation_t online_rotation = ROTATE_0);
+                  uint32_t camHandle,
+                  uint32_t chId,
+                  mm_camera_ops_t *camOps,
+                  cam_padding_info_t *paddingInfo,
+                  bool deffered = false);
     virtual ~QCameraStream();
     virtual int32_t init(QCameraHeapMemory *streamInfoBuf,
-            QCameraHeapMemory *miscBuf,
-            uint8_t minStreamBufNum,
-            stream_cb_routine stream_cb,
-            void *userdata,
-            bool bDynallocBuf);
+                         uint8_t minStreamBufNum,
+                         stream_cb_routine stream_cb,
+                         void *userdata,
+                         bool bDynallocBuf);
     virtual int32_t processZoomDone(preview_stream_ops_t *previewWindow,
                                     cam_crop_data_t &crop_info);
-    virtual int32_t bufDone(uint32_t index);
+    virtual int32_t bufDone(int index);
     virtual int32_t bufDone(const void *opaque, bool isMetaData);
     virtual int32_t processDataNotify(mm_camera_super_buf_t *bufs);
     virtual int32_t start();
@@ -84,18 +85,13 @@ public:
     int32_t getFrameDimension(cam_dimension_t &dim);
     int32_t getFormat(cam_format_t &fmt);
     QCameraMemory *getStreamBufs() {return mStreamBufs;};
-    QCameraHeapMemory *getStreamInfoBuf() {return mStreamInfoBuf;};
-    QCameraHeapMemory *getMiscBuf() {return mMiscBuf;};
     uint32_t getMyServerID();
     cam_stream_type_t getMyType();
-    cam_stream_type_t getMyOriginalType();
     int32_t acquireStreamBufs();
 
     int32_t mapBuf(uint8_t buf_type, uint32_t buf_idx,
-            int32_t plane_idx, int fd, size_t size,
-            mm_camera_map_unmap_ops_tbl_t *ops_tbl = NULL);
-    int32_t unmapBuf(uint8_t buf_type, uint32_t buf_idx, int32_t plane_idx,
-            mm_camera_map_unmap_ops_tbl_t *ops_tbl = NULL);
+                   int32_t plane_idx, int fd, uint32_t size);
+    int32_t unmapBuf(uint8_t buf_type, uint32_t buf_idx, int32_t plane_idx);
     int32_t setParameter(cam_stream_parm_buffer_t &param);
     int32_t getParameter(cam_stream_parm_buffer_t &param);
     int32_t syncRuntimeParams();
@@ -107,13 +103,9 @@ public:
     bool isDeffered() const { return mDefferedAllocation; }
     void deleteStream();
 
-    uint8_t getBufferCount() { return mNumBufs; }
-    uint32_t getChannelHandle() { return mChannelHandle; }
-    int32_t getNumQueuedBuf();
-
-    uint32_t mDumpFrame;
-    uint32_t mDumpMetaFrame;
-    uint32_t mDumpSkipCnt;
+    int mDumpFrame;
+    int mDumpMetaFrame;
+    int mDumpSkipCnt;
 
     void cond_wait();
     void cond_signal();
@@ -126,7 +118,6 @@ private:
     cam_stream_info_t *mStreamInfo; // ptr to stream info buf
     mm_camera_stream_mem_vtbl_t mMemVtbl;
     uint8_t mNumBufs;
-    uint8_t mNumPlaneBufs;
     uint8_t mNumBufsNeedAlloc;
     uint8_t *mRegFlags;
     stream_cb_routine mDataCB;
@@ -136,16 +127,12 @@ private:
     QCameraCmdThread mProcTh; // thread for dataCB
 
     QCameraHeapMemory *mStreamInfoBuf;
-    QCameraHeapMemory *mMiscBuf;
     QCameraMemory *mStreamBufs;
-    QCameraMemory *mStreamBatchBufs;
     QCameraAllocator &mAllocator;
     mm_camera_buf_def_t *mBufDefs;
-    mm_camera_buf_def_t *mPlaneBufDefs;
     cam_frame_len_offset_t mFrameLenOffset;
     cam_padding_info_t mPaddingInfo;
     cam_rect_t mCropInfo;
-    cam_rotation_t mOnlineRotation;
     pthread_mutex_t mCropLock; // lock to protect crop info
     pthread_mutex_t mParameterLock; // lock to sync access to parameters
     bool mStreamBufsAcquired;
@@ -180,8 +167,8 @@ private:
             mm_camera_map_unmap_ops_tbl_t *ops_tbl,
             void *user_data);
 
-    static int32_t invalidate_buf(uint32_t index, void *user_data);
-    static int32_t clean_invalidate_buf(uint32_t index, void *user_data);
+    static int32_t invalidate_buf(int index, void *user_data);
+    static int32_t clean_invalidate_buf(int index, void *user_data);
 
     int32_t getBufs(cam_frame_len_offset_t *offset,
                      uint8_t *num_bufs,
@@ -189,25 +176,11 @@ private:
                      mm_camera_buf_def_t **bufs,
                      mm_camera_map_unmap_ops_tbl_t *ops_tbl);
     int32_t putBufs(mm_camera_map_unmap_ops_tbl_t *ops_tbl);
-
-    /* Used for deffered allocation of buffers */
-    int32_t allocateBatchBufs(cam_frame_len_offset_t *offset,
-            uint8_t *num_bufs, uint8_t **initial_reg_flag,
-            mm_camera_buf_def_t **bufs, mm_camera_map_unmap_ops_tbl_t *ops_tbl);
-
-    int32_t releaseBatchBufs(mm_camera_map_unmap_ops_tbl_t *ops_tbl);
-
-    int32_t invalidateBuf(uint32_t index);
-    int32_t cleanInvalidateBuf(uint32_t index);
+    int32_t invalidateBuf(int index);
+    int32_t cleanInvalidateBuf(int index);
     int32_t calcOffset(cam_stream_info_t *streamInfo);
     int32_t unmapStreamInfoBuf();
     int32_t releaseStreamInfoBuf();
-    int32_t releaseMiscBuf();
-    int32_t mapBuf(QCameraMemory *heapBuf, cam_mapping_buf_type bufType,
-            mm_camera_map_unmap_ops_tbl_t *ops_tbl = NULL);
-    int32_t unMapBuf(QCameraMemory *heapBuf, cam_mapping_buf_type bufType,
-            mm_camera_map_unmap_ops_tbl_t *ops_tbl = NULL);
-
     bool mDefferedAllocation;
 
     bool wait_for_cond;

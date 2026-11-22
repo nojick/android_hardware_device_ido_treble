@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2014, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2013, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -117,7 +117,7 @@ extern "C" int get_camera_info(int camera_id, struct camera_info *info)
     if(info) {
         QCamera2Factory::get_camera_info(camera_id, info);
     }
-    CDBG("Q%s: X", __func__);
+    ALOGV("Q%s: X", __func__);
     return rc;
 }
 
@@ -131,9 +131,9 @@ extern "C" int  camera_device_open(
     camera_device *device = NULL;
 
     if(module && id && hw_device) {
-        if (!strcmp(module->name, camera_common.name)) {
-            int cameraId = atoi(id);
+        int cameraId = atoi(id);
 
+        if (!strcmp(module->name, camera_common.name)) {
             camera_hardware_t *camHal =
                 (camera_hardware_t *) malloc(sizeof (camera_hardware_t));
             if(!camHal) {
@@ -143,7 +143,7 @@ extern "C" int  camera_device_open(
             }
             /* we have the camera_hardware obj malloced */
             memset(camHal, 0, sizeof (camera_hardware_t));
-            camHal->hardware = new QCamera2HardwareInterface((uint32_t)cameraId);
+            camHal->hardware = new QCamera2HardwareInterface(cameraId);
             if (camHal->hardware) {
                 camHal->cameraId = cameraId;
                 device = &camHal->hw_dev;
@@ -327,7 +327,7 @@ int recording_enabled(struct camera_device * device)
 void release_recording_frame(struct camera_device * device,
                 const void *opaque)
 {
-    CDBG("Q%s: E", __func__);
+    ALOGV("Q%s: E", __func__);
     QCamera2HardwareInterface *hardware = util_get_Hal_obj(device);
     if(hardware != NULL){
         hardware->release_recording_frame(device, opaque);

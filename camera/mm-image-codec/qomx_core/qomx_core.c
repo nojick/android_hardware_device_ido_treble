@@ -1,4 +1,4 @@
-/*Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
+/*Copyright (c) 2012, The Linux Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -44,8 +44,7 @@ static int g_omxcore_cnt = 0;
 static const comp_info_t g_comp_info[] =
 {
   { "OMX.qcom.image.jpeg.encoder", "libqomx_jpegenc.so" },
-  { "OMX.qcom.image.jpeg.decoder", "libqomx_jpegdec.so" },
-  { "OMX.qcom.image.jpeg.encoder_pipeline", "libqomx_jpegenc_pipe.so" }
+  { "OMX.qcom.image.jpeg.decoder", "libqomx_jpegdec.so" }
 };
 
 static int get_idx_from_handle(OMX_IN OMX_HANDLETYPE *ahComp, int *acompIndex,
@@ -253,9 +252,9 @@ OMX_API OMX_ERRORTYPE OMX_APIENTRY OMX_GetHandle(
 
   *handle = p_core_comp->handle[inst_idx] = (OMX_HANDLETYPE)p_comp;
 
-  ALOGD("%s:%d] handle = %p Instanceindex = %d,"
+  ALOGD("%s:%d] handle = %x Instanceindex = %d,"
     "comp_idx %d g_ptr %p", __func__, __LINE__,
-    p_core_comp->handle[inst_idx], inst_idx,
+    (int)p_core_comp->handle[inst_idx], inst_idx,
     comp_idx, g_omxcore);
 
   p_comp->SetCallbacks(p_comp, callBacks, appData);

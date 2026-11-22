@@ -1,4 +1,4 @@
-/* Copyright (c) 2015, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2014, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,19 +27,23 @@
  *
  */
 
-#ifndef MM_JPEG_MPO_H_
-#define MM_JPEG_MPO_H_
+#include "cam_intf.h"
 
-#include <cam_semaphore.h>
-#include "mm_jpeg_interface.h"
-#include <qmpo.h>
+void *POINTER_OF_PARAM(cam_intf_parm_type_t PARAM_ID,
+                 void *table_ptr)
+{
+    parm_buffer_new_t *TABLE_PTR = (parm_buffer_new_t *)table_ptr;
+    int32_t j = 0, i = TABLE_PTR->num_entry;
+    parm_entry_type_new_t *curr_param =
+                (parm_entry_type_new_t *)&TABLE_PTR->entry[0];
 
-#define TRUE 1
-#define FALSE 0
+    for (j = 0; j < i; j++) {
+      if (PARAM_ID == curr_param->entry_type) {
+        return (void *)&curr_param->data[0];
+      }
+      curr_param = GET_NEXT_PARAM(curr_param, parm_entry_type_new_t);
+    }
+    curr_param = (parm_entry_type_new_t *)&TABLE_PTR->entry[0];
+    return NULL;
+}
 
-extern int mm_jpeg_mpo_compose(mm_jpeg_mpo_info_t *mpo_info);
-
-extern int get_mpo_size(mm_jpeg_output_t jpeg_buffer[MM_JPEG_MAX_MPO_IMAGES],
-    int num_of_images);
-
-#endif
