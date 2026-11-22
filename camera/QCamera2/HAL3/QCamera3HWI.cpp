@@ -931,7 +931,7 @@ void QCamera3HardwareInterface::deriveMinFrameDuration()
 
     maxJpegDimension = 0;
     maxProcessedDimension = 0;
-
+/*
     // Figure out maximum jpeg, processed, and raw dimensions
     for (List<stream_info_t*>::iterator it = mStreamInfo.begin();
         it != mStreamInfo.end(); it++) {
@@ -949,7 +949,7 @@ void QCamera3HardwareInterface::deriveMinFrameDuration()
                 maxProcessedDimension = dimension;
         }
     }
-
+*/
     //Assume all jpeg dimensions are in processed dimensions.
     if (maxJpegDimension > maxProcessedDimension)
         maxProcessedDimension = maxJpegDimension;
@@ -1776,7 +1776,7 @@ void QCamera3HardwareInterface::dump(int fd)
     dprintf(fd, "-------+----------+------------------\n");
     for(List<MetadataBufferInfo>::iterator i = mStoredMetadataList.begin();
         i != mStoredMetadataList.end(); i++) {
-        fdprintf(fd, " %5d | %8d | %16d \n",
+        dprintf(fd, " %5d | %8d | %16d \n",
         i->frame_number, i->meta_buf->ch_id, i->meta_buf->num_bufs);
     }
     dprintf(fd, "-------+----------+------------------\n");
@@ -3004,11 +3004,11 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION,
                       (uint8_t*)gCamCapability[cameraId]->optical_stab_modes,
                       gCamCapability[cameraId]->optical_stab_modes_count);
-
+/*
     staticInfo.update(ANDROID_LENS_POSITION,
                       gCamCapability[cameraId]->lens_position,
                       sizeof(gCamCapability[cameraId]->lens_position)/ sizeof(float));
-
+*/
     int32_t lens_shading_map_size[] = {gCamCapability[cameraId]->lens_shading_map_size.width,
                                                     gCamCapability[cameraId]->lens_shading_map_size.height};
     staticInfo.update(ANDROID_LENS_INFO_SHADING_MAP_SIZE,
@@ -4430,6 +4430,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
 int QCamera3HardwareInterface::getJpegSettings
                                   (const camera_metadata_t *settings)
 {
+/*
     if (mJpegSettings) {
         if (mJpegSettings->gps_timestamp) {
             free(mJpegSettings->gps_timestamp);
@@ -4444,6 +4445,7 @@ int QCamera3HardwareInterface::getJpegSettings
         free(mJpegSettings);
         mJpegSettings = NULL;
     }
+    */
     mJpegSettings = (jpeg_settings_t*) malloc(sizeof(jpeg_settings_t));
     CameraMetadata jpeg_settings;
     jpeg_settings = settings;
