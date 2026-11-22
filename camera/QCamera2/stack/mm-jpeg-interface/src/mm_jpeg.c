@@ -49,7 +49,7 @@
 
 #define ENCODING_MODE_PARALLEL 1
 
-#define META_KEYFILE "/data/metadata.key"
+#define META_KEYFILE "/data/vendor/qcam/metadata.key"
 
 #define MM_JPG_USE_TURBO_CLOCK (0)
 
@@ -1431,7 +1431,7 @@ static OMX_ERRORTYPE mm_jpeg_session_encode(mm_jpeg_job_session_t *p_session)
 
 #ifdef MM_JPEG_DUMP_INPUT
   char filename[256];
-  snprintf(filename, 255, "/data/jpeg/mm_jpeg_int%d.yuv", p_session->ebd_count);
+  snprintf(filename, 255, "/data/vendor/qcam/jpeg/mm_jpeg_int%d.yuv", p_session->ebd_count);
   DUMP_TO_FILE(filename,
     p_session->p_in_omx_buf[p_jobparams->src_index]->pBuffer,
     (int)p_session->p_in_omx_buf[p_jobparams->src_index]->nAllocLen);
@@ -1447,7 +1447,7 @@ static OMX_ERRORTYPE mm_jpeg_session_encode(mm_jpeg_job_session_t *p_session)
   if (p_session->params.encode_thumbnail) {
 #ifdef MM_JPEG_DUMP_INPUT
   char thumb_filename[256];
-  snprintf(thumb_filename, 255, "/data/jpeg/mm_jpeg_int_t%d.yuv",
+  snprintf(thumb_filename, 255, "/data/vendor/qcam/jpeg/mm_jpeg_int_t%d.yuv",
     p_session->ebd_count);
   DUMP_TO_FILE(filename,
     p_session->p_in_omx_thumb_buf[p_jobparams->thumb_index]->pBuffer,

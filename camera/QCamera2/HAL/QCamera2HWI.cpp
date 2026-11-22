@@ -2235,7 +2235,7 @@ bool QCamera2HardwareInterface::processUFDumps(qcamera_jpeg_evt_payload_t *evt)
        } else {
            strncpy(name, "0", CAM_FN_CNT - 1);
        }
-       CAM_DUMP_TO_FILE("/data/local/ubifocus", name, index, "jpg",
+       CAM_DUMP_TO_FILE("/data/vendor/qcam/ubifocus", name, index, "jpg",
            dataPtr, dataLen);
        CDBG("%s:%d] Dump the image %d %d allFocusImage %d", __func__, __LINE__,
            getOutputImageCount(), index, allFocusImage);

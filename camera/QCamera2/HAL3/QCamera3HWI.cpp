@@ -2461,7 +2461,7 @@ void QCamera3HardwareInterface::dumpMetadataToFile(tuning_params_t &meta,
             struct tm * timeinfo;
             time (&current_time);
             timeinfo = localtime (&current_time);
-            strftime (timeBuf, sizeof(timeBuf),"/data/%Y%m%d%H%M%S", timeinfo);
+            strftime (timeBuf, sizeof(timeBuf),"/data/vendor/qcam/%Y%m%d%H%M%S", timeinfo);
             String8 filePath(timeBuf);
             snprintf(buf,
                      sizeof(buf),

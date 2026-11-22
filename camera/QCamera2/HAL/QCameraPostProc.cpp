@@ -1622,7 +1622,7 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
                mem, imgProp.size);
            /* dump image */
            if (mem && mem->data) {
-               CAM_DUMP_TO_FILE("/data/local/ubifocus", "DepthMapImage",
+               CAM_DUMP_TO_FILE("/data/vendor/qcam/ubifocus", "DepthMapImage",
                                 -1, "y",
                                 (uint8_t *)mem->data,
                                 imgProp.size);

@@ -1023,7 +1023,7 @@ void QCameraRawChannel::dumpRawSnapshot(mm_camera_buf_def_t *frame)
    cam_frame_len_offset_t offset;
    memset(&offset, 0, sizeof(cam_frame_len_offset_t));
    stream->getFrameOffset(offset);
-   snprintf(buf, sizeof(buf), "/data/r_%d_%dx%d.raw",
+   snprintf(buf, sizeof(buf), "/data/vendor/qcam/r_%d_%dx%d.raw",
             frame->frame_idx, offset.mp[0].stride, offset.mp[0].scanline);
 
    int file_fd = open(buf, O_RDWR| O_CREAT, 0777);
