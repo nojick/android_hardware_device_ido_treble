@@ -1645,7 +1645,6 @@ int32_t getExifLatitude(rat_t *latitude,
 {
     char str[30];
     snprintf(str, sizeof(str), "%f", value);
-    if(str != NULL) {
         parseGPSCoordinate(str, latitude);
 
         //set Latitude Ref
@@ -1657,9 +1656,6 @@ int32_t getExifLatitude(rat_t *latitude,
         }
         latRef[1] = '\0';
         return NO_ERROR;
-    }else{
-        return BAD_VALUE;
-    }
 }
 
 /*===========================================================================
@@ -1680,7 +1676,6 @@ int32_t getExifLongitude(rat_t *longitude,
 {
     char str[30];
     snprintf(str, sizeof(str), "%f", value);
-    if(str != NULL) {
         parseGPSCoordinate(str, longitude);
 
         //set Longitude Ref
@@ -1692,9 +1687,6 @@ int32_t getExifLongitude(rat_t *longitude,
         }
         lonRef[1] = '\0';
         return NO_ERROR;
-    }else{
-        return BAD_VALUE;
-    }
 }
 
 /*===========================================================================
@@ -1711,11 +1703,10 @@ int32_t getExifLongitude(rat_t *longitude,
  *              none-zero failure code
  *==========================================================================*/
 int32_t getExifAltitude(rat_t *altitude,
-                                           char *altRef, double value)
+                                           char *altRef, double argValue)
 {
     char str[30];
-    snprintf(str, sizeof(str), "%f", value);
-    if(str != NULL) {
+    snprintf(str, sizeof(str), "%f", argValue);
         double value = atof(str);
         *altRef = 0;
         if(value < 0){
@@ -1723,9 +1714,6 @@ int32_t getExifAltitude(rat_t *altitude,
             value = -value;
         }
         return getRational(altitude, value*1000, 1000);
-    }else{
-        return BAD_VALUE;
-    }
 }
 
 /*===========================================================================
@@ -1748,7 +1736,6 @@ int32_t getExifGpsDateTimeStamp(char *gpsDateStamp,
 {
     char str[30];
     snprintf(str, sizeof(str), "%lld", value);
-    if(str != NULL) {
         time_t unixTime = (time_t)atol(str);
         struct tm *UTCTimestamp = gmtime(&unixTime);
 
@@ -1759,9 +1746,6 @@ int32_t getExifGpsDateTimeStamp(char *gpsDateStamp,
         getRational(&gpsTimeStamp[2], UTCTimestamp->tm_sec, 1);
 
         return NO_ERROR;
-    } else {
-        return BAD_VALUE;
-    }
 }
 
 int32_t getExifExposureValue(srat_t* exposure_val, int32_t exposure_comp,

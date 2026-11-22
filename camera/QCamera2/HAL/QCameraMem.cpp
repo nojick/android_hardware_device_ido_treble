@@ -1433,7 +1433,7 @@ int QCameraGrallocMemory::allocate(int count, int /*size*/, uint32_t /*isSecure*
          goto end;
     }
 
-    gralloc_usage = GRALLOC_USAGE_HW_CAMERA_WRITE | GRALLOC_USAGE_PRIVATE_IOMMU_HEAP;
+    gralloc_usage = GRALLOC_USAGE_HW_CAMERA_WRITE;
     err = mWindow->set_usage(mWindow, gralloc_usage);
     if(err != 0) {
         /* set_usage error out */

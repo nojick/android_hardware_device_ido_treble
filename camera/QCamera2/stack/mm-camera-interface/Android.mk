@@ -23,7 +23,8 @@ LOCAL_CFLAGS += -D_ANDROID_
 
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/inc \
-    $(LOCAL_PATH)/../common
+    $(LOCAL_PATH)/../common \
+    system/media/camera/include
 
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/media
@@ -42,6 +43,7 @@ LOCAL_SRC_FILES := $(MM_CAM_FILES)
 LOCAL_MODULE           := libmmcamera_interface
 LOCAL_VENDOR_MODULE := true
 LOCAL_SHARED_LIBRARIES := libdl libcutils liblog
+LOCAL_SHARED_LIBRARIES += libhardware
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_32_BIT_ONLY := $(BOARD_QTI_CAMERA_32BIT_ONLY)
