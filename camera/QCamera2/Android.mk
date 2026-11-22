@@ -41,9 +41,6 @@ LOCAL_C_INCLUDES := \
         $(LOCAL_PATH)/stack/common \
         frameworks/native/include/media/hardware \
         frameworks/native/include/media/openmax \
-        frameworks/native/include \
-        frameworks/av/include \
-        hardware/qcom/display/libgralloc \
         hardware/qcom/media/libstagefrighthw \
         system/media/camera/include \
         $(LOCAL_PATH)/../mm-image-codec/qexif \
@@ -54,8 +51,7 @@ LOCAL_C_INCLUDES := \
 
 #HAL 1.0 Include paths
 LOCAL_C_INCLUDES += \
-        frameworks/native/include/media/hardware \
-        hardware/qcom/camera/QCamera2/HAL
+        $(LOCAL_PATH)/HAL
 
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 
@@ -64,6 +60,8 @@ LOCAL_C_INCLUDES += device/xiaomi/ido/display-hal/libqdutils
 
 LOCAL_SHARED_LIBRARIES := libcamera_client liblog libhardware libutils libcutils libdl
 LOCAL_SHARED_LIBRARIES += libmmcamera_interface libmmjpeg_interface libui libcamera_metadata
+LOCAL_SHARED_LIBRARIES += libqdMetaData libbinder
+LOCAL_HEADER_LIBRARIES += media_plugin_headers
 
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_MODULE := camera.$(TARGET_BOARD_PLATFORM)
