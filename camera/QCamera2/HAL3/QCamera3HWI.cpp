@@ -878,23 +878,23 @@ int QCamera3HardwareInterface::validateCaptureRequest(
         QCamera3Channel *channel =
             static_cast<QCamera3Channel*>(b->stream->priv);
         if (channel == NULL) {
-            ALOGE("%s: Request %d: Buffer %ld: Unconfigured stream!",
-                    __func__, frameNumber, idx);
+            ALOGE("%s: Request %d: Buffer %d: Unconfigured stream!",
+                    __func__, frameNumber, (int)idx);
             return BAD_VALUE;
         }
         if (b->status != CAMERA3_BUFFER_STATUS_OK) {
-            ALOGE("%s: Request %d: Buffer %ld: Status not OK!",
-                    __func__, frameNumber, idx);
+            ALOGE("%s: Request %d: Buffer %d: Status not OK!",
+                    __func__, frameNumber, (int)idx);
             return BAD_VALUE;
         }
         if (b->release_fence != -1) {
-            ALOGE("%s: Request %d: Buffer %ld: Has a release fence!",
-                    __func__, frameNumber, idx);
+            ALOGE("%s: Request %d: Buffer %d: Has a release fence!",
+                    __func__, frameNumber, (int)idx);
             return BAD_VALUE;
         }
         if (b->buffer == NULL) {
-            ALOGE("%s: Request %d: Buffer %ld: NULL buffer handle!",
-                    __func__, frameNumber, idx);
+            ALOGE("%s: Request %d: Buffer %d: NULL buffer handle!",
+                    __func__, frameNumber, (int)idx);
             return BAD_VALUE;
         }
     }
@@ -906,22 +906,22 @@ int QCamera3HardwareInterface::validateCaptureRequest(
                 static_cast<QCamera3Channel*>(b->stream->priv);
         if (channel == NULL) {
             ALOGE("%s: Request %d: Buffer %d: Unconfigured stream!",
-                    __func__, frameNumber, idx);
+                    __func__, frameNumber, (int)idx);
             return BAD_VALUE;
         }
         if (b->status != CAMERA3_BUFFER_STATUS_OK) {
             ALOGE("%s: Request %d: Buffer %d: Status not OK!",
-                    __func__, frameNumber, idx);
+                    __func__, frameNumber, (int)idx);
             return BAD_VALUE;
         }
         if (b->release_fence != -1) {
             ALOGE("%s: Request %d: Buffer %d: Has a release fence!",
-                    __func__, frameNumber, idx);
+                    __func__, frameNumber, (int)idx);
             return BAD_VALUE;
         }
         if (b->buffer == NULL) {
             ALOGE("%s: Request %d: Buffer %d: NULL buffer handle!",
-                    __func__, frameNumber, idx);
+                    __func__, frameNumber, (int)idx);
             return BAD_VALUE;
         }
         idx++;
