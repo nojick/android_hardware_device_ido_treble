@@ -177,6 +177,13 @@ static void mm_camera_event_notify(void* user_data)
                     mm_camera_enqueue_evt(my_obj, &evt);
                 }
                 break;
+            case CAM_EVENT_TYPE_INT_TAKE_JPEG:
+            case CAM_EVENT_TYPE_INT_TAKE_RAW:
+                {
+                    evt.server_event_type = msm_evt->command;
+                    mm_camera_enqueue_evt(my_obj, &evt);
+                }
+                break;
             case MSM_CAMERA_PRIV_SHUTDOWN:
                 {
                     evt.server_event_type = CAM_EVENT_TYPE_DAEMON_DIED;
