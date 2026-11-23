@@ -795,6 +795,7 @@ int QCamera3HardwareInterface::configureStreams(
     // settings/parameters don't carry over for new configureStreams
     memset(mParameters, 0, sizeof(parm_buffer_t));
 
+    mParameters->first_flagged_entry = CAM_INTF_PARM_MAX;
     AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_HAL_VERSION,
                 sizeof(hal_version), &hal_version);
 
@@ -1471,6 +1472,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
                 meta.find(ANDROID_CONTROL_CAPTURE_INTENT).data.u8[0];
 
             memset(mParameters, 0, sizeof(parm_buffer_t));
+            mParameters->first_flagged_entry = CAM_INTF_PARM_MAX;
             AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_HAL_VERSION,
                 sizeof(hal_version), &hal_version);
             AddSetParmEntryToBatch(mParameters, CAM_INTF_META_CAPTURE_INTENT,
@@ -3646,25 +3648,40 @@ int32_t QCamera3HardwareInterface::AddSetParmEntryToBatch(parm_buffer_t *p_table
                                                           uint32_t paramLength,
                                                           void *paramValue)
 {
-    void* dst;
-    if ((NULL == p_table) || (NULL == paramValue) ||
-        (paramType >= CAM_INTF_PARM_MAX)) {
-        ALOGE("%s: Invalid p_table: %p, paramValue: %p, param type: %d",
-            __func__, p_table, paramValue, paramType);
-        return BAD_VALUE;
+    int position = paramType;
+    int current, next;
+
+    /*************************************************************************
+    *                 Code to take care of linking next flags                *
+    *************************************************************************/
+    current = GET_FIRST_PARAM_ID(p_table);
+    if (position == current){
+        //DO NOTHING
+    } else if (position < current){
+        SET_NEXT_PARAM_ID(position, p_table, current);
+        SET_FIRST_PARAM_ID(p_table, position);
+    } else {
+        /* Search for the position in the linked list where we need to slot in*/
+        while (position > GET_NEXT_PARAM_ID(current, p_table))
+            current = GET_NEXT_PARAM_ID(current, p_table);
+
+        /*If node already exists no need to alter linking*/
+        if (position != GET_NEXT_PARAM_ID(current, p_table)) {
+            next = GET_NEXT_PARAM_ID(current, p_table);
+            SET_NEXT_PARAM_ID(current, p_table, position);
+            SET_NEXT_PARAM_ID(position, p_table, next);
+        }
     }
+
     /*************************************************************************
     *                   Copy contents into entry                             *
     *************************************************************************/
-    if (paramLength > get_size_of(paramType)) {
+
+    if (paramLength > sizeof(parm_type_t)) {
         ALOGE("%s:Size of input larger than max entry size",__func__);
         return BAD_VALUE;
     }
-    dst = get_pointer_of(paramType, p_table);
-    if(NULL != dst){
-        memcpy(dst, paramValue, paramLength);
-        p_table->is_valid[paramType] = 1;
-    }
+    memcpy(POINTER_OF(paramType,p_table), paramValue, paramLength);
     return NO_ERROR;
 }
 
@@ -4037,6 +4054,7 @@ int QCamera3HardwareInterface::setFrameParameters(camera3_capture_request_t *req
     int32_t hal_version = CAM_HAL_V3;
 
     memset(mParameters, 0, sizeof(parm_buffer_t));
+    mParameters->first_flagged_entry = CAM_INTF_PARM_MAX;
     rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_HAL_VERSION,
                 sizeof(hal_version), &hal_version);
     if (rc < 0) {
