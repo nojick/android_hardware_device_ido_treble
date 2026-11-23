@@ -5184,6 +5184,7 @@ int32_t QCameraParameters::setFlash(const char *flashStr)
                                    sizeof(FLASH_MODES_MAP)/sizeof(QCameraMap),
                                    flashStr);
         if (value != NAME_NOT_FOUND) {
+            CDBG_HIGH("%s: Setting Flash value %s", __func__, flashStr);
             updateParamEntry(KEY_FLASH_MODE, flashStr);
             mFlashValue = value;
             return NO_ERROR;
@@ -5858,7 +5859,7 @@ int32_t QCameraParameters::setAEBracket(const char *aecBracketStr)
             }
             else {
                 /* Apps not set capture-burst-exposures, error case fall into bracketing off mode */
-                ALOGI("%s: capture-burst-exposures not set, back to HDR OFF mode", __func__);
+                CDBG("%s: capture-burst-exposures not set, back to HDR OFF mode", __func__);
                 m_bAeBracketingEnabled = false;
                 expBracket.mode = CAM_EXP_BRACKETING_OFF;
             }
@@ -5867,7 +5868,7 @@ int32_t QCameraParameters::setAEBracket(const char *aecBracketStr)
     default:
         {
             m_bAeBracketingEnabled = false;
-            ALOGD("%s, EXP_BRACKETING_OFF", __func__);
+            CDBG_HIGH("%s, EXP_BRACKETING_OFF", __func__);
             expBracket.mode = CAM_EXP_BRACKETING_OFF;
         }
         break;
@@ -6325,8 +6326,7 @@ int32_t QCameraParameters::updateFlash(bool commitSettings)
     }
 
     if (value != mFlashDaemonValue) {
-
-        ALOGV("%s: Setting Flash value %d", __func__, value);
+        CDBG("%s: Setting Flash value %d", __func__, value);
         rc = AddSetParmEntryToBatch(m_pParamBuf,
                                       CAM_INTF_PARM_LED_MODE,
                                       sizeof(value),
