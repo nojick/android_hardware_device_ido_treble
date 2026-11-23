@@ -1118,10 +1118,15 @@ int32_t QCameraReprocessChannel::doReprocessOffline(
                 metadata_buffer_t *pMetaData =
                         (metadata_buffer_t *)meta_buf->buffer;
                 if (NULL != pMetaData) {
+                    uint8_t curr_entry = GET_FIRST_PARAM_ID(pMetaData);
                     cam_crop_data_t *crop = NULL;
-                    if (IS_META_AVAILABLE(CAM_INTF_META_CROP_DATA, pMetaData)) {
-                        crop = (cam_crop_data_t *)
-                            POINTER_OF_META(CAM_INTF_META_CROP_DATA, pMetaData);
+                    while (!(curr_entry == CAM_INTF_PARM_MAX)) {
+                        if (curr_entry == CAM_INTF_META_CROP_DATA) {
+                            crop = (cam_crop_data_t *)
+                                    POINTER_OF(CAM_INTF_META_CROP_DATA, pMetaData);
+                            break;
+                        }
+                        curr_entry = GET_NEXT_PARAM_ID(curr_entry, pMetaData);
                     }
 
                     if ((NULL != crop) && (NULL != srcStream)) {
