@@ -49,7 +49,7 @@
 
 #define ENCODING_MODE_PARALLEL 1
 
-#define META_KEYFILE "/data/vendor/qcam/metadata.key"
+#define META_KEYFILE "/data/metadata.key"
 
 #define MM_JPG_USE_TURBO_CLOCK (0)
 

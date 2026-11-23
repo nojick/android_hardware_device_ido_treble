@@ -301,12 +301,10 @@ typedef struct{
     cam_rational_type_t base_gain_factor;    /* sensor base gain factor */
     /* AF Bracketing info */
     cam_af_bracketing_t  ubifocus_af_bracketing_need;
+    /* Sensor type information */
+    cam_sensor_type_t sensor_type;
     /* opti Zoom info */
     cam_opti_zoom_t      opti_zoom_settings_need;
-
-    /* Sensor type information 
-    cam_sensor_type_t sensor_type;
-		в хал ветки мсм8916 он не был применен, хоть он и в конце списка, но каждая запись влияет на смещение */
 } cam_capability_t;
 
 typedef enum {
