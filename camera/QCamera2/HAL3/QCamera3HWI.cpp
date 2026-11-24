@@ -3143,7 +3143,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     int32_t scalar_formats[] = {HAL_PIXEL_FORMAT_YCbCr_420_888,
                                 HAL_PIXEL_FORMAT_BLOB,
                            HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED};
-    int scalar_formats_count = sizeof(scalar_formats)/sizeof(int32_t);
+    size_t scalar_formats_count = sizeof(scalar_formats)/sizeof(int32_t);
     staticInfo.update(ANDROID_SCALER_AVAILABLE_FORMATS,
                       scalar_formats,
                       scalar_formats_count);
@@ -3823,7 +3823,7 @@ int32_t QCamera3HardwareInterface::AddSetParmEntryToBatch(parm_buffer_t *p_table
  *              none-zero failure code
  *==========================================================================*/
 int32_t QCamera3HardwareInterface::lookupFwkName(const QCameraMap arr[],
-                                             int len, int hal_name)
+                                             size_t len, int hal_name)
 {
 
     for (size_t i = 0; i < len; i++) {
@@ -3854,7 +3854,7 @@ int32_t QCamera3HardwareInterface::lookupFwkName(const QCameraMap arr[],
  *              none-zero failure code
  *==========================================================================*/
 int32_t QCamera3HardwareInterface::lookupHalName(const QCameraMap arr[],
-                                             int len, int fwk_name)
+                                             size_t len, int fwk_name)
 {
     for (size_t i = 0; i < len; i++) {
        if (arr[i].fwk_name == fwk_name)

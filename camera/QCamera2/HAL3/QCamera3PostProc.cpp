@@ -683,7 +683,7 @@ void QCamera3PostProcessor::releaseJpegJobData(qcamera_hal3_jpeg_data_t *job)
         }
 
         if (NULL != job->aux_frame) {
-            for(int i = 0; i < job->aux_frame->num_bufs; i++) {
+            for(uint32_t i = 0; i < job->aux_frame->num_bufs; i++) {
                 memset(job->aux_frame->bufs[i], 0, sizeof(mm_camera_buf_def_t));
                 free(job->aux_frame->bufs[i]);
                 job->aux_frame->bufs[i] = NULL;
@@ -950,7 +950,7 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_hal3_jpeg_data_t *jpeg_job_dat
 
     mm_camera_buf_def_t *meta_frame = NULL;
     if(jpeg_job_data->src_frame) {
-        for (int i = 0; i < jpeg_job_data->src_frame->num_bufs; i++) {
+        for (uint32_t i = 0; i < jpeg_job_data->src_frame->num_bufs; i++) {
             // look through input superbuf
             if (jpeg_job_data->src_frame->bufs[i]->stream_type == CAM_STREAM_TYPE_METADATA) {
                 meta_frame = jpeg_job_data->src_frame->bufs[i];
@@ -960,7 +960,7 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_hal3_jpeg_data_t *jpeg_job_dat
     }
     if (meta_frame == NULL && jpeg_job_data->src_reproc_frame != NULL) {
         // look through reprocess source superbuf
-        for (int i = 0; i < jpeg_job_data->src_reproc_frame->num_bufs; i++) {
+        for (uint32_t i = 0; i < jpeg_job_data->src_reproc_frame->num_bufs; i++) {
             if (jpeg_job_data->src_reproc_frame->bufs[i]->stream_type == CAM_STREAM_TYPE_METADATA) {
                 meta_frame = jpeg_job_data->src_reproc_frame->bufs[i];
                 break;
